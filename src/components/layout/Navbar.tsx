@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Brain } from 'lucide-react';
+import { Menu, X, Brain, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navLinks = [
   { label: 'الرئيسية', href: '#hero' },
@@ -13,6 +15,12 @@ const navLinks = [
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut, loading } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsOpen(false);
+  };
 
   return (
     <motion.nav
@@ -23,12 +31,12 @@ export const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-hero flex items-center justify-center">
               <Brain className="w-6 h-6 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold text-foreground">نفسي</span>
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
@@ -45,8 +53,31 @@ export const Navbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-4">
-            <Button variant="ghost">تسجيل الدخول</Button>
-            <Button variant="default">ابدأ الآن</Button>
+            {loading ? (
+              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            ) : user ? (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/profile" className="gap-2">
+                    <User className="w-4 h-4" />
+                    حسابي
+                  </Link>
+                </Button>
+                <Button variant="outline" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 ml-2" />
+                  خروج
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/auth">تسجيل الدخول</Link>
+                </Button>
+                <Button variant="default" asChild>
+                  <Link to="/auth">ابدأ الآن</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -80,8 +111,29 @@ export const Navbar = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-3 pt-4 border-t border-border">
-                <Button variant="ghost" className="w-full">تسجيل الدخول</Button>
-                <Button variant="default" className="w-full">ابدأ الآن</Button>
+                {user ? (
+                  <>
+                    <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
+                      <Link to="/profile" className="gap-2">
+                        <User className="w-4 h-4" />
+                        حسابي
+                      </Link>
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                      <LogOut className="w-4 h-4 ml-2" />
+                      تسجيل الخروج
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
+                      <Link to="/auth">تسجيل الدخول</Link>
+                    </Button>
+                    <Button variant="default" asChild className="w-full" onClick={() => setIsOpen(false)}>
+                      <Link to="/auth">ابدأ الآن</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
