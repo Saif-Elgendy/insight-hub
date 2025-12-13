@@ -151,7 +151,13 @@ export const ConsultationsSection = () => {
                       </div>
                     </div>
                   </div>
-                  <Button variant="wellness" size="sm" className="self-center" onClick={() => setBookingOpen(true)}>
+                  <Button 
+                    variant="wellness" 
+                    size="sm" 
+                    className="self-center" 
+                    onClick={() => setBookingOpen(true)}
+                    aria-label={`احجز ${type.title} الآن - ${type.price}`}
+                  >
                     احجز الآن
                   </Button>
                 </div>
