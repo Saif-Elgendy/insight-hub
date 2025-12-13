@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      consultations: {
+        Row: {
+          consultation_type: Database["public"]["Enums"]["consultation_type"]
+          created_at: string
+          id: string
+          notes: string | null
+          price: number
+          specialist_id: string
+          status: Database["public"]["Enums"]["consultation_status"]
+          time_slot_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consultation_type: Database["public"]["Enums"]["consultation_type"]
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price: number
+          specialist_id: string
+          status?: Database["public"]["Enums"]["consultation_status"]
+          time_slot_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consultation_type?: Database["public"]["Enums"]["consultation_type"]
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price?: number
+          specialist_id?: string
+          status?: Database["public"]["Enums"]["consultation_status"]
+          time_slot_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultations_specialist_id_fkey"
+            columns: ["specialist_id"]
+            isOneToOne: false
+            referencedRelation: "specialists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultations_time_slot_id_fkey"
+            columns: ["time_slot_id"]
+            isOneToOne: false
+            referencedRelation: "time_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_progress: {
         Row: {
           certificate_issued: boolean | null
@@ -127,6 +181,80 @@ export type Database = {
         }
         Relationships: []
       }
+      specialists: {
+        Row: {
+          bio: string | null
+          created_at: string
+          full_name: string
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          rating: number | null
+          specialty: string
+          title: string
+          years_experience: number | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          rating?: number | null
+          specialty: string
+          title: string
+          years_experience?: number | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          rating?: number | null
+          specialty?: string
+          title?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
+      time_slots: {
+        Row: {
+          created_at: string
+          id: string
+          is_booked: boolean | null
+          slot_date: string
+          slot_time: string
+          specialist_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_booked?: boolean | null
+          slot_date: string
+          slot_time: string
+          specialist_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_booked?: boolean | null
+          slot_date?: string
+          slot_time?: string
+          specialist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_slots_specialist_id_fkey"
+            columns: ["specialist_id"]
+            isOneToOne: false
+            referencedRelation: "specialists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -135,7 +263,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      consultation_status: "pending" | "confirmed" | "completed" | "cancelled"
+      consultation_type: "video" | "audio" | "chat"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -262,6 +391,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      consultation_status: ["pending", "confirmed", "completed", "cancelled"],
+      consultation_type: ["video", "audio", "chat"],
+    },
   },
 } as const
