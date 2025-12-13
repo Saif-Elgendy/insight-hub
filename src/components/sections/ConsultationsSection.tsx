@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, Video, Phone, Shield, Clock, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BookingDialog } from '@/components/booking/BookingDialog';
 import therapist1 from '@/assets/therapist-1.jpg';
 import therapist2 from '@/assets/therapist-2.jpg';
-
 const consultationTypes = [
   {
     icon: Video,
@@ -41,6 +42,8 @@ const specialists = [
 ];
 
 export const ConsultationsSection = () => {
+  const [bookingOpen, setBookingOpen] = useState(false);
+
   return (
     <section id="consultations" className="py-24 bg-wellness-cream">
       <div className="container mx-auto px-4">
@@ -148,7 +151,7 @@ export const ConsultationsSection = () => {
                       </div>
                     </div>
                   </div>
-                  <Button variant="wellness" size="sm" className="self-center">
+                  <Button variant="wellness" size="sm" className="self-center" onClick={() => setBookingOpen(true)}>
                     احجز الآن
                   </Button>
                 </div>
@@ -157,6 +160,8 @@ export const ConsultationsSection = () => {
           </motion.div>
         </div>
       </div>
+
+      <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} />
     </section>
   );
 };
