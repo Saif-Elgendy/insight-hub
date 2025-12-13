@@ -1,41 +1,25 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, Users, Star, Play, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
-const courses = [
-  {
-    id: 1,
-    title: 'إدارة القلق والتوتر',
-    description: 'تعلم تقنيات فعالة للتعامل مع القلق اليومي وتحويله لطاقة إيجابية',
-    duration: '8 ساعات',
-    students: 450,
-    rating: 4.9,
-    lessons: 24,
-    category: 'القلق والتوتر',
-    color: 'from-wellness-teal to-wellness-sage',
-  },
-  {
-    id: 2,
-    title: 'بناء الثقة بالنفس',
-    description: 'رحلة شاملة لاكتشاف قدراتك وتعزيز ثقتك بنفسك في جميع جوانب الحياة',
-    duration: '12 ساعة',
-    students: 680,
-    rating: 4.8,
-    lessons: 32,
-    category: 'تطوير الذات',
-    color: 'from-primary to-wellness-teal',
-  },
-  {
-    id: 3,
-    title: 'العلاقات الصحية',
-    description: 'كيف تبني علاقات متوازنة وصحية مع الآخرين وتحافظ عليها',
-    duration: '10 ساعات',
-    students: 320,
-    rating: 4.9,
-    lessons: 28,
-    category: 'العلاقات',
-    color: 'from-wellness-lavender to-primary',
-  },
+interface Course {
+  id: string;
+  title: string;
+  description: string | null;
+  duration: string | null;
+  category: string | null;
+  image_url: string | null;
+  lessons_count: number | null;
+  is_featured: boolean | null;
+}
+
+const colorGradients = [
+  'from-wellness-teal to-wellness-sage',
+  'from-primary to-wellness-teal',
+  'from-wellness-lavender to-primary',
 ];
 
 const containerVariants = {
@@ -52,6 +36,29 @@ const itemVariants = {
 };
 
 export const CoursesSection = () => {
+  const navigate = useNavigate();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_featured', true)
+      .limit(3);
+
+    if (error) {
+      console.error('Error fetching courses:', error);
+    } else {
+      setCourses(data || []);
+    }
+    setLoading(false);
+  };
+
   return (
     <section id="courses" className="py-24 bg-gradient-accent">
       <div className="container mx-auto px-4">
@@ -74,76 +81,93 @@ export const CoursesSection = () => {
         </motion.div>
 
         {/* Courses Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
-          {courses.map((course) => (
-            <motion.div
-              key={course.id}
-              variants={itemVariants}
-              className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-500 border border-border/50"
-            >
-              {/* Course Image Placeholder */}
-              <div className={`relative h-48 bg-gradient-to-br ${course.color} overflow-hidden`}>
-                <div className="absolute inset-0 bg-foreground/10" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className="w-16 h-16 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center cursor-pointer"
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse bg-card rounded-2xl h-96" />
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {courses.map((course, index) => (
+              <motion.article
+                key={course.id}
+                variants={itemVariants}
+                className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-500 border border-border/50"
+              >
+                {/* Course Image Placeholder */}
+                <div className={`relative h-48 bg-gradient-to-br ${colorGradients[index % colorGradients.length]} overflow-hidden`}>
+                  <div className="absolute inset-0 bg-foreground/10" />
+                  <button
+                    onClick={() => navigate(`/course/${course.id}`)}
+                    className="absolute inset-0 flex items-center justify-center"
+                    aria-label={`مشاهدة ${course.title}`}
                   >
-                    <Play className="w-6 h-6 text-primary-foreground fill-current" />
-                  </motion.div>
-                </div>
-                <span className="absolute top-4 right-4 px-3 py-1 rounded-full bg-background/90 text-xs font-medium text-foreground">
-                  {course.category}
-                </span>
-              </div>
-
-              {/* Course Content */}
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-                  {course.title}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                  {course.description}
-                </p>
-
-                {/* Course Meta */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4" />
-                    <span>{course.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <BookOpen className="w-4 h-4" />
-                    <span>{course.lessons} درس</span>
-                  </div>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      className="w-16 h-16 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center cursor-pointer"
+                    >
+                      <Play className="w-6 h-6 text-primary-foreground fill-current" aria-hidden="true" />
+                    </motion.div>
+                  </button>
+                  <span className="absolute top-4 right-4 px-3 py-1 rounded-full bg-background/90 text-xs font-medium text-foreground">
+                    {course.category || 'كورس'}
+                  </span>
                 </div>
 
-                {/* Course Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium text-foreground">{course.rating}</span>
+                {/* Course Content */}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+                    {course.title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                    {course.description}
+                  </p>
+
+                  {/* Course Meta */}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" aria-hidden="true" />
+                      <span>{course.duration || 'غير محدد'}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Users className="w-4 h-4" />
-                      <span className="text-sm">{course.students}</span>
+                    <div className="flex items-center gap-1.5">
+                      <BookOpen className="w-4 h-4" aria-hidden="true" />
+                      <span>{course.lessons_count || 0} درس</span>
                     </div>
                   </div>
-                  <Button variant="wellness" size="sm">
-                    ابدأ التعلم
-                  </Button>
+
+                  {/* Course Footer */}
+                  <div className="flex items-center justify-between pt-4 border-t border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" aria-hidden="true" />
+                        <span className="text-sm font-medium text-foreground">4.9</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Users className="w-4 h-4" aria-hidden="true" />
+                        <span className="text-sm">+500</span>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="wellness" 
+                      size="sm"
+                      onClick={() => navigate(`/course/${course.id}`)}
+                      aria-label={`ابدأ تعلم ${course.title}`}
+                    >
+                      ابدأ التعلم
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+              </motion.article>
+            ))}
+          </motion.div>
+        )}
 
         {/* View All Button */}
         <motion.div
@@ -152,7 +176,7 @@ export const CoursesSection = () => {
           viewport={{ once: true }}
           className="text-center mt-12"
         >
-          <Button variant="outline" size="lg">
+          <Button variant="outline" size="lg" aria-label="عرض جميع الكورسات المتاحة">
             عرض جميع الكورسات
           </Button>
         </motion.div>
