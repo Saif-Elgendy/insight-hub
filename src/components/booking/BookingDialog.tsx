@@ -188,21 +188,29 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
         </DialogHeader>
 
         {/* Progress Steps */}
-        <div className="flex justify-center gap-2 mb-6">
-          {[1, 2, 3, 4].map((s) => (
+        <nav className="flex justify-center gap-2 mb-6" aria-label="مراحل الحجز">
+          {[
+            { num: 1, label: 'اختيار المختص' },
+            { num: 2, label: 'نوع الاستشارة' },
+            { num: 3, label: 'اختيار الموعد' },
+            { num: 4, label: 'تأكيد الحجز' }
+          ].map((s) => (
             <div
-              key={s}
+              key={s.num}
+              role="listitem"
+              aria-current={step === s.num ? 'step' : undefined}
+              aria-label={`${s.label} - ${step > s.num ? 'مكتملة' : step === s.num ? 'الخطوة الحالية' : 'قادمة'}`}
               className={cn(
                 'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all',
-                step >= s
+                step >= s.num
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground'
               )}
             >
-              {step > s ? <CheckCircle className="w-5 h-5" /> : s}
+              {step > s.num ? <CheckCircle className="w-5 h-5" aria-hidden="true" /> : s.num}
             </div>
           ))}
-        </div>
+        </nav>
 
         <AnimatePresence mode="wait">
           {/* Step 1: Select Specialist */}
@@ -217,11 +225,14 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               <h3 className="text-lg font-semibold text-center mb-4">اختر المختص</h3>
               <div className="grid gap-3">
                 {specialists.map((specialist) => (
-                  <div
+                  <button
                     key={specialist.id}
+                    type="button"
                     onClick={() => setSelectedSpecialist(specialist)}
+                    aria-pressed={selectedSpecialist?.id === specialist.id}
+                    aria-label={`اختيار ${specialist.full_name} - ${specialist.title}`}
                     className={cn(
-                      'p-4 rounded-xl border cursor-pointer transition-all',
+                      'p-4 rounded-xl border cursor-pointer transition-all text-right w-full',
                       selectedSpecialist?.id === specialist.id
                         ? 'border-primary bg-primary/5 shadow-md'
                         : 'border-border hover:border-primary/50'
@@ -244,7 +255,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </motion.div>
@@ -262,11 +273,14 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               <h3 className="text-lg font-semibold text-center mb-4">نوع الاستشارة</h3>
               <div className="grid gap-3">
                 {consultationTypes.map((type) => (
-                  <div
+                  <button
                     key={type.value}
+                    type="button"
                     onClick={() => setSelectedType(type)}
+                    aria-pressed={selectedType?.value === type.value}
+                    aria-label={`اختيار ${type.label} - ${type.duration} - ${type.price} ريال`}
                     className={cn(
-                      'p-4 rounded-xl border cursor-pointer transition-all',
+                      'p-4 rounded-xl border cursor-pointer transition-all text-right w-full',
                       selectedType?.value === type.value
                         ? 'border-primary bg-primary/5 shadow-md'
                         : 'border-border hover:border-primary/50'
@@ -282,7 +296,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                       </div>
                       <div className="text-lg font-bold text-primary">{type.price} ر.س</div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </motion.div>
@@ -344,8 +358,10 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                           size="sm"
                           onClick={() => setSelectedSlot(slot)}
                           className="flex items-center gap-1"
+                          aria-pressed={selectedSlot?.id === slot.id}
+                          aria-label={`اختيار الوقت ${slot.slot_time.slice(0, 5)}`}
                         >
-                          <Clock className="w-3 h-3" />
+                          <Clock className="w-3 h-3" aria-hidden="true" />
                           {slot.slot_time.slice(0, 5)}
                         </Button>
                       ))}
@@ -407,12 +423,13 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
         </AnimatePresence>
 
         {/* Navigation Buttons */}
-        <div className="flex gap-3 mt-6">
+        <nav className="flex gap-3 mt-6" aria-label="خطوات الحجز">
           {step > 1 && (
             <Button
               variant="outline"
               onClick={() => setStep(step - 1)}
               className="flex-1"
+              aria-label="العودة للخطوة السابقة"
             >
               السابق
             </Button>
@@ -422,6 +439,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               onClick={() => setStep(step + 1)}
               disabled={!canProceed()}
               className="flex-1"
+              aria-label={`الانتقال للخطوة ${step + 1} من 4`}
             >
               التالي
             </Button>
@@ -430,11 +448,13 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               onClick={handleBooking}
               disabled={booking}
               className="flex-1"
+              aria-label="تأكيد حجز الاستشارة"
+              aria-busy={booking}
             >
               {booking ? 'جاري الحجز...' : 'تأكيد الحجز'}
             </Button>
           )}
-        </div>
+        </nav>
       </DialogContent>
     </Dialog>
   );
