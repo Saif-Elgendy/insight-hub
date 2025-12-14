@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Brain, User, LogOut } from 'lucide-react';
+import { Menu, X, Brain, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const navLinks = [
   { label: 'الرئيسية', href: '#hero' },
@@ -16,6 +17,7 @@ const navLinks = [
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
+  const { isDoctor } = useUserRole();
 
   const handleSignOut = async () => {
     await signOut();
@@ -57,6 +59,14 @@ export const Navbar = () => {
               <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             ) : user ? (
               <>
+                {isDoctor && (
+                  <Button variant="ghost" asChild>
+                    <Link to="/doctor-dashboard" className="gap-2">
+                      <LayoutDashboard className="w-4 h-4" />
+                      لوحة التحكم
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="ghost" asChild>
                   <Link to="/profile" className="gap-2">
                     <User className="w-4 h-4" />
@@ -113,6 +123,14 @@ export const Navbar = () => {
               <div className="flex flex-col gap-3 pt-4 border-t border-border">
                 {user ? (
                   <>
+                    {isDoctor && (
+                      <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
+                        <Link to="/doctor-dashboard" className="gap-2">
+                          <LayoutDashboard className="w-4 h-4" />
+                          لوحة التحكم
+                        </Link>
+                      </Button>
+                    )}
                     <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                       <Link to="/profile" className="gap-2">
                         <User className="w-4 h-4" />

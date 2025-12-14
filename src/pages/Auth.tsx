@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   fullName: z.string().trim().min(2, { message: 'الاسم يجب أن يكون حرفين على الأقل' }).max(100),
   confirmPassword: z.string(),
+  role: z.enum(['student', 'doctor']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'كلمتا المرور غير متطابقتين',
   path: ['confirmPassword'],
@@ -26,6 +27,7 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'student' | 'doctor'>('student');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -72,7 +74,7 @@ const AuthPage = () => {
           navigate('/profile');
         }
       } else {
-        const result = signupSchema.safeParse(formData);
+        const result = signupSchema.safeParse({ ...formData, role: selectedRole });
         if (!result.success) {
           const fieldErrors: Record<string, string> = {};
           result.error.errors.forEach((err) => {
@@ -83,7 +85,7 @@ const AuthPage = () => {
           return;
         }
 
-        const { error } = await signUp(formData.email, formData.password, formData.fullName);
+        const { error } = await signUp(formData.email, formData.password, formData.fullName, selectedRole);
         if (error) {
           if (error.message.includes('User already registered')) {
             toast.error('هذا البريد الإلكتروني مسجل مسبقاً');
@@ -153,24 +155,57 @@ const AuthPage = () => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">الاسم الكامل</Label>
-                <div className="relative">
-                  <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    placeholder="أدخل اسمك الكامل"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    className="pr-10"
-                  />
+              <>
+                {/* Role Selection */}
+                <div className="space-y-3">
+                  <Label>نوع الحساب</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRole('student')}
+                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                        selectedRole === 'student'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <GraduationCap className="w-8 h-8" />
+                      <span className="font-medium">طالب</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRole('doctor')}
+                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                        selectedRole === 'doctor'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Stethoscope className="w-8 h-8" />
+                      <span className="font-medium">دكتور</span>
+                    </button>
+                  </div>
                 </div>
-                {errors.fullName && (
-                  <p className="text-sm text-destructive">{errors.fullName}</p>
-                )}
-              </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">الاسم الكامل</Label>
+                  <div className="relative">
+                    <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="fullName"
+                      name="fullName"
+                      type="text"
+                      placeholder="أدخل اسمك الكامل"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      className="pr-10"
+                    />
+                  </div>
+                  {errors.fullName && (
+                    <p className="text-sm text-destructive">{errors.fullName}</p>
+                  )}
+                </div>
+              </>
             )}
 
             <div className="space-y-2">
@@ -272,6 +307,7 @@ const AuthPage = () => {
                   setIsLogin(!isLogin);
                   setErrors({});
                   setFormData({ email: '', password: '', fullName: '', confirmPassword: '' });
+                  setSelectedRole('student');
                 }}
                 className="text-primary font-medium hover:underline mr-2"
               >
