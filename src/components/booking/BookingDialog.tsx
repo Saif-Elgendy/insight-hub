@@ -413,10 +413,14 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                 <Textarea
                   placeholder="أي ملاحظات تود مشاركتها مع المختص..."
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => setNotes(e.target.value.slice(0, 1000))}
                   className="resize-none"
                   rows={3}
+                  maxLength={1000}
                 />
+                <p className="text-xs text-muted-foreground mt-1 text-left">
+                  {notes.length}/1000
+                </p>
               </div>
             </motion.div>
           )}
