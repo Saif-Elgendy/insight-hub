@@ -365,6 +365,12 @@ const DoctorDashboard = () => {
             <span className="text-xl font-bold">لوحة تحكم الدكتور</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link to="/doctor-consultations">
+              <Button variant="hero">
+                <Calendar className="w-4 h-4 ml-2" />
+                الاستشارات
+              </Button>
+            </Link>
             <Link to="/profile">
               <Button variant="outline">الملف الشخصي</Button>
             </Link>
