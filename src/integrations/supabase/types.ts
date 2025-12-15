@@ -269,6 +269,7 @@ export type Database = {
           rating: number | null
           specialty: string
           title: string
+          user_id: string | null
           years_experience: number | null
         }
         Insert: {
@@ -281,6 +282,7 @@ export type Database = {
           rating?: number | null
           specialty: string
           title: string
+          user_id?: string | null
           years_experience?: number | null
         }
         Update: {
@@ -293,6 +295,7 @@ export type Database = {
           rating?: number | null
           specialty?: string
           title?: string
+          user_id?: string | null
           years_experience?: number | null
         }
         Relationships: []
