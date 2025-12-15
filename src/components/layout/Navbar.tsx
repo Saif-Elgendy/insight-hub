@@ -5,6 +5,7 @@ import { Menu, X, Brain, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 
 const navLinks = [
   { label: 'الرئيسية', href: '#hero' },
@@ -59,6 +60,7 @@ export const Navbar = () => {
               <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             ) : user ? (
               <>
+                <NotificationsDropdown />
                 {isDoctor && (
                   <Button variant="ghost" asChild>
                     <Link to="/doctor-dashboard" className="gap-2">
