@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import CourseDetails from "./pages/CourseDetails";
+import Courses from "./pages/Courses";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorConsultations from "./pages/DoctorConsultations";
 import NotFound from "./pages/NotFound";
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/courses" element={<Courses />} />
             <Route path="/course/:id" element={<CourseDetails />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor-consultations" element={<DoctorConsultations />} />
