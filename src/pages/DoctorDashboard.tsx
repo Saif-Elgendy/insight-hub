@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Brain, Plus, Edit, Trash2, BookOpen, Video, 
-  Users, Calendar, ArrowRight, Loader2, Upload
+  Users, Calendar, ArrowRight, Loader2, Upload, Image, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +73,9 @@ const DoctorDashboard = () => {
     image_url: '',
     is_featured: false,
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Lesson form
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
@@ -142,6 +145,49 @@ const DoctorDashboard = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setCourseForm({ ...courseForm, image_url: '' });
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `courses/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('course-images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('course-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
   const handleSaveCourse = async () => {
     if (!courseForm.title.trim()) {
       toast.error('عنوان الكورس مطلوب');
@@ -150,6 +196,15 @@ const DoctorDashboard = () => {
 
     setSaving(true);
     try {
+      let imageUrl = courseForm.image_url;
+
+      // Upload new image if selected
+      if (imageFile) {
+        setUploadingImage(true);
+        imageUrl = await uploadImage(imageFile) || '';
+        setUploadingImage(false);
+      }
+
       if (editingCourse) {
         const { error } = await supabase
           .from('courses')
@@ -158,7 +213,7 @@ const DoctorDashboard = () => {
             description: courseForm.description || null,
             duration: courseForm.duration || null,
             category: courseForm.category || null,
-            image_url: courseForm.image_url || null,
+            image_url: imageUrl || null,
             is_featured: courseForm.is_featured,
           })
           .eq('id', editingCourse.id);
@@ -173,7 +228,7 @@ const DoctorDashboard = () => {
             description: courseForm.description || null,
             duration: courseForm.duration || null,
             category: courseForm.category || null,
-            image_url: courseForm.image_url || null,
+            image_url: imageUrl || null,
             is_featured: courseForm.is_featured,
           });
 
@@ -189,6 +244,7 @@ const DoctorDashboard = () => {
       toast.error('حدث خطأ أثناء حفظ الكورس');
     } finally {
       setSaving(false);
+      setUploadingImage(false);
     }
   };
 
@@ -307,6 +363,8 @@ const DoctorDashboard = () => {
       image_url: '',
       is_featured: false,
     });
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const resetLessonForm = () => {
@@ -330,6 +388,8 @@ const DoctorDashboard = () => {
       image_url: course.image_url || '',
       is_featured: course.is_featured || false,
     });
+    setImageFile(null);
+    setImagePreview(course.image_url || null);
     setCourseDialogOpen(true);
   };
 
@@ -450,13 +510,39 @@ const DoctorDashboard = () => {
                         </div>
                       </div>
                       <div>
-                        <Label>رابط الصورة</Label>
-                        <Input
-                          value={courseForm.image_url}
-                          onChange={(e) => setCourseForm({ ...courseForm, image_url: e.target.value })}
-                          placeholder="https://..."
-                          dir="ltr"
-                        />
+                        <Label>صورة الكورس</Label>
+                        {imagePreview ? (
+                          <div className="relative mt-2">
+                            <img
+                              src={imagePreview}
+                              alt="معاينة الصورة"
+                              className="w-full h-40 object-cover rounded-lg border border-border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 left-2 w-8 h-8"
+                              onClick={removeImage}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors mt-2">
+                            <div className="flex flex-col items-center justify-center py-4">
+                              <Image className="w-8 h-8 text-muted-foreground mb-2" />
+                              <p className="text-sm text-muted-foreground">اضغط لرفع صورة</p>
+                              <p className="text-xs text-muted-foreground mt-1">PNG, JPG حتى 5MB</p>
+                            </div>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={handleImageChange}
+                            />
+                          </label>
+                        )}
                       </div>
                       <div className="flex items-center justify-between">
                         <Label>كورس مميز</Label>
@@ -469,12 +555,12 @@ const DoctorDashboard = () => {
                         className="w-full"
                         variant="hero"
                         onClick={handleSaveCourse}
-                        disabled={saving}
+                        disabled={saving || uploadingImage}
                       >
-                        {saving ? (
+                        {saving || uploadingImage ? (
                           <Loader2 className="w-4 h-4 animate-spin ml-2" />
                         ) : null}
-                        {editingCourse ? 'تحديث' : 'إنشاء'}
+                        {uploadingImage ? 'جاري رفع الصورة...' : editingCourse ? 'تحديث' : 'إنشاء'}
                       </Button>
                     </div>
                   </DialogContent>
