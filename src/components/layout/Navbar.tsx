@@ -8,11 +8,11 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 
 const navLinks = [
-  { label: 'الرئيسية', href: '#hero' },
-  { label: 'الكورسات', href: '#courses' },
-  { label: 'الجلسات المباشرة', href: '#live-sessions' },
-  { label: 'الاستشارات', href: '#consultations' },
-  { label: 'الشهادات', href: '#certificates' },
+  { label: 'الرئيسية', href: '/', isRoute: true },
+  { label: 'الكورسات', href: '/courses', isRoute: true },
+  { label: 'الجلسات المباشرة', href: '#live-sessions', isRoute: false },
+  { label: 'الاستشارات', href: '#consultations', isRoute: false },
+  { label: 'الشهادات', href: '#certificates', isRoute: false },
 ];
 
 export const Navbar = () => {
@@ -44,13 +44,23 @@ export const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-muted-foreground hover:text-primary transition-colors duration-300 font-medium"
-              >
-                {link.label}
-              </a>
+              link.isRoute ? (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="text-muted-foreground hover:text-primary transition-colors duration-300 font-medium"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-muted-foreground hover:text-primary transition-colors duration-300 font-medium"
+                >
+                  {link.label}
+                </a>
+              )
             ))}
           </div>
 
@@ -113,14 +123,25 @@ export const Navbar = () => {
           >
             <div className="container mx-auto px-4 py-6 space-y-4">
               {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="block py-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {link.label}
-                </a>
+                link.isRoute ? (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="block py-2 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="block py-2 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                )
               ))}
               <div className="flex flex-col gap-3 pt-4 border-t border-border">
                 {user ? (
