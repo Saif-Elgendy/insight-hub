@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Brain, Calendar, Clock, User, Video, Phone, MessageSquare,
-  Check, X, Loader2, ArrowLeft, Filter
+  Check, X, Loader2, ArrowLeft, Filter, FileText, Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +73,8 @@ const DoctorConsultations = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [doctorNotes, setDoctorNotes] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -179,7 +181,36 @@ const DoctorConsultations = () => {
 
   const openDetails = (consultation: Consultation) => {
     setSelectedConsultation(consultation);
+    setDoctorNotes(consultation.notes || '');
     setDetailsOpen(true);
+  };
+
+  const saveNotes = async () => {
+    if (!selectedConsultation) return;
+    
+    setSavingNotes(true);
+    try {
+      const { error } = await supabase
+        .from('consultations')
+        .update({ notes: doctorNotes.trim() || null })
+        .eq('id', selectedConsultation.id);
+
+      if (error) throw error;
+      
+      toast.success('تم حفظ الملاحظات');
+      setConsultations(prev => 
+        prev.map(c => c.id === selectedConsultation.id 
+          ? { ...c, notes: doctorNotes.trim() || null } 
+          : c
+        )
+      );
+      setSelectedConsultation(prev => prev ? { ...prev, notes: doctorNotes.trim() || null } : null);
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast.error('حدث خطأ أثناء حفظ الملاحظات');
+    } finally {
+      setSavingNotes(false);
+    }
   };
 
   if (authLoading || roleLoading || loading) {
@@ -301,6 +332,12 @@ const DoctorConsultations = () => {
                       </>
                     )}
                   </div>
+                  {consultation.notes && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                      <FileText className="w-3 h-3" />
+                      يوجد ملاحظات
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-4 border-t border-border">
@@ -416,14 +453,34 @@ const DoctorConsultations = () => {
                 <span className="text-muted-foreground">السعر</span>
                 <span className="font-medium">{selectedConsultation.price} ر.س</span>
               </div>
-              {selectedConsultation.notes && (
-                <div>
-                  <span className="text-muted-foreground block mb-2">ملاحظات المريض</span>
-                  <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                    {selectedConsultation.notes}
-                  </div>
+              
+              {/* Doctor Notes Section */}
+              <div className="pt-4 border-t">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">ملاحظات الطبيب</span>
                 </div>
-              )}
+                <Textarea
+                  value={doctorNotes}
+                  onChange={(e) => setDoctorNotes(e.target.value)}
+                  placeholder="أضف ملاحظاتك هنا..."
+                  className="min-h-[100px] mb-3"
+                  maxLength={1000}
+                />
+                <Button
+                  onClick={saveNotes}
+                  disabled={savingNotes}
+                  className="w-full"
+                >
+                  {savingNotes ? (
+                    <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                  ) : (
+                    <Save className="w-4 h-4 ml-2" />
+                  )}
+                  حفظ الملاحظات
+                </Button>
+              </div>
+
               <div className="text-xs text-muted-foreground pt-2 border-t">
                 تم الحجز في {format(new Date(selectedConsultation.created_at), 'd MMMM yyyy - HH:mm', { locale: ar })}
               </div>
