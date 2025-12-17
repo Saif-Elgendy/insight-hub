@@ -3,10 +3,12 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Brain, Calendar, Clock, User, Video, Phone, MessageSquare,
-  Check, X, Loader2, ArrowLeft, Filter, FileText, Save
+  Check, X, Loader2, ArrowLeft, Filter, FileText, Save, Plus, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,8 +25,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import type { Database } from '@/integrations/supabase/types';
@@ -49,6 +53,15 @@ interface Consultation {
   slot_time?: string | null;
 }
 
+interface TimeSlot {
+  id: string;
+  specialist_id: string;
+  slot_date: string;
+  slot_time: string;
+  is_booked: boolean | null;
+  created_at: string;
+}
+
 const statusConfig = {
   pending: { label: 'قيد الانتظار', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
   confirmed: { label: 'مؤكد', color: 'bg-green-500/10 text-green-600 border-green-500/20' },
@@ -68,6 +81,8 @@ const DoctorConsultations = () => {
   const navigate = useNavigate();
 
   const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [specialistId, setSpecialistId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -75,6 +90,11 @@ const DoctorConsultations = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [doctorNotes, setDoctorNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  
+  // Time slots form
+  const [slotDialogOpen, setSlotDialogOpen] = useState(false);
+  const [slotForm, setSlotForm] = useState({ date: '', time: '' });
+  const [savingSlot, setSavingSlot] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -112,6 +132,8 @@ const DoctorConsultations = () => {
         return;
       }
 
+      setSpecialistId(specialist.id);
+
       // Get consultations with separate queries for related data
       const { data: consultationsData, error } = await supabase
         .from('consultations')
@@ -147,11 +169,81 @@ const DoctorConsultations = () => {
       }));
       
       setConsultations(enrichedData);
+
+      // Fetch time slots
+      await fetchTimeSlots(specialist.id);
     } catch (error) {
       console.error('Error fetching consultations:', error);
       toast.error('حدث خطأ أثناء تحميل الاستشارات');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTimeSlots = async (specId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('time_slots')
+        .select('*')
+        .eq('specialist_id', specId)
+        .order('slot_date', { ascending: true })
+        .order('slot_time', { ascending: true });
+
+      if (error) throw error;
+      setTimeSlots(data || []);
+    } catch (error) {
+      console.error('Error fetching time slots:', error);
+    }
+  };
+
+  const handleAddTimeSlot = async () => {
+    if (!slotForm.date || !slotForm.time || !specialistId) {
+      toast.error('الرجاء إدخال التاريخ والوقت');
+      return;
+    }
+
+    setSavingSlot(true);
+    try {
+      const { error } = await supabase
+        .from('time_slots')
+        .insert({
+          specialist_id: specialistId,
+          slot_date: slotForm.date,
+          slot_time: slotForm.time,
+        });
+
+      if (error) throw error;
+      
+      toast.success('تم إضافة الموعد بنجاح');
+      setSlotDialogOpen(false);
+      setSlotForm({ date: '', time: '' });
+      await fetchTimeSlots(specialistId);
+    } catch (error) {
+      console.error('Error adding time slot:', error);
+      toast.error('حدث خطأ أثناء إضافة الموعد');
+    } finally {
+      setSavingSlot(false);
+    }
+  };
+
+  const handleDeleteTimeSlot = async (slotId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الموعد؟')) return;
+
+    try {
+      const { error } = await supabase
+        .from('time_slots')
+        .delete()
+        .eq('id', slotId);
+
+      if (error) throw error;
+      
+      toast.success('تم حذف الموعد بنجاح');
+      if (specialistId) {
+        await fetchTimeSlots(specialistId);
+      }
+    } catch (error) {
+      console.error('Error deleting time slot:', error);
+      toast.error('حدث خطأ أثناء حذف الموعد');
     }
   };
 
@@ -248,155 +340,294 @@ const DoctorConsultations = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Filter */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">الاستشارات ({filteredConsultations.length})</h2>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="فلتر الحالة" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع الحالات</SelectItem>
-                <SelectItem value="pending">قيد الانتظار</SelectItem>
-                <SelectItem value="confirmed">مؤكد</SelectItem>
-                <SelectItem value="completed">مكتمل</SelectItem>
-                <SelectItem value="cancelled">ملغي</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <Tabs defaultValue="consultations" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="consultations" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              الاستشارات
+            </TabsTrigger>
+            <TabsTrigger value="timeslots" className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              المواعيد المتاحة
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Consultations Grid */}
-        {filteredConsultations.length === 0 ? (
-          <div className="text-center py-16">
-            <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-medium mb-2">لا توجد استشارات</h3>
-            <p className="text-muted-foreground">
-              {statusFilter === 'all' 
-                ? 'لم يتم حجز أي استشارات بعد'
-                : 'لا توجد استشارات بهذه الحالة'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredConsultations.map((consultation, index) => {
-              const TypeIcon = typeConfig[consultation.consultation_type].icon;
-              return (
-                <motion.div
-                  key={consultation.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center ${typeConfig[consultation.consultation_type].color}`}>
-                        <TypeIcon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium">
-                          استشارة {typeConfig[consultation.consultation_type].label}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {consultation.price} ر.س
-                        </p>
-                      </div>
-                    </div>
-                    <Badge className={statusConfig[consultation.status].color}>
-                      {statusConfig[consultation.status].label}
-                    </Badge>
-                  </div>
+          {/* Consultations Tab */}
+          <TabsContent value="consultations" className="space-y-6">
+            {/* Filter */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">الاستشارات ({filteredConsultations.length})</h2>
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="فلتر الحالة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع الحالات</SelectItem>
+                    <SelectItem value="pending">قيد الانتظار</SelectItem>
+                    <SelectItem value="confirmed">مؤكد</SelectItem>
+                    <SelectItem value="completed">مكتمل</SelectItem>
+                    <SelectItem value="cancelled">ملغي</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                  {/* Patient Info */}
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span>{consultation.patient_name || 'مستخدم'}</span>
-                    </div>
-                    {consultation.slot_date && (
-                      <>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span>
-                            {format(new Date(consultation.slot_date), 'EEEE, d MMMM yyyy', { locale: ar })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span>{consultation.slot_time}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {consultation.notes && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                      <FileText className="w-3 h-3" />
-                      يوجد ملاحظات
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t border-border">
-                    {consultation.status === 'pending' && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="hero"
-                          className="flex-1"
-                          onClick={() => updateStatus(consultation.id, 'confirmed')}
-                          disabled={updating === consultation.id}
-                        >
-                          {updating === consultation.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Check className="w-4 h-4 ml-1" />
-                              تأكيد
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => updateStatus(consultation.id, 'cancelled')}
-                          disabled={updating === consultation.id}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                    {consultation.status === 'confirmed' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => updateStatus(consultation.id, 'completed')}
-                        disabled={updating === consultation.id}
-                      >
-                        {updating === consultation.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          'إكمال الاستشارة'
-                        )}
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => openDetails(consultation)}
+            {/* Consultations Grid */}
+            {filteredConsultations.length === 0 ? (
+              <div className="text-center py-16">
+                <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-medium mb-2">لا توجد استشارات</h3>
+                <p className="text-muted-foreground">
+                  {statusFilter === 'all' 
+                    ? 'لم يتم حجز أي استشارات بعد'
+                    : 'لا توجد استشارات بهذه الحالة'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredConsultations.map((consultation, index) => {
+                  const TypeIcon = typeConfig[consultation.consultation_type].icon;
+                  return (
+                    <motion.div
+                      key={consultation.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
                     >
-                      التفاصيل
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center ${typeConfig[consultation.consultation_type].color}`}>
+                            <TypeIcon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">
+                              استشارة {typeConfig[consultation.consultation_type].label}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {consultation.price} ر.س
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className={statusConfig[consultation.status].color}>
+                          {statusConfig[consultation.status].label}
+                        </Badge>
+                      </div>
+
+                      {/* Patient Info */}
+                      <div className="space-y-3 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span>{consultation.patient_name || 'مستخدم'}</span>
+                        </div>
+                        {consultation.slot_date && (
+                          <>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar className="w-4 h-4 text-muted-foreground" />
+                              <span>
+                                {format(new Date(consultation.slot_date), 'EEEE, d MMMM yyyy', { locale: ar })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Clock className="w-4 h-4 text-muted-foreground" />
+                              <span>{consultation.slot_time}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {consultation.notes && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                          <FileText className="w-3 h-3" />
+                          يوجد ملاحظات
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex gap-2 pt-4 border-t border-border">
+                        {consultation.status === 'pending' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="hero"
+                              className="flex-1"
+                              onClick={() => updateStatus(consultation.id, 'confirmed')}
+                              disabled={updating === consultation.id}
+                            >
+                              {updating === consultation.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Check className="w-4 h-4 ml-1" />
+                                  تأكيد
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => updateStatus(consultation.id, 'cancelled')}
+                              disabled={updating === consultation.id}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                        {consultation.status === 'confirmed' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => updateStatus(consultation.id, 'completed')}
+                            disabled={updating === consultation.id}
+                          >
+                            {updating === consultation.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              'إكمال الاستشارة'
+                            )}
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openDetails(consultation)}
+                        >
+                          التفاصيل
+                        </Button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Time Slots Tab */}
+          <TabsContent value="timeslots" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">المواعيد المتاحة ({timeSlots.filter(s => !s.is_booked).length})</h2>
+              <Dialog open={slotDialogOpen} onOpenChange={setSlotDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="hero">
+                    <Plus className="w-4 h-4 ml-2" />
+                    إضافة موعد
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>إضافة موعد جديد</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <Label>التاريخ *</Label>
+                      <Input
+                        type="date"
+                        value={slotForm.date}
+                        onChange={(e) => setSlotForm({ ...slotForm, date: e.target.value })}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label>الوقت *</Label>
+                      <Input
+                        type="time"
+                        value={slotForm.time}
+                        onChange={(e) => setSlotForm({ ...slotForm, time: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleAddTimeSlot}
+                      disabled={savingSlot}
+                      className="w-full"
+                      variant="hero"
+                    >
+                      {savingSlot ? (
+                        <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                      ) : (
+                        <Plus className="w-4 h-4 ml-2" />
+                      )}
+                      إضافة الموعد
                     </Button>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {!specialistId ? (
+              <div className="text-center py-16">
+                <User className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-medium mb-2">لا يوجد حساب مختص</h3>
+                <p className="text-muted-foreground">
+                  يجب ربط حسابك بمختص لإدارة المواعيد
+                </p>
+              </div>
+            ) : timeSlots.length === 0 ? (
+              <div className="text-center py-16">
+                <Clock className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-medium mb-2">لا توجد مواعيد</h3>
+                <p className="text-muted-foreground mb-4">
+                  قم بإضافة مواعيد متاحة للمرضى لحجزها
+                </p>
+                <Button variant="outline" onClick={() => setSlotDialogOpen(true)}>
+                  <Plus className="w-4 h-4 ml-2" />
+                  أضف أول موعد
+                </Button>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {timeSlots.map((slot, index) => (
+                  <motion.div
+                    key={slot.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.03 }}
+                    className={`p-4 rounded-xl border ${
+                      slot.is_booked 
+                        ? 'border-red-200 bg-red-50/50 dark:bg-red-950/20' 
+                        : 'border-green-200 bg-green-50/50 dark:bg-green-950/20'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            {format(new Date(slot.slot_date), 'EEEE, d MMMM', { locale: ar })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <span>{slot.slot_time}</span>
+                        </div>
+                        <Badge className={slot.is_booked 
+                          ? 'bg-red-100 text-red-700 border-red-200' 
+                          : 'bg-green-100 text-green-700 border-green-200'
+                        }>
+                          {slot.is_booked ? 'محجوز' : 'متاح'}
+                        </Badge>
+                      </div>
+                      {!slot.is_booked && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteTimeSlot(slot.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Details Dialog */}
