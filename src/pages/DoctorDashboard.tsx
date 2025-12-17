@@ -87,6 +87,9 @@ const DoctorDashboard = () => {
     video_url: '',
     is_free: false,
   });
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -188,6 +191,45 @@ const DoctorDashboard = () => {
     return data.publicUrl;
   };
 
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 500 * 1024 * 1024) {
+        toast.error('حجم الفيديو يجب أن يكون أقل من 500 ميجابايت');
+        return;
+      }
+      setVideoFile(file);
+      setVideoPreview(file.name);
+    }
+  };
+
+  const removeVideo = () => {
+    setVideoFile(null);
+    setVideoPreview(null);
+    setLessonForm({ ...lessonForm, video_url: '' });
+  };
+
+  const uploadVideo = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `lessons/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('lesson-videos')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('lesson-videos')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
   const handleSaveCourse = async () => {
     if (!courseForm.title.trim()) {
       toast.error('عنوان الكورس مطلوب');
@@ -278,6 +320,15 @@ const DoctorDashboard = () => {
 
     setSaving(true);
     try {
+      let videoUrl = lessonForm.video_url;
+
+      // Upload new video if selected
+      if (videoFile) {
+        setUploadingVideo(true);
+        videoUrl = await uploadVideo(videoFile) || '';
+        setUploadingVideo(false);
+      }
+
       if (editingLesson) {
         const { error } = await supabase
           .from('lessons')
@@ -285,7 +336,7 @@ const DoctorDashboard = () => {
             title: lessonForm.title,
             description: lessonForm.description || null,
             duration: lessonForm.duration || null,
-            video_url: lessonForm.video_url || null,
+            video_url: videoUrl || null,
             is_free: lessonForm.is_free,
           })
           .eq('id', editingLesson.id);
@@ -299,7 +350,7 @@ const DoctorDashboard = () => {
             title: lessonForm.title,
             description: lessonForm.description || null,
             duration: lessonForm.duration || null,
-            video_url: lessonForm.video_url || null,
+            video_url: videoUrl || null,
             is_free: lessonForm.is_free,
             course_id: selectedCourse.id,
             order_index: lessons.length,
@@ -324,6 +375,7 @@ const DoctorDashboard = () => {
       toast.error('حدث خطأ أثناء حفظ الدرس');
     } finally {
       setSaving(false);
+      setUploadingVideo(false);
     }
   };
 
@@ -376,6 +428,8 @@ const DoctorDashboard = () => {
       video_url: '',
       is_free: false,
     });
+    setVideoFile(null);
+    setVideoPreview(null);
   };
 
   const openEditCourse = (course: Course) => {
@@ -402,6 +456,8 @@ const DoctorDashboard = () => {
       video_url: lesson.video_url || '',
       is_free: lesson.is_free || false,
     });
+    setVideoFile(null);
+    setVideoPreview(lesson.video_url ? lesson.video_url.split('/').pop() || 'فيديو محفوظ' : null);
     setLessonDialogOpen(true);
   };
 
@@ -682,13 +738,41 @@ const DoctorDashboard = () => {
                             />
                           </div>
                           <div>
-                            <Label>رابط الفيديو</Label>
-                            <Input
-                              value={lessonForm.video_url}
-                              onChange={(e) => setLessonForm({ ...lessonForm, video_url: e.target.value })}
-                              placeholder="https://youtube.com/..."
-                              dir="ltr"
-                            />
+                            <Label>فيديو الدرس</Label>
+                            {videoPreview ? (
+                              <div className="flex items-center gap-3 mt-2 p-3 bg-muted/50 rounded-lg border border-border">
+                                <Video className="w-8 h-8 text-primary" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{videoPreview}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {videoFile ? `${(videoFile.size / (1024 * 1024)).toFixed(2)} MB` : 'فيديو محفوظ'}
+                                  </p>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  className="w-8 h-8 shrink-0"
+                                  onClick={removeVideo}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors mt-2">
+                                <div className="flex flex-col items-center justify-center py-4">
+                                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                                  <p className="text-sm text-muted-foreground">اضغط لرفع فيديو</p>
+                                  <p className="text-xs text-muted-foreground mt-1">MP4, MOV حتى 500MB</p>
+                                </div>
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept="video/*"
+                                  onChange={handleVideoChange}
+                                />
+                              </label>
+                            )}
                           </div>
                           <div className="flex items-center justify-between">
                             <Label>درس مجاني</Label>
@@ -701,12 +785,12 @@ const DoctorDashboard = () => {
                             className="w-full"
                             variant="hero"
                             onClick={handleSaveLesson}
-                            disabled={saving}
+                            disabled={saving || uploadingVideo}
                           >
-                            {saving ? (
+                            {saving || uploadingVideo ? (
                               <Loader2 className="w-4 h-4 animate-spin ml-2" />
                             ) : null}
-                            {editingLesson ? 'تحديث' : 'إضافة'}
+                            {uploadingVideo ? 'جاري رفع الفيديو...' : editingLesson ? 'تحديث' : 'إضافة'}
                           </Button>
                         </div>
                       </DialogContent>
