@@ -88,6 +88,16 @@ const getConsultationTypeName = (type: ConsultationType) => {
   }
 };
 
+type FilterStatus = 'all' | ConsultationStatus;
+
+const filterOptions: { value: FilterStatus; label: string }[] = [
+  { value: 'all', label: 'الكل' },
+  { value: 'pending', label: 'قيد الانتظار' },
+  { value: 'confirmed', label: 'مؤكدة' },
+  { value: 'completed', label: 'مكتملة' },
+  { value: 'cancelled', label: 'ملغية' },
+];
+
 const StudentConsultations = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -95,6 +105,11 @@ const StudentConsultations = () => {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+
+  const filteredConsultations = consultations.filter(
+    (c) => filterStatus === 'all' || c.status === filterStatus
+  );
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -218,8 +233,40 @@ const StudentConsultations = () => {
             <p className="text-muted-foreground mt-2">عرض جميع استشاراتك وحالاتها</p>
           </motion.div>
 
+          {/* Filter Tabs */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-6 flex flex-wrap gap-2"
+          >
+            {filterOptions.map((option) => {
+              const count = option.value === 'all' 
+                ? consultations.length 
+                : consultations.filter(c => c.status === option.value).length;
+              
+              return (
+                <Button
+                  key={option.value}
+                  variant={filterStatus === option.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilterStatus(option.value)}
+                  className="gap-2"
+                >
+                  {option.label}
+                  <Badge 
+                    variant={filterStatus === option.value ? 'secondary' : 'outline'} 
+                    className="text-xs px-1.5 py-0"
+                  >
+                    {count}
+                  </Badge>
+                </Button>
+              );
+            })}
+          </motion.div>
+
           {/* Consultations List */}
-          {consultations.length === 0 ? (
+          {filteredConsultations.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -228,20 +275,30 @@ const StudentConsultations = () => {
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
                 <Calendar className="w-12 h-12 text-muted-foreground" />
               </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">لا توجد استشارات</h2>
-              <p className="text-muted-foreground mb-6">لم تقم بحجز أي استشارة بعد</p>
-              <Button variant="default" asChild>
-                <Link to="/#consultations">احجز استشارة الآن</Link>
-              </Button>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                {filterStatus === 'all' ? 'لا توجد استشارات' : 'لا توجد استشارات بهذه الحالة'}
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                {filterStatus === 'all' ? 'لم تقم بحجز أي استشارة بعد' : 'جرب تغيير الفلتر لعرض استشارات أخرى'}
+              </p>
+              {filterStatus === 'all' ? (
+                <Button variant="default" asChild>
+                  <Link to="/#consultations">احجز استشارة الآن</Link>
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => setFilterStatus('all')}>
+                  عرض جميع الاستشارات
+                </Button>
+              )}
             </motion.div>
           ) : (
             <div className="grid gap-4">
-              {consultations.map((consultation, index) => (
+              {filteredConsultations.map((consultation, index) => (
                 <motion.div
                   key={consultation.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.05 }}
                 >
                   <Card className="hover:shadow-elevated transition-shadow">
                     <CardContent className="p-6">
