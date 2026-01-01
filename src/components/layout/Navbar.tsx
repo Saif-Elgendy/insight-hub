@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Brain, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Brain, User, LogOut, LayoutDashboard, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -71,11 +71,18 @@ export const Navbar = () => {
             ) : user ? (
               <>
                 <NotificationsDropdown />
-                {isDoctor && (
+                {isDoctor ? (
                   <Button variant="ghost" asChild>
                     <Link to="/doctor-dashboard" className="gap-2">
                       <LayoutDashboard className="w-4 h-4" />
                       لوحة التحكم
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="ghost" asChild>
+                    <Link to="/my-consultations" className="gap-2">
+                      <Calendar className="w-4 h-4" />
+                      استشاراتي
                     </Link>
                   </Button>
                 )}
@@ -146,11 +153,18 @@ export const Navbar = () => {
               <div className="flex flex-col gap-3 pt-4 border-t border-border">
                 {user ? (
                   <>
-                    {isDoctor && (
+                    {isDoctor ? (
                       <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                         <Link to="/doctor-dashboard" className="gap-2">
                           <LayoutDashboard className="w-4 h-4" />
                           لوحة التحكم
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
+                        <Link to="/my-consultations" className="gap-2">
+                          <Calendar className="w-4 h-4" />
+                          استشاراتي
                         </Link>
                       </Button>
                     )}
