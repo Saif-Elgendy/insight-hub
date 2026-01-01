@@ -3,12 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText } from 'lucide-react';
+import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +35,7 @@ interface Consultation {
   price: number;
   notes: string | null;
   created_at: string;
+  time_slot_id: string;
   time_slot: {
     slot_date: string;
     slot_time: string;
@@ -82,6 +94,7 @@ const StudentConsultations = () => {
   const { toast } = useToast();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -106,6 +119,7 @@ const StudentConsultations = () => {
           price,
           notes,
           created_at,
+          time_slot_id,
           time_slot:time_slots!consultations_time_slot_id_fkey(slot_date, slot_time),
           specialist:specialists!consultations_specialist_id_fkey(full_name, specialty, image_url)
         `)
@@ -130,6 +144,46 @@ const StudentConsultations = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelConsultation = async (consultationId: string, timeSlotId: string) => {
+    setCancellingId(consultationId);
+    try {
+      // Update consultation status to cancelled
+      const { error: consultationError } = await supabase
+        .from('consultations')
+        .update({ status: 'cancelled' })
+        .eq('id', consultationId);
+
+      if (consultationError) throw consultationError;
+
+      // Free up the time slot
+      const { error: slotError } = await supabase
+        .from('time_slots')
+        .update({ is_booked: false })
+        .eq('id', timeSlotId);
+
+      if (slotError) {
+        console.error('Error freeing time slot:', slotError);
+      }
+
+      toast({
+        title: 'تم إلغاء الاستشارة',
+        description: 'تم إلغاء الاستشارة بنجاح',
+      });
+
+      // Refresh consultations
+      fetchConsultations();
+    } catch (error) {
+      console.error('Error cancelling consultation:', error);
+      toast({
+        title: 'خطأ',
+        description: 'حدث خطأ أثناء إلغاء الاستشارة',
+        variant: 'destructive',
+      });
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -265,12 +319,50 @@ const StudentConsultations = () => {
                           </div>
                         </div>
 
-                        {/* Status */}
+                        {/* Status & Actions */}
                         <div className="flex flex-col items-start md:items-end gap-2">
                           {getStatusBadge(consultation.status)}
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(consultation.created_at), 'dd/MM/yyyy', { locale: ar })}
                           </p>
+                          
+                          {/* Cancel Button - Only for pending consultations */}
+                          {consultation.status === 'pending' && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  className="mt-2"
+                                  disabled={cancellingId === consultation.id}
+                                >
+                                  {cancellingId === consultation.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin ml-1" />
+                                  ) : (
+                                    <XCircle className="w-4 h-4 ml-1" />
+                                  )}
+                                  إلغاء الاستشارة
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent dir="rtl">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>تأكيد إلغاء الاستشارة</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    هل أنت متأكد من إلغاء هذه الاستشارة؟ لا يمكن التراجع عن هذا الإجراء.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="flex-row-reverse gap-2">
+                                  <AlertDialogCancel>تراجع</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleCancelConsultation(consultation.id, consultation.time_slot_id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    نعم، إلغاء الاستشارة
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                         </div>
                       </div>
 
