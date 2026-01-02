@@ -18,7 +18,7 @@ const navLinks = [
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
-  const { isDoctor } = useUserRole();
+  const { canManageCourses } = useUserRole();
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,7 +71,7 @@ export const Navbar = () => {
             ) : user ? (
               <>
                 <NotificationsDropdown />
-                {isDoctor ? (
+                {canManageCourses ? (
                   <Button variant="ghost" asChild>
                     <Link to="/doctor-dashboard" className="gap-2">
                       <LayoutDashboard className="w-4 h-4" />
@@ -153,7 +153,7 @@ export const Navbar = () => {
               <div className="flex flex-col gap-3 pt-4 border-t border-border">
                 {user ? (
                   <>
-                    {isDoctor ? (
+                    {canManageCourses ? (
                       <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                         <Link to="/doctor-dashboard" className="gap-2">
                           <LayoutDashboard className="w-4 h-4" />
