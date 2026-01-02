@@ -53,7 +53,7 @@ interface Lesson {
 
 const DoctorDashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isDoctor, loading: roleLoading } = useUserRole();
+  const { canManageCourses, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -98,17 +98,17 @@ const DoctorDashboard = () => {
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
-    if (!roleLoading && !isDoctor && user) {
+    if (!roleLoading && !canManageCourses && user) {
       toast.error('ليس لديك صلاحية الوصول لهذه الصفحة');
       navigate('/profile');
     }
-  }, [roleLoading, isDoctor, user, navigate]);
+  }, [roleLoading, canManageCourses, user, navigate]);
 
   useEffect(() => {
-    if (isDoctor) {
+    if (canManageCourses) {
       fetchCourses();
     }
-  }, [isDoctor]);
+  }, [canManageCourses]);
 
   useEffect(() => {
     if (selectedCourse) {

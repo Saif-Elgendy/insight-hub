@@ -77,7 +77,7 @@ const typeConfig = {
 
 const DoctorConsultations = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isDoctor, loading: roleLoading } = useUserRole();
+  const { canManageCourses, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -103,17 +103,17 @@ const DoctorConsultations = () => {
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
-    if (!roleLoading && !isDoctor && user) {
+    if (!roleLoading && !canManageCourses && user) {
       toast.error('ليس لديك صلاحية الوصول لهذه الصفحة');
       navigate('/profile');
     }
-  }, [roleLoading, isDoctor, user, navigate]);
+  }, [roleLoading, canManageCourses, user, navigate]);
 
   useEffect(() => {
-    if (isDoctor && user) {
+    if (canManageCourses && user) {
       fetchConsultations();
     }
-  }, [isDoctor, user]);
+  }, [canManageCourses, user]);
 
   const fetchConsultations = async () => {
     try {
