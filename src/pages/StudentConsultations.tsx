@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2 } from 'lucide-react';
+import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -98,6 +98,13 @@ const filterOptions: { value: FilterStatus; label: string }[] = [
   { value: 'cancelled', label: 'ملغية' },
 ];
 
+type SortOrder = 'newest' | 'oldest';
+
+const sortOptions: { value: SortOrder; label: string; icon: typeof ArrowUp }[] = [
+  { value: 'newest', label: 'الأحدث أولاً', icon: ArrowDown },
+  { value: 'oldest', label: 'الأقدم أولاً', icon: ArrowUp },
+];
+
 const StudentConsultations = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -106,10 +113,15 @@ const StudentConsultations = () => {
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
 
-  const filteredConsultations = consultations.filter(
-    (c) => filterStatus === 'all' || c.status === filterStatus
-  );
+  const filteredConsultations = consultations
+    .filter((c) => filterStatus === 'all' || c.status === filterStatus)
+    .sort((a, b) => {
+      const dateA = new Date(a.time_slot?.slot_date || a.created_at).getTime();
+      const dateB = new Date(b.time_slot?.slot_date || b.created_at).getTime();
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -238,31 +250,53 @@ const StudentConsultations = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="mb-6 flex flex-wrap gap-2"
+            className="mb-6 flex flex-wrap items-center justify-between gap-4"
           >
-            {filterOptions.map((option) => {
-              const count = option.value === 'all' 
-                ? consultations.length 
-                : consultations.filter(c => c.status === option.value).length;
-              
-              return (
-                <Button
-                  key={option.value}
-                  variant={filterStatus === option.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilterStatus(option.value)}
-                  className="gap-2"
-                >
-                  {option.label}
-                  <Badge 
-                    variant={filterStatus === option.value ? 'secondary' : 'outline'} 
-                    className="text-xs px-1.5 py-0"
+            <div className="flex flex-wrap gap-2">
+              {filterOptions.map((option) => {
+                const count = option.value === 'all' 
+                  ? consultations.length 
+                  : consultations.filter(c => c.status === option.value).length;
+                
+                return (
+                  <Button
+                    key={option.value}
+                    variant={filterStatus === option.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterStatus(option.value)}
+                    className="gap-2"
                   >
-                    {count}
-                  </Badge>
-                </Button>
-              );
-            })}
+                    {option.label}
+                    <Badge 
+                      variant={filterStatus === option.value ? 'secondary' : 'outline'} 
+                      className="text-xs px-1.5 py-0"
+                    >
+                      {count}
+                    </Badge>
+                  </Button>
+                );
+              })}
+            </div>
+            
+            {/* Sort Options */}
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+              {sortOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <Button
+                    key={option.value}
+                    variant={sortOrder === option.value ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSortOrder(option.value)}
+                    className="gap-1"
+                  >
+                    <Icon className="w-3 h-3" />
+                    {option.label}
+                  </Button>
+                );
+              })}
+            </div>
           </motion.div>
 
           {/* Consultations List */}
