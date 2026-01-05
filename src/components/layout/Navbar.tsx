@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Brain, User, LogOut, LayoutDashboard, Calendar } from 'lucide-react';
+import { Menu, X, Brain, User, LogOut, LayoutDashboard, Calendar, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -18,7 +18,7 @@ const navLinks = [
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
-  const { canManageCourses } = useUserRole();
+  const { isAdmin, canManageCourses } = useUserRole();
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,6 +71,14 @@ export const Navbar = () => {
             ) : user ? (
               <>
                 <NotificationsDropdown />
+                {isAdmin && (
+                  <Button variant="ghost" asChild>
+                    <Link to="/admin" className="gap-2">
+                      <Shield className="w-4 h-4" />
+                      إدارة النظام
+                    </Link>
+                  </Button>
+                )}
                 {canManageCourses ? (
                   <Button variant="ghost" asChild>
                     <Link to="/doctor-dashboard" className="gap-2">
@@ -153,6 +161,14 @@ export const Navbar = () => {
               <div className="flex flex-col gap-3 pt-4 border-t border-border">
                 {user ? (
                   <>
+                    {isAdmin && (
+                      <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
+                        <Link to="/admin" className="gap-2">
+                          <Shield className="w-4 h-4" />
+                          إدارة النظام
+                        </Link>
+                      </Button>
+                    )}
                     {canManageCourses ? (
                       <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                         <Link to="/doctor-dashboard" className="gap-2">
