@@ -148,6 +148,44 @@ export type Database = {
         }
         Relationships: []
       }
+      enrollments: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          paid_at: string | null
+          status: Database["public"]["Enums"]["enrollment_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["enrollment_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["enrollment_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           course_id: string
@@ -385,6 +423,7 @@ export type Database = {
       app_role: "admin" | "instructor" | "student"
       consultation_status: "pending" | "confirmed" | "completed" | "cancelled"
       consultation_type: "video" | "audio" | "chat"
+      enrollment_status: "pending" | "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -515,6 +554,7 @@ export const Constants = {
       app_role: ["admin", "instructor", "student"],
       consultation_status: ["pending", "confirmed", "completed", "cancelled"],
       consultation_type: ["video", "audio", "chat"],
+      enrollment_status: ["pending", "active", "completed", "cancelled"],
     },
   },
 } as const
