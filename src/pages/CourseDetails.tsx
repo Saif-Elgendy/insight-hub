@@ -11,14 +11,18 @@ import {
   CheckCircle, 
   ArrowRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CreditCard,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEnrollment } from '@/hooks/useEnrollment';
 import { toast } from 'sonner';
 
 interface Course {
@@ -59,6 +63,9 @@ const CourseDetails = () => {
   const [loading, setLoading] = useState(true);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+  const [enrolling, setEnrolling] = useState(false);
+
+  const { enrollment, isEnrolled, isPending, enroll, activateEnrollment, loading: enrollmentLoading } = useEnrollment(id);
 
   useEffect(() => {
     if (id) {
@@ -131,40 +138,45 @@ const CourseDetails = () => {
     }
   };
 
-  const handleStartCourse = async () => {
+  const handleEnrollCourse = async () => {
     if (!user) {
-      toast.error('يرجى تسجيل الدخول للبدء في الكورس');
+      toast.error('يرجى تسجيل الدخول للتسجيل في الكورس');
       navigate('/auth');
       return;
     }
 
-    // Check if progress already exists
-    const { data: existingProgress } = await supabase
-      .from('course_progress')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('course_id', id)
-      .maybeSingle();
+    setEnrolling(true);
+    const result = await enroll();
+    setEnrolling(false);
 
-    if (!existingProgress) {
-      // Create new progress record
-      const { error } = await supabase
-        .from('course_progress')
-        .insert({
-          user_id: user.id,
-          course_id: id!,
-          total_lessons: lessons.length,
-          completed_lessons: 0,
-        });
+    if (result.success) {
+      toast.success('تم التسجيل بنجاح! في انتظار تأكيد الدفع');
+    } else {
+      toast.error(result.error || 'حدث خطأ أثناء التسجيل');
+    }
+  };
 
-      if (error) {
-        console.error('Error creating progress:', error);
-        toast.error('حدث خطأ');
-        return;
+  const handleActivateEnrollment = async () => {
+    setEnrolling(true);
+    const result = await activateEnrollment();
+    setEnrolling(false);
+
+    if (result.success) {
+      toast.success('تم تفعيل التسجيل بنجاح!');
+      // Create progress record
+      if (user && id) {
+        await supabase
+          .from('course_progress')
+          .insert({
+            user_id: user.id,
+            course_id: id,
+            total_lessons: lessons.length,
+            completed_lessons: 0,
+          });
+        fetchProgress();
       }
-
-      toast.success('تم تسجيلك في الكورس!');
-      fetchProgress();
+    } else {
+      toast.error(result.error || 'حدث خطأ');
     }
   };
 
@@ -179,7 +191,7 @@ const CourseDetails = () => {
   };
 
   const canAccessLesson = (lesson: Lesson) => {
-    return lesson.is_free || (user && progress);
+    return lesson.is_free || (user && isEnrolled);
   };
 
   const selectLesson = (lesson: Lesson) => {
@@ -263,22 +275,58 @@ const CourseDetails = () => {
                   </div>
                 </div>
 
-                {!progress ? (
-                  <Button 
-                    size="lg" 
-                    variant="hero-outline"
-                    onClick={handleStartCourse}
-                    aria-label="ابدأ الكورس الآن"
-                  >
-                    ابدأ الكورس مجاناً
-                  </Button>
+                {!isEnrolled ? (
+                  <div className="flex flex-col gap-3">
+                    {isPending ? (
+                      <>
+                        <Badge variant="secondary" className="w-fit text-sm py-1.5 px-4">
+                          في انتظار تأكيد الدفع
+                        </Badge>
+                        <Button 
+                          size="lg" 
+                          variant="hero-outline"
+                          onClick={handleActivateEnrollment}
+                          disabled={enrolling}
+                          aria-label="تأكيد الدفع"
+                        >
+                          {enrolling ? (
+                            <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                          ) : (
+                            <CreditCard className="w-5 h-5 ml-2" />
+                          )}
+                          تأكيد الدفع وتفعيل الكورس
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        size="lg" 
+                        variant="hero-outline"
+                        onClick={handleEnrollCourse}
+                        disabled={enrolling || enrollmentLoading}
+                        aria-label="التسجيل في الكورس"
+                      >
+                        {enrolling ? (
+                          <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                        ) : null}
+                        التسجيل في الكورس
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-primary-foreground text-sm">
-                      <span>تقدمك في الكورس</span>
-                      <span>{Math.round(progressPercentage)}%</span>
-                    </div>
-                    <Progress value={progressPercentage} className="h-3 bg-primary-foreground/20" />
+                    <Badge variant="default" className="w-fit text-sm py-1.5 px-4 bg-green-600">
+                      <CheckCircle className="w-4 h-4 ml-2" />
+                      مسجل في الكورس
+                    </Badge>
+                    {progress && (
+                      <>
+                        <div className="flex items-center justify-between text-primary-foreground text-sm">
+                          <span>تقدمك في الكورس</span>
+                          <span>{Math.round(progressPercentage)}%</span>
+                        </div>
+                        <Progress value={progressPercentage} className="h-3 bg-primary-foreground/20" />
+                      </>
+                    )}
                   </div>
                 )}
               </motion.div>
@@ -443,7 +491,7 @@ const CourseDetails = () => {
                   </div>
 
                   {/* CTA Card */}
-                  {!progress && (
+                  {!isEnrolled && !isPending && (
                     <div className="bg-gradient-hero rounded-2xl p-6 text-primary-foreground">
                       <h3 className="font-bold text-xl mb-2">ابدأ رحلتك الآن</h3>
                       <p className="text-primary-foreground/80 text-sm mb-4">
@@ -452,10 +500,14 @@ const CourseDetails = () => {
                       <Button 
                         variant="hero-outline" 
                         className="w-full"
-                        onClick={handleStartCourse}
+                        onClick={handleEnrollCourse}
+                        disabled={enrolling || enrollmentLoading}
                         aria-label="التسجيل في الكورس"
                       >
-                        سجل الآن مجاناً
+                        {enrolling ? (
+                          <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                        ) : null}
+                        سجل الآن
                       </Button>
                     </div>
                   )}
