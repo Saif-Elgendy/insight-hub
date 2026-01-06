@@ -16,7 +16,7 @@ interface Enrollment {
 }
 
 export const useEnrollment = (courseId: string | undefined) => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +52,7 @@ export const useEnrollment = (courseId: string | undefined) => {
   }, [fetchEnrollment]);
 
   const enroll = async (): Promise<{ success: boolean; error?: string }> => {
-    if (!user) {
+    if (!user || !session) {
       return { success: false, error: 'يرجى تسجيل الدخول أولاً' };
     }
 
@@ -61,25 +61,20 @@ export const useEnrollment = (courseId: string | undefined) => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('enrollments')
-        .insert({
-          user_id: user.id,
-          course_id: courseId,
-          status: 'pending',
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.functions.invoke('process-enrollment', {
+        body: { action: 'enroll', course_id: courseId }
+      });
 
       if (error) {
-        if (error.code === '23505') {
-          return { success: false, error: 'أنت مسجل بالفعل في هذا الكورس' };
-        }
         console.error('Error enrolling:', error);
         return { success: false, error: 'حدث خطأ أثناء التسجيل' };
       }
 
-      setEnrollment(data);
+      if (data.error) {
+        return { success: false, error: data.error };
+      }
+
+      setEnrollment(data.enrollment);
       return { success: true };
     } catch (error) {
       console.error('Error enrolling:', error);
@@ -93,22 +88,20 @@ export const useEnrollment = (courseId: string | undefined) => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('enrollments')
-        .update({
-          status: 'active',
-          paid_at: new Date().toISOString(),
-        })
-        .eq('id', enrollment.id)
-        .select()
-        .single();
+      const { data, error } = await supabase.functions.invoke('process-enrollment', {
+        body: { action: 'activate', enrollment_id: enrollment.id }
+      });
 
       if (error) {
         console.error('Error activating enrollment:', error);
         return { success: false, error: 'حدث خطأ أثناء تفعيل التسجيل' };
       }
 
-      setEnrollment(data);
+      if (data.error) {
+        return { success: false, error: data.error };
+      }
+
+      setEnrollment(data.enrollment);
       return { success: true };
     } catch (error) {
       console.error('Error activating enrollment:', error);
@@ -122,19 +115,20 @@ export const useEnrollment = (courseId: string | undefined) => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('enrollments')
-        .update({ status: 'cancelled' })
-        .eq('id', enrollment.id)
-        .select()
-        .single();
+      const { data, error } = await supabase.functions.invoke('process-enrollment', {
+        body: { action: 'cancel', enrollment_id: enrollment.id }
+      });
 
       if (error) {
         console.error('Error cancelling enrollment:', error);
         return { success: false, error: 'حدث خطأ أثناء إلغاء التسجيل' };
       }
 
-      setEnrollment(data);
+      if (data.error) {
+        return { success: false, error: data.error };
+      }
+
+      setEnrollment(data.enrollment);
       return { success: true };
     } catch (error) {
       console.error('Error cancelling enrollment:', error);
