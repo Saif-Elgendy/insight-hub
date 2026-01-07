@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, UserCog, Search, ChevronDown } from 'lucide-react';
+import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -26,6 +27,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ErrorLogsTable } from '@/components/admin/ErrorLogsTable';
+import { ActivityLogsTable } from '@/components/admin/ActivityLogsTable';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -240,130 +243,158 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
-            {/* Users Table */}
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5 text-primary" />
-                    <CardTitle>إدارة المستخدمين</CardTitle>
-                  </div>
-                  <div className="relative max-w-sm">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="ابحث عن مستخدم..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                  </div>
-                ) : filteredUsers.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    لا يوجد مستخدمين
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-right">المستخدم</TableHead>
-                          <TableHead className="text-right">الصلاحية</TableHead>
-                          <TableHead className="text-right">تاريخ الانضمام</TableHead>
-                          <TableHead className="text-right">الإجراءات</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredUsers.map((u) => (
-                          <TableRow key={u.user_id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                                  {u.avatar_url ? (
-                                    <img
-                                      src={u.avatar_url}
-                                      alt={u.full_name || 'User'}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <UserCog className="w-5 h-5 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <span className="font-medium">
-                                  {u.full_name || 'مستخدم بدون اسم'}
-                                  {u.user_id === user?.id && (
-                                    <Badge variant="outline" className="mr-2 text-xs">
-                                      أنت
-                                    </Badge>
-                                  )}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={roleBadgeVariants[u.role]}>
-                                {roleLabels[u.role]}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {new Date(u.created_at).toLocaleDateString('ar-EG')}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={u.user_id === user?.id || updatingUserId === u.user_id}
-                                  >
-                                    {updatingUserId === u.user_id ? (
-                                      <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                                    ) : (
-                                      <>
-                                        تغيير الصلاحية
-                                        <ChevronDown className="w-4 h-4 mr-2" />
-                                      </>
-                                    )}
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => handleRoleChange(u.user_id, 'admin')}
-                                    disabled={u.role === 'admin'}
-                                  >
-                                    <Shield className="w-4 h-4 ml-2" />
-                                    مسؤول
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleRoleChange(u.user_id, 'instructor')}
-                                    disabled={u.role === 'instructor'}
-                                  >
-                                    <UserCog className="w-4 h-4 ml-2" />
-                                    مدرب
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleRoleChange(u.user_id, 'student')}
-                                    disabled={u.role === 'student'}
-                                  >
-                                    <Users className="w-4 h-4 ml-2" />
-                                    طالب
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Tabs for different sections */}
+            <Tabs defaultValue="users" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  المستخدمين
+                </TabsTrigger>
+                <TabsTrigger value="errors" className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  الأخطاء
+                </TabsTrigger>
+                <TabsTrigger value="activity" className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  النشاطات
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="users">
+                {/* Users Table */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <Users className="w-5 h-5 text-primary" />
+                        <CardTitle>إدارة المستخدمين</CardTitle>
+                      </div>
+                      <div className="relative max-w-sm">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          placeholder="ابحث عن مستخدم..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pr-10"
+                        />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                      </div>
+                    ) : filteredUsers.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        لا يوجد مستخدمين
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-right">المستخدم</TableHead>
+                              <TableHead className="text-right">الصلاحية</TableHead>
+                              <TableHead className="text-right">تاريخ الانضمام</TableHead>
+                              <TableHead className="text-right">الإجراءات</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredUsers.map((u) => (
+                              <TableRow key={u.user_id}>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                                      {u.avatar_url ? (
+                                        <img
+                                          src={u.avatar_url}
+                                          alt={u.full_name || 'User'}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <UserCog className="w-5 h-5 text-muted-foreground" />
+                                      )}
+                                    </div>
+                                    <span className="font-medium">
+                                      {u.full_name || 'مستخدم بدون اسم'}
+                                      {u.user_id === user?.id && (
+                                        <Badge variant="outline" className="mr-2 text-xs">
+                                          أنت
+                                        </Badge>
+                                      )}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={roleBadgeVariants[u.role]}>
+                                    {roleLabels[u.role]}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {new Date(u.created_at).toLocaleDateString('ar-EG')}
+                                </TableCell>
+                                <TableCell>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={u.user_id === user?.id || updatingUserId === u.user_id}
+                                      >
+                                        {updatingUserId === u.user_id ? (
+                                          <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                        ) : (
+                                          <>
+                                            تغيير الصلاحية
+                                            <ChevronDown className="w-4 h-4 mr-2" />
+                                          </>
+                                        )}
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={() => handleRoleChange(u.user_id, 'admin')}
+                                        disabled={u.role === 'admin'}
+                                      >
+                                        <Shield className="w-4 h-4 ml-2" />
+                                        مسؤول
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => handleRoleChange(u.user_id, 'instructor')}
+                                        disabled={u.role === 'instructor'}
+                                      >
+                                        <UserCog className="w-4 h-4 ml-2" />
+                                        مدرب
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => handleRoleChange(u.user_id, 'student')}
+                                        disabled={u.role === 'student'}
+                                      >
+                                        <Users className="w-4 h-4 ml-2" />
+                                        طالب
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="errors">
+                <ErrorLogsTable />
+              </TabsContent>
+
+              <TabsContent value="activity">
+                <ActivityLogsTable />
+              </TabsContent>
+            </Tabs>
           </motion.div>
         </div>
       </main>
