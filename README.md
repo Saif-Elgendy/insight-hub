@@ -4,6 +4,58 @@
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
+## Supabase Configuration
+
+This project uses **Lovable Cloud** (powered by Supabase) for backend services.
+
+### Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `supabase/config.toml` | Contains `project_id` and edge function configurations |
+| `.env` | Environment variables (auto-generated, do not edit manually) |
+| `src/integrations/supabase/client.ts` | Supabase client (auto-generated) |
+| `src/integrations/supabase/types.ts` | Database types (auto-generated) |
+
+### Environment Variables
+
+The following environment variables are automatically configured:
+
+```env
+VITE_SUPABASE_PROJECT_ID    # Supabase project identifier
+VITE_SUPABASE_URL           # Supabase API URL
+VITE_SUPABASE_PUBLISHABLE_KEY  # Public anon key for client-side
+```
+
+### Environment Separation (Dev vs Prod)
+
+For production deployments with separate environments:
+
+1. **Development**: Uses the default Lovable Cloud project
+2. **Production**: Create a separate Supabase project and configure:
+
+```env
+# Production environment example
+VITE_SUPABASE_PROJECT_ID="your-prod-project-id"
+VITE_SUPABASE_URL="https://your-prod-project-id.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="your-prod-anon-key"
+```
+
+### Edge Functions
+
+Edge functions are located in `supabase/functions/` and are deployed automatically.
+
+| Function | Purpose |
+|----------|---------|
+| `process-enrollment` | Handles course enrollment with rate limiting, logging, and soft delete |
+
+### Database Features
+
+- **Rate Limiting**: Prevents abuse with configurable limits per action
+- **Activity Logging**: Tracks user actions for audit purposes
+- **Error Tracking**: Logs errors with stack traces for debugging
+- **Soft Delete**: Enrollments use soft delete (deleted_at column)
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
@@ -59,6 +111,7 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Lovable Cloud (Supabase)
 
 ## How can I deploy this project?
 
