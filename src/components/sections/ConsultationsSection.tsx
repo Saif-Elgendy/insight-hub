@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, Video, Phone, Shield, Clock, CheckCircle2 } from 'lucide-react';
+import { MessageCircle, Video, Phone, Shield, Clock, CheckCircle2, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BookingDialog } from '@/components/booking/BookingDialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import therapist1 from '@/assets/therapist-1.jpg';
 import therapist2 from '@/assets/therapist-2.jpg';
+
 const consultationTypes = [
   {
     icon: Video,
@@ -43,6 +46,16 @@ const specialists = [
 
 export const ConsultationsSection = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBookingClick = () => {
+    if (!user) {
+      navigate('/auth');
+    } else {
+      setBookingOpen(true);
+    }
+  };
 
   return (
     <section id="consultations" className="py-24 bg-wellness-cream">
@@ -110,6 +123,39 @@ export const ConsultationsSection = () => {
                 +30 مختص جاهز لمساعدتك
               </span>
             </div>
+
+            {/* Guest User Message */}
+            {!user && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+                className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/20"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <LogIn className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-1">
+                      سجّل الآن للوصول للمختصين
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      أنشئ حساباً مجانياً للتواصل مع أكثر من 30 مختصاً معتمداً وحجز جلساتك الخاصة.
+                    </p>
+                    <Button 
+                      variant="wellness" 
+                      size="sm" 
+                      onClick={() => navigate('/auth')}
+                    >
+                      <LogIn className="w-4 h-4 ml-2" />
+                      إنشاء حساب مجاني
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Right Column - Consultation Types */}
@@ -155,10 +201,10 @@ export const ConsultationsSection = () => {
                     variant="wellness" 
                     size="sm" 
                     className="self-center" 
-                    onClick={() => setBookingOpen(true)}
+                    onClick={handleBookingClick}
                     aria-label={`احجز ${type.title} الآن - ${type.price}`}
                   >
-                    احجز الآن
+                    {user ? 'احجز الآن' : 'سجّل للحجز'}
                   </Button>
                 </div>
               </motion.div>
