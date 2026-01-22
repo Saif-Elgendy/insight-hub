@@ -125,33 +125,32 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
 
     setBooking(true);
 
-    // Create consultation
-    const { error: consultationError } = await supabase
-      .from('consultations')
-      .insert({
-        user_id: user.id,
-        specialist_id: selectedSpecialist.id,
-        time_slot_id: selectedSlot.id,
-        consultation_type: selectedType.value,
-        price: selectedType.price,
-        notes: notes || null,
-      });
+    // Use secure RPC function for atomic booking
+    // @ts-expect-error - Function exists but types not yet updated
+    const { data, error } = await supabase.rpc('book_consultation', {
+      p_time_slot_id: selectedSlot.id,
+      p_specialist_id: selectedSpecialist.id,
+      p_consultation_type: selectedType.value,
+      p_price: selectedType.price,
+      p_notes: notes || null,
+    });
 
-    if (consultationError) {
-      console.error('Error creating consultation:', consultationError);
-      toast.error('حدث خطأ في حجز الاستشارة');
+    if (error) {
+      console.error('Error creating consultation:', error);
+      if (error.message.includes('not available')) {
+        toast.error('عذراً، هذا الموعد لم يعد متاحاً. يرجى اختيار موعد آخر.');
+        // Refresh time slots
+        fetchTimeSlots();
+        setSelectedSlot(null);
+      } else if (error.message.includes('Authentication required')) {
+        toast.error('يرجى تسجيل الدخول أولاً');
+        onOpenChange(false);
+        navigate('/auth');
+      } else {
+        toast.error('حدث خطأ في حجز الاستشارة');
+      }
       setBooking(false);
       return;
-    }
-
-    // Update time slot to booked
-    const { error: slotError } = await supabase
-      .from('time_slots')
-      .update({ is_booked: true })
-      .eq('id', selectedSlot.id);
-
-    if (slotError) {
-      console.error('Error updating time slot:', slotError);
     }
 
     toast.success('تم حجز الاستشارة بنجاح!');
