@@ -126,7 +126,6 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
     setBooking(true);
 
     // Use secure RPC function for atomic booking
-    // @ts-expect-error - Function exists but types not yet updated
     const { data, error } = await supabase.rpc('book_consultation', {
       p_time_slot_id: selectedSlot.id,
       p_specialist_id: selectedSpecialist.id,
