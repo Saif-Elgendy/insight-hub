@@ -498,6 +498,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      book_consultation: {
+        Args: {
+          p_consultation_type: Database["public"]["Enums"]["consultation_type"]
+          p_notes?: string
+          p_price: number
+          p_specialist_id: string
+          p_time_slot_id: string
+        }
+        Returns: string
+      }
       can_manage_courses: { Args: { _user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
