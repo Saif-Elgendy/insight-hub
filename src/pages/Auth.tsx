@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, BookOpen, Shield } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, BookOpen, Shield, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -23,8 +24,10 @@ const signupSchema = loginSchema.extend({
   path: ['confirmPassword'],
 });
 
+type AuthMode = 'login' | 'signup' | 'forgot-password';
+
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'student' | 'instructor' | 'admin'>('student');
@@ -39,9 +42,49 @@ const AuthPage = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
+  const resetForm = () => {
+    setErrors({});
+    setFormData({ email: '', password: '', fullName: '', confirmPassword: '' });
+    setSelectedRole('student');
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: '' });
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+
+    const emailResult = z.string().trim().email({ message: 'البريد الإلكتروني غير صحيح' }).safeParse(formData.email);
+    if (!emailResult.success) {
+      setErrors({ email: emailResult.error.errors[0].message });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      });
+
+      if (error) {
+        toast.error('حدث خطأ أثناء إرسال رابط الاستعادة');
+      } else {
+        toast.success('تم إرسال رابط استعادة كلمة المرور! 📧', {
+          description: `تحقق من بريدك الإلكتروني ${formData.email}`,
+          duration: 6000,
+        });
+        setAuthMode('login');
+        resetForm();
+      }
+    } catch {
+      toast.error('حدث خطأ غير متوقع');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,7 +93,7 @@ const AuthPage = () => {
     setErrors({});
 
     try {
-      if (isLogin) {
+      if (authMode === 'login') {
         const result = loginSchema.safeParse(formData);
         if (!result.success) {
           const fieldErrors: Record<string, string> = {};
@@ -73,7 +116,7 @@ const AuthPage = () => {
           toast.success('تم تسجيل الدخول بنجاح!');
           navigate('/profile');
         }
-      } else {
+      } else if (authMode === 'signup') {
         const result = signupSchema.safeParse({ ...formData, role: selectedRole });
         if (!result.success) {
           const fieldErrors: Record<string, string> = {};
@@ -100,7 +143,7 @@ const AuthPage = () => {
           navigate('/profile');
         }
       }
-    } catch (error) {
+    } catch {
       toast.error('حدث خطأ غير متوقع');
     } finally {
       setLoading(false);
@@ -148,191 +191,272 @@ const AuthPage = () => {
               <span className="text-2xl font-bold text-foreground">نفسي</span>
             </Link>
             <h1 className="text-2xl font-bold text-foreground">
-              {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
+              {authMode === 'login' ? 'تسجيل الدخول' : authMode === 'signup' ? 'إنشاء حساب جديد' : 'استعادة كلمة المرور'}
             </h1>
             <p className="text-muted-foreground mt-2">
-              {isLogin ? 'مرحباً بعودتك!' : 'انضم إلى رحلتك نحو الصحة النفسية'}
+              {authMode === 'login' ? 'مرحباً بعودتك!' : authMode === 'signup' ? 'انضم إلى رحلتك نحو الصحة النفسية' : 'أدخل بريدك الإلكتروني لاستعادة كلمة المرور'}
             </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {!isLogin && (
-              <>
-                {/* Role Selection */}
-                <div className="space-y-3">
-                  <Label>نوع الحساب</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRole('student')}
-                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                        selectedRole === 'student'
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <GraduationCap className="w-6 h-6" />
-                      <span className="font-medium text-sm">طالب</span>
-                      <span className="text-[10px] text-muted-foreground">قراءة فقط</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRole('instructor')}
-                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                        selectedRole === 'instructor'
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <BookOpen className="w-6 h-6" />
-                      <span className="font-medium text-sm">مدرب</span>
-                      <span className="text-[10px] text-muted-foreground">إنشاء وتعديل</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRole('admin')}
-                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                        selectedRole === 'admin'
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <Shield className="w-6 h-6" />
-                      <span className="font-medium text-sm">مسؤول</span>
-                      <span className="text-[10px] text-muted-foreground">صلاحيات كاملة</span>
-                    </button>
+          <AnimatePresence mode="wait">
+            {authMode === 'forgot-password' ? (
+              <motion.form
+                key="forgot-password"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                onSubmit={handleForgotPassword}
+                className="space-y-5"
+              >
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <KeyRound className="w-8 h-8 text-primary" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">الاسم الكامل</Label>
+                  <Label htmlFor="email">البريد الإلكتروني</Label>
                   <div className="relative">
-                    <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      placeholder="أدخل اسمك الكامل"
-                      value={formData.fullName}
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="example@email.com"
+                      value={formData.email}
                       onChange={handleChange}
                       className="pr-10"
+                      dir="ltr"
                     />
                   </div>
-                  {errors.fullName && (
-                    <p className="text-sm text-destructive">{errors.fullName}</p>
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email}</p>
                   )}
                 </div>
-              </>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <div className="relative">
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="pr-10"
-                  dir="ltr"
-                />
-              </div>
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
-            </div>
+                <Button
+                  type="submit"
+                  variant="hero"
+                  size="lg"
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      جاري الإرسال...
+                    </span>
+                  ) : (
+                    'إرسال رابط الاستعادة'
+                  )}
+                </Button>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">كلمة المرور</Label>
-              <div className="relative">
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="pr-10 pl-10"
-                  dir="ltr"
-                />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => { setAuthMode('login'); resetForm(); }}
+                  className="w-full text-center text-primary font-medium hover:underline"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  العودة لتسجيل الدخول
                 </button>
-              </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-            </div>
+              </motion.form>
+            ) : (
+              <motion.form
+                key="auth"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                onSubmit={handleSubmit}
+                className="space-y-5"
+              >
+                {authMode === 'signup' && (
+                  <>
+                    {/* Role Selection */}
+                    <div className="space-y-3">
+                      <Label>نوع الحساب</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRole('student')}
+                          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                            selectedRole === 'student'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <GraduationCap className="w-6 h-6" />
+                          <span className="font-medium text-sm">طالب</span>
+                          <span className="text-[10px] text-muted-foreground">قراءة فقط</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRole('instructor')}
+                          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                            selectedRole === 'instructor'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <BookOpen className="w-6 h-6" />
+                          <span className="font-medium text-sm">مدرب</span>
+                          <span className="text-[10px] text-muted-foreground">إنشاء وتعديل</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRole('admin')}
+                          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                            selectedRole === 'admin'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <Shield className="w-6 h-6" />
+                          <span className="font-medium text-sm">مسؤول</span>
+                          <span className="text-[10px] text-muted-foreground">صلاحيات كاملة</span>
+                        </button>
+                      </div>
+                    </div>
 
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
-                <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="pr-10"
-                    dir="ltr"
-                  />
-                </div>
-                {errors.confirmPassword && (
-                  <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">الاسم الكامل</Label>
+                      <div className="relative">
+                        <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <Input
+                          id="fullName"
+                          name="fullName"
+                          type="text"
+                          placeholder="أدخل اسمك الكامل"
+                          value={formData.fullName}
+                          onChange={handleChange}
+                          className="pr-10"
+                        />
+                      </div>
+                      {errors.fullName && (
+                        <p className="text-sm text-destructive">{errors.fullName}</p>
+                      )}
+                    </div>
+                  </>
                 )}
-              </div>
-            )}
 
-            <Button
-              type="submit"
-              variant="hero"
-              size="lg"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  جاري التحميل...
-                </span>
-              ) : isLogin ? (
-                'تسجيل الدخول'
-              ) : (
-                'إنشاء حساب'
-              )}
-            </Button>
-          </form>
+                <div className="space-y-2">
+                  <Label htmlFor="email">البريد الإلكتروني</Label>
+                  <div className="relative">
+                    <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="example@email.com"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="pr-10"
+                      dir="ltr"
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="password">كلمة المرور</Label>
+                    {authMode === 'login' && (
+                      <button
+                        type="button"
+                        onClick={() => { setAuthMode('forgot-password'); resetForm(); }}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        نسيت كلمة المرور؟
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="pr-10 pl-10"
+                      dir="ltr"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-destructive">{errors.password}</p>
+                  )}
+                </div>
+
+                {authMode === 'signup' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+                    <div className="relative">
+                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className="pr-10"
+                        dir="ltr"
+                      />
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                    )}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  variant="hero"
+                  size="lg"
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      جاري التحميل...
+                    </span>
+                  ) : authMode === 'login' ? (
+                    'تسجيل الدخول'
+                  ) : (
+                    'إنشاء حساب'
+                  )}
+                </Button>
+              </motion.form>
+            )}
+          </AnimatePresence>
 
           {/* Toggle */}
-          <div className="mt-6 text-center">
-            <p className="text-muted-foreground">
-              {isLogin ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                  setFormData({ email: '', password: '', fullName: '', confirmPassword: '' });
-                  setSelectedRole('student');
-                }}
-                className="text-primary font-medium hover:underline mr-2"
-              >
-                {isLogin ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}
-              </button>
-            </p>
-          </div>
+          {authMode !== 'forgot-password' && (
+            <div className="mt-6 text-center">
+              <p className="text-muted-foreground">
+                {authMode === 'login' ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode(authMode === 'login' ? 'signup' : 'login');
+                    resetForm();
+                  }}
+                  className="text-primary font-medium hover:underline mr-2"
+                >
+                  {authMode === 'login' ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}
+                </button>
+              </p>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
