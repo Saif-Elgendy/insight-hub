@@ -14,6 +14,7 @@ import DoctorConsultations from "./pages/DoctorConsultations";
 import StudentConsultations from "./pages/StudentConsultations";
 import AdminDashboard from "./pages/AdminDashboard";
 import ResetPassword from "./pages/ResetPassword";
+import SpecialistDetails from "./pages/SpecialistDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/course/:id" element={<CourseDetails />} />
+            <Route path="/specialist/:id" element={<SpecialistDetails />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor-consultations" element={<DoctorConsultations />} />
             <Route path="/my-consultations" element={<StudentConsultations />} />
