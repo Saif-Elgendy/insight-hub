@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Brain, User, Mail, Phone, Edit2, Save, LogOut, 
-  BookOpen, Award, Clock, ChevronLeft, ArrowLeft
+  BookOpen, Award, Clock, ChevronLeft, ArrowLeft, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,19 @@ const ProfilePage = () => {
     full_name: '',
     phone: '',
     bio: '',
+  });
+  
+  // Password change state
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: '',
   });
 
   useEffect(() => {
@@ -137,6 +150,35 @@ const ProfilePage = () => {
     await signOut();
     navigate('/');
     toast.success('تم تسجيل الخروج بنجاح');
+  };
+
+  const handlePasswordChange = async () => {
+    if (passwordData.newPassword.length < 6) {
+      toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      return;
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('كلمات المرور غير متطابقة');
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword,
+      });
+
+      if (error) throw error;
+
+      toast.success('تم تغيير كلمة المرور بنجاح');
+      setIsChangingPassword(false);
+      setPasswordData({ newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      toast.error(error.message || 'حدث خطأ أثناء تغيير كلمة المرور');
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   if (authLoading || loading) {
@@ -295,6 +337,87 @@ const ProfilePage = () => {
                   ) : (
                     <div className="text-foreground p-2 bg-muted rounded-lg min-h-[80px]">
                       {formData.bio || 'لم يتم إضافة نبذة بعد'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Password Change Section */}
+                <div className="pt-4 border-t border-border">
+                  {!isChangingPassword ? (
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => setIsChangingPassword(true)}
+                    >
+                      <Lock className="w-4 h-4" />
+                      تغيير كلمة المرور
+                    </Button>
+                  ) : (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-foreground flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
+                        تغيير كلمة المرور
+                      </h3>
+                      
+                      <div className="space-y-2">
+                        <Label>كلمة المرور الجديدة</Label>
+                        <div className="relative">
+                          <Input
+                            type={showPasswords.new ? 'text' : 'password'}
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                            placeholder="أدخل كلمة المرور الجديدة"
+                            className="pl-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>تأكيد كلمة المرور الجديدة</Label>
+                        <div className="relative">
+                          <Input
+                            type={showPasswords.confirm ? 'text' : 'password'}
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                            placeholder="أعد إدخال كلمة المرور الجديدة"
+                            className="pl-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="default"
+                          className="flex-1"
+                          onClick={handlePasswordChange}
+                          disabled={savingPassword}
+                        >
+                          {savingPassword ? 'جاري الحفظ...' : 'حفظ'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setIsChangingPassword(false);
+                            setPasswordData({ newPassword: '', confirmPassword: '' });
+                          }}
+                        >
+                          إلغاء
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
