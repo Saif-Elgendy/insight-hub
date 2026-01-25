@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import CourseDetails from "./pages/CourseDetails";
 import Courses from "./pages/Courses";
+import Specialists from "./pages/Specialists";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorConsultations from "./pages/DoctorConsultations";
 import StudentConsultations from "./pages/StudentConsultations";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/course/:id" element={<CourseDetails />} />
+            <Route path="/specialists" element={<Specialists />} />
             <Route path="/specialist/:id" element={<SpecialistDetails />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor-consultations" element={<DoctorConsultations />} />
