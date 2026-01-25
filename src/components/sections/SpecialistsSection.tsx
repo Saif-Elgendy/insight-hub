@@ -168,7 +168,7 @@ export const SpecialistsSection = () => {
           <Button
             variant="outline"
             size="lg"
-            onClick={() => user ? navigate('/consultations') : navigate('/auth')}
+            onClick={() => navigate('/specialists')}
             className="gap-2"
           >
             عرض جميع المختصين
