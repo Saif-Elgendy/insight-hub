@@ -10,6 +10,7 @@ import { NotificationsDropdown } from '@/components/notifications/NotificationsD
 const navLinks = [
   { label: 'الرئيسية', href: '/', isRoute: true },
   { label: 'الكورسات', href: '/courses', isRoute: true },
+  { label: 'المختصين', href: '/specialists', isRoute: true },
   { label: 'الجلسات المباشرة', href: '#live-sessions', isRoute: false },
   { label: 'الاستشارات', href: '#consultations', isRoute: false },
   { label: 'الشهادات', href: '#certificates', isRoute: false },
