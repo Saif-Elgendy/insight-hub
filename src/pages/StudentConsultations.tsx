@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Star } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { SpecialistReviewDialog } from '@/components/reviews/SpecialistReviewDialog';
 import type { Database } from '@/integrations/supabase/types';
 
 type ConsultationStatus = Database['public']['Enums']['consultation_status'];
@@ -36,11 +37,13 @@ interface Consultation {
   notes: string | null;
   created_at: string;
   time_slot_id: string;
+  specialist_id: string;
   time_slot: {
     slot_date: string;
     slot_time: string;
   };
   specialist: {
+    id: string;
     full_name: string;
     specialty: string;
     image_url: string | null;
@@ -110,10 +113,13 @@ const StudentConsultations = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [reviewedConsultations, setReviewedConsultations] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
 
   const filteredConsultations = consultations
     .filter((c) => filterStatus === 'all' || c.status === filterStatus)
@@ -147,8 +153,9 @@ const StudentConsultations = () => {
           notes,
           created_at,
           time_slot_id,
+          specialist_id,
           time_slot:time_slots!consultations_time_slot_id_fkey(slot_date, slot_time),
-          specialist:specialists!consultations_specialist_id_fkey(full_name, specialty, image_url)
+          specialist:specialists!consultations_specialist_id_fkey(id, full_name, specialty, image_url)
         `)
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
@@ -162,6 +169,22 @@ const StudentConsultations = () => {
       })) as Consultation[];
 
       setConsultations(formattedData);
+      
+      // Fetch which consultations have been reviewed
+      const consultationIds = formattedData
+        .filter(c => c.status === 'completed')
+        .map(c => c.id);
+      
+      if (consultationIds.length > 0) {
+        const { data: reviews } = await supabase
+          .from('specialist_reviews')
+          .select('consultation_id')
+          .in('consultation_id', consultationIds);
+        
+        if (reviews) {
+          setReviewedConsultations(new Set(reviews.map(r => r.consultation_id)));
+        }
+      }
     } catch (error) {
       console.error('Error fetching consultations:', error);
       toast({
@@ -211,6 +234,17 @@ const StudentConsultations = () => {
       });
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleOpenReviewDialog = (consultation: Consultation) => {
+    setSelectedConsultation(consultation);
+    setReviewDialogOpen(true);
+  };
+
+  const handleReviewSubmitted = () => {
+    if (selectedConsultation) {
+      setReviewedConsultations(prev => new Set([...prev, selectedConsultation.id]));
     }
   };
 
@@ -454,6 +488,26 @@ const StudentConsultations = () => {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
+                          
+                          {/* Review Button - Only for completed consultations */}
+                          {consultation.status === 'completed' && (
+                            reviewedConsultations.has(consultation.id) ? (
+                              <Badge variant="outline" className="mt-2 gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                تم التقييم
+                              </Badge>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-2 gap-1"
+                                onClick={() => handleOpenReviewDialog(consultation)}
+                              >
+                                <Star className="w-4 h-4" />
+                                قيّم المختص
+                              </Button>
+                            )
+                          )}
                         </div>
                       </div>
 
@@ -481,6 +535,18 @@ const StudentConsultations = () => {
       </main>
 
       <Footer />
+      
+      {/* Review Dialog */}
+      {selectedConsultation && (
+        <SpecialistReviewDialog
+          open={reviewDialogOpen}
+          onOpenChange={setReviewDialogOpen}
+          consultationId={selectedConsultation.id}
+          specialistId={selectedConsultation.specialist_id}
+          specialistName={selectedConsultation.specialist?.full_name || 'المختص'}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </div>
   );
 };

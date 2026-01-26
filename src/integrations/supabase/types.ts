@@ -395,6 +395,51 @@ export type Database = {
         }
         Relationships: []
       }
+      specialist_reviews: {
+        Row: {
+          comment: string | null
+          consultation_id: string
+          created_at: string
+          id: string
+          rating: number
+          specialist_id: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          consultation_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          specialist_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          consultation_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          specialist_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "specialist_reviews_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: true
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "specialist_reviews_specialist_id_fkey"
+            columns: ["specialist_id"]
+            isOneToOne: false
+            referencedRelation: "specialists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       specialists: {
         Row: {
           bio: string | null
