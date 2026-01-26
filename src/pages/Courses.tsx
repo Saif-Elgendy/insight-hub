@@ -22,11 +22,40 @@ interface Course {
   is_featured: boolean | null;
 }
 
+// Duration filter options
+const durationOptions = [
+  { label: 'الكل', value: 'all' },
+  { label: 'أقل من ساعة', value: 'short', max: 1 },
+  { label: '1-3 ساعات', value: 'medium', min: 1, max: 3 },
+  { label: '3-5 ساعات', value: 'long', min: 3, max: 5 },
+  { label: 'أكثر من 5 ساعات', value: 'very-long', min: 5 },
+];
+
+// Helper function to parse duration string to hours
+const parseDurationToHours = (duration: string | null): number | null => {
+  if (!duration) return null;
+  
+  // Match patterns like "1ساعة", "4ساعات", "30 دقيقة", etc.
+  const hourMatch = duration.match(/(\d+)\s*(?:ساعة|ساعات|hour|hours)/i);
+  const minuteMatch = duration.match(/(\d+)\s*(?:دقيقة|دقائق|minute|minutes)/i);
+  
+  let hours = 0;
+  if (hourMatch) {
+    hours += parseInt(hourMatch[1], 10);
+  }
+  if (minuteMatch) {
+    hours += parseInt(minuteMatch[1], 10) / 60;
+  }
+  
+  return hours > 0 ? hours : null;
+};
+
 const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<string>('all');
 
   useEffect(() => {
     fetchCourses();
@@ -65,16 +94,32 @@ const Courses = () => {
       
       const matchesCategory = !selectedCategory || course.category === selectedCategory;
       
-      return matchesSearch && matchesCategory;
+      // Duration filter
+      let matchesDuration = true;
+      if (selectedDuration !== 'all') {
+        const durationOption = durationOptions.find(opt => opt.value === selectedDuration);
+        const courseHours = parseDurationToHours(course.duration);
+        
+        if (durationOption && courseHours !== null) {
+          const minHours = durationOption.min ?? 0;
+          const maxHours = durationOption.max ?? Infinity;
+          matchesDuration = courseHours >= minHours && courseHours < maxHours;
+        } else if (courseHours === null && selectedDuration !== 'all') {
+          matchesDuration = false;
+        }
+      }
+      
+      return matchesSearch && matchesCategory && matchesDuration;
     });
-  }, [courses, searchQuery, selectedCategory]);
+  }, [courses, searchQuery, selectedCategory, selectedDuration]);
 
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedCategory(null);
+    setSelectedDuration('all');
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory;
+  const hasActiveFilters = searchQuery || selectedCategory || selectedDuration !== 'all';
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -133,6 +178,22 @@ const Courses = () => {
                 </div>
               </div>
 
+              {/* Duration Filter */}
+              <div className="flex flex-wrap gap-2 items-center pt-4 border-t border-border">
+                <Clock className="w-4 h-4 text-muted-foreground hidden md:block" />
+                <span className="text-sm text-muted-foreground ml-2">المدة:</span>
+                {durationOptions.map((option) => (
+                  <Badge
+                    key={option.value}
+                    variant={selectedDuration === option.value ? "default" : "outline"}
+                    className="cursor-pointer h-8 px-4"
+                    onClick={() => setSelectedDuration(option.value)}
+                  >
+                    {option.label}
+                  </Badge>
+                ))}
+              </div>
+
               {/* Active Filters */}
               {hasActiveFilters && (
                 <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
@@ -152,6 +213,15 @@ const Courses = () => {
                       <X 
                         className="w-3 h-3 cursor-pointer" 
                         onClick={() => setSelectedCategory(null)}
+                      />
+                    </Badge>
+                  )}
+                  {selectedDuration !== 'all' && (
+                    <Badge variant="secondary" className="gap-1">
+                      المدة: {durationOptions.find(o => o.value === selectedDuration)?.label}
+                      <X 
+                        className="w-3 h-3 cursor-pointer" 
+                        onClick={() => setSelectedDuration('all')}
                       />
                     </Badge>
                   )}
