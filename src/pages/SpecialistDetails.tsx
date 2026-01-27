@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import {
   Brain, Star, Clock, Award, Calendar, MapPin, ArrowRight,
-  Video, Phone, MessageCircle, CheckCircle, User, Briefcase
+  Video, Phone, MessageCircle, CheckCircle, User, Briefcase, MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { SpecialistReviewsList } from '@/components/reviews/SpecialistReviewsList';
 
 interface Specialist {
   id: string;
@@ -514,6 +515,15 @@ const SpecialistDetails = () => {
                 </Card>
               </motion.div>
             )}
+
+            {/* Reviews Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <SpecialistReviewsList specialistId={specialist.id} />
+            </motion.div>
           </div>
         </div>
       </main>
