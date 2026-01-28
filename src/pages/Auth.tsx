@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, BookOpen, Shield, KeyRound } from 'lucide-react';
+import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, BookOpen, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,7 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   fullName: z.string().trim().min(2, { message: 'الاسم يجب أن يكون حرفين على الأقل' }).max(100),
   confirmPassword: z.string(),
-  role: z.enum(['student', 'instructor', 'admin']),
+  role: z.enum(['student', 'instructor']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'كلمتا المرور غير متطابقتين',
   path: ['confirmPassword'],
@@ -30,7 +30,7 @@ const AuthPage = () => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'student' | 'instructor' | 'admin'>('student');
+  const [selectedRole, setSelectedRole] = useState<'student' | 'instructor'>('student');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -273,7 +273,7 @@ const AuthPage = () => {
                     {/* Role Selection */}
                     <div className="space-y-3">
                       <Label>نوع الحساب</Label>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 gap-3">
                         <button
                           type="button"
                           onClick={() => setSelectedRole('student')}
@@ -299,19 +299,6 @@ const AuthPage = () => {
                           <BookOpen className="w-6 h-6" />
                           <span className="font-medium text-sm">مدرب</span>
                           <span className="text-[10px] text-muted-foreground">إنشاء وتعديل</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedRole('admin')}
-                          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                            selectedRole === 'admin'
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border hover:border-primary/50'
-                          }`}
-                        >
-                          <Shield className="w-6 h-6" />
-                          <span className="font-medium text-sm">مسؤول</span>
-                          <span className="text-[10px] text-muted-foreground">صلاحيات كاملة</span>
                         </button>
                       </div>
                     </div>
