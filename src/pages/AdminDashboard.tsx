@@ -34,6 +34,8 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
+const SUPER_ADMIN_ID = '9a48cfb7-03ed-4df4-afc9-67a06d014d77';
+
 interface UserWithRole {
   user_id: string;
   full_name: string | null;
@@ -323,7 +325,12 @@ const AdminDashboard = () => {
                                     </div>
                                     <span className="font-medium">
                                       {u.full_name || 'مستخدم بدون اسم'}
-                                      {u.user_id === user?.id && (
+                                      {u.user_id === SUPER_ADMIN_ID && (
+                                        <Badge variant="default" className="mr-2 text-xs">
+                                          المسؤول الأعلى
+                                        </Badge>
+                                      )}
+                                      {u.user_id === user?.id && u.user_id !== SUPER_ADMIN_ID && (
                                         <Badge variant="outline" className="mr-2 text-xs">
                                           أنت
                                         </Badge>
@@ -345,7 +352,7 @@ const AdminDashboard = () => {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        disabled={u.user_id === user?.id || updatingUserId === u.user_id}
+                                        disabled={u.user_id === user?.id || u.user_id === SUPER_ADMIN_ID || updatingUserId === u.user_id}
                                       >
                                         {updatingUserId === u.user_id ? (
                                           <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
