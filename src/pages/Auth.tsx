@@ -136,10 +136,17 @@ const AuthPage = () => {
             toast.error('حدث خطأ أثناء إنشاء الحساب');
           }
         } else {
-          toast.success('تم إنشاء حسابك بنجاح! 🎉', {
-            description: `تم إرسال رسالة تأكيد إلى ${formData.email}. يرجى التحقق من بريدك الإلكتروني.`,
-            duration: 6000,
-          });
+          if (selectedRole === 'instructor') {
+            toast.success('تم إنشاء حسابك بنجاح! 🎉', {
+              description: 'تم تسجيلك كطالب مؤقتاً. سيتم مراجعة طلب المدرب من قبل المسؤول وترقيتك عند الموافقة.',
+              duration: 8000,
+            });
+          } else {
+            toast.success('تم إنشاء حسابك بنجاح! 🎉', {
+              description: `تم إرسال رسالة تأكيد إلى ${formData.email}. يرجى التحقق من بريدك الإلكتروني.`,
+              duration: 6000,
+            });
+          }
           navigate('/profile');
         }
       }
@@ -298,7 +305,7 @@ const AuthPage = () => {
                         >
                           <BookOpen className="w-6 h-6" />
                           <span className="font-medium text-sm">مدرب</span>
-                          <span className="text-[10px] text-muted-foreground">إنشاء وتعديل</span>
+                          <span className="text-[10px] text-muted-foreground">يتطلب موافقة المسؤول</span>
                         </button>
                       </div>
                     </div>

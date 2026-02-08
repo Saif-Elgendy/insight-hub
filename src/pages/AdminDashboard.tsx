@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity } from 'lucide-react';
+import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ErrorLogsTable } from '@/components/admin/ErrorLogsTable';
 import { ActivityLogsTable } from '@/components/admin/ActivityLogsTable';
+import { InstructorRequestsTable } from '@/components/admin/InstructorRequestsTable';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -245,10 +246,14 @@ const AdminDashboard = () => {
 
             {/* Tabs for different sections */}
             <Tabs defaultValue="users" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3 max-w-md">
+              <TabsList className="grid w-full grid-cols-4 max-w-lg">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   المستخدمين
+                </TabsTrigger>
+                <TabsTrigger value="instructor-requests" className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  طلبات المدربين
                 </TabsTrigger>
                 <TabsTrigger value="errors" className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
@@ -385,6 +390,10 @@ const AdminDashboard = () => {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="instructor-requests">
+                <InstructorRequestsTable />
               </TabsContent>
 
               <TabsContent value="errors">
