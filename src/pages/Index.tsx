@@ -4,7 +4,7 @@ import { CoursesSection } from '@/components/sections/CoursesSection';
 import { LiveSessionsSection } from '@/components/sections/LiveSessionsSection';
 import { ConsultationsSection } from '@/components/sections/ConsultationsSection';
 import { SpecialistsSection } from '@/components/sections/SpecialistsSection';
-import { CertificatesSection } from '@/components/sections/CertificatesSection';
+
 import { TestimonialsSection } from '@/components/sections/TestimonialsSection';
 import { CTASection } from '@/components/sections/CTASection';
 import { Footer } from '@/components/layout/Footer';
@@ -19,7 +19,7 @@ const Index = () => {
         <LiveSessionsSection />
         <ConsultationsSection />
         <SpecialistsSection />
-        <CertificatesSection />
+        
         <TestimonialsSection />
         <CTASection />
       </main>
