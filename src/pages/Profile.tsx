@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Brain, User, Mail, Phone, Edit2, Save, LogOut, 
-  BookOpen, Award, Clock, ChevronLeft, ArrowLeft, Lock, Eye, EyeOff, Camera, Loader2, Trash2
+  BookOpen, Award, Clock, ChevronLeft, ArrowLeft, Lock, Eye, EyeOff, Camera, Loader2, Trash2,
+  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,12 @@ interface CourseProgress {
     category: string;
     image_url: string | null;
   } | null;
+}
+interface InstructorRequest {
+  id: string;
+  status: string;
+  created_at: string;
+  reviewed_at: string | null;
 }
 
 const ProfilePage = () => {
@@ -67,6 +74,10 @@ const ProfilePage = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Instructor request state
+  const [instructorRequest, setInstructorRequest] = useState<InstructorRequest | null>(null);
+  const [resubmitting, setResubmitting] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
@@ -77,8 +88,45 @@ const ProfilePage = () => {
     if (user) {
       fetchProfile();
       fetchCourseProgress();
+      fetchInstructorRequest();
     }
   }, [user]);
+
+  const fetchInstructorRequest = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('instructor_requests')
+        .select('id, status, created_at, reviewed_at')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      setInstructorRequest(data);
+    } catch (error) {
+      console.error('Error fetching instructor request:', error);
+    }
+  };
+
+  const handleResubmitInstructorRequest = async () => {
+    if (!user) return;
+    setResubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('instructor_requests')
+        .insert({ user_id: user.id, status: 'pending' });
+
+      if (error) throw error;
+      toast.success('تم إعادة إرسال طلب المدرب بنجاح');
+      fetchInstructorRequest();
+    } catch (error: any) {
+      console.error('Error resubmitting:', error);
+      toast.error('حدث خطأ أثناء إعادة إرسال الطلب');
+    } finally {
+      setResubmitting(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -567,6 +615,52 @@ const ProfilePage = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Instructor Request Section */}
+                {instructorRequest && (
+                  <div className="pt-4 border-t border-border">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <GraduationCap className="w-4 h-4" />
+                      طلب الترقية لمدرب
+                    </h3>
+                    
+                    {instructorRequest.status === 'pending' && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                        <Clock3 className="w-5 h-5 flex-shrink-0" />
+                        <span className="text-sm">طلبك قيد المراجعة</span>
+                      </div>
+                    )}
+
+                    {instructorRequest.status === 'approved' && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                        <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                        <span className="text-sm">تمت الموافقة على طلبك</span>
+                      </div>
+                    )}
+
+                    {instructorRequest.status === 'rejected' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
+                          <XCircle className="w-5 h-5 flex-shrink-0" />
+                          <span className="text-sm">تم رفض طلبك</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2"
+                          onClick={handleResubmitInstructorRequest}
+                          disabled={resubmitting}
+                        >
+                          {resubmitting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                          {resubmitting ? 'جاري الإرسال...' : 'إعادة إرسال الطلب'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
