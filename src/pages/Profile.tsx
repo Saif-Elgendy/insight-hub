@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface Profile {
   id: string;
@@ -45,6 +46,7 @@ interface InstructorRequest {
 
 const ProfilePage = () => {
   const { user, signOut, loading: authLoading } = useAuth();
+  const { isStudent, isInstructor, isAdmin } = useUserRole();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
@@ -617,28 +619,49 @@ const ProfilePage = () => {
                 </div>
 
                 {/* Instructor Request Section */}
-                {instructorRequest && (
+                {isStudent && !isInstructor && !isAdmin && (
                   <div className="pt-4 border-t border-border">
                     <h3 className="font-semibold text-foreground flex items-center gap-2 mb-3">
                       <GraduationCap className="w-4 h-4" />
                       طلب الترقية لمدرب
                     </h3>
                     
-                    {instructorRequest.status === 'pending' && (
+                    {!instructorRequest && (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          يمكنك التقديم للحصول على صلاحيات المدرب لإنشاء وإدارة الكورسات.
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2"
+                          onClick={handleResubmitInstructorRequest}
+                          disabled={resubmitting}
+                        >
+                          {resubmitting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <GraduationCap className="w-4 h-4" />
+                          )}
+                          {resubmitting ? 'جاري الإرسال...' : 'تقديم طلب مدرب'}
+                        </Button>
+                      </div>
+                    )}
+
+                    {instructorRequest?.status === 'pending' && (
                       <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400">
                         <Clock3 className="w-5 h-5 flex-shrink-0" />
                         <span className="text-sm">طلبك قيد المراجعة</span>
                       </div>
                     )}
 
-                    {instructorRequest.status === 'approved' && (
+                    {instructorRequest?.status === 'approved' && (
                       <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                         <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
                         <span className="text-sm">تمت الموافقة على طلبك</span>
                       </div>
                     )}
 
-                    {instructorRequest.status === 'rejected' && (
+                    {instructorRequest?.status === 'rejected' && (
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
                           <XCircle className="w-5 h-5 flex-shrink-0" />
