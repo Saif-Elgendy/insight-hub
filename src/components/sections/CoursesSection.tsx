@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock, Users, Star, Play, BookOpen } from 'lucide-react';
+import { Clock, Users, Star, Play, BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -176,8 +176,15 @@ export const CoursesSection = () => {
           viewport={{ once: true }}
           className="text-center mt-12"
         >
-          <Button variant="outline" size="lg" aria-label="عرض جميع الكورسات المتاحة">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/courses')}
+            className="gap-2"
+            aria-label="عرض جميع الكورسات المتاحة"
+          >
             عرض جميع الكورسات
+            <ArrowLeft className="w-5 h-5" />
           </Button>
         </motion.div>
       </div>

@@ -1,31 +1,32 @@
+import { Link } from 'react-router-dom';
 import { Brain, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 const footerLinks = {
   platform: {
     title: 'المنصة',
     links: [
-      { label: 'الكورسات', href: '#courses' },
-      { label: 'الجلسات المباشرة', href: '#live-sessions' },
-      { label: 'الاستشارات', href: '#consultations' },
-      { label: 'الشهادات', href: '#certificates' },
+      { label: 'الكورسات', href: '/courses' },
+      { label: 'المختصين', href: '/specialists' },
+      { label: 'المكتبة', href: '/resources' },
+      { label: 'الشهادات', href: '/#certificates' },
     ],
   },
   support: {
     title: 'الدعم',
     links: [
-      { label: 'مركز المساعدة', href: '#' },
-      { label: 'الأسئلة الشائعة', href: '#' },
-      { label: 'تواصل معنا', href: '#' },
-      { label: 'سياسة الخصوصية', href: '#' },
+      { label: 'مركز المساعدة', href: '/#consultations' },
+      { label: 'الأسئلة الشائعة', href: '/#consultations' },
+      { label: 'تواصل معنا', href: '/#consultations' },
+      { label: 'سياسة الخصوصية', href: '/' },
     ],
   },
   company: {
     title: 'الشركة',
     links: [
-      { label: 'من نحن', href: '#' },
-      { label: 'فريق العمل', href: '#' },
-      { label: 'وظائف', href: '#' },
-      { label: 'الشراكات', href: '#' },
+      { label: 'من نحن', href: '/' },
+      { label: 'فريق العمل', href: '/specialists' },
+      { label: 'وظائف', href: '/' },
+      { label: 'الشراكات', href: '/' },
     ],
   },
 };
@@ -44,12 +45,12 @@ export const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <a href="#" className="flex items-center gap-3 mb-6">
+            <Link to="/" className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
                 <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">نفسي</span>
-            </a>
+            </Link>
             <p className="text-background/70 mb-6 max-w-sm">
               منصة متخصصة في الصحة النفسية تقدم كورسات، جلسات مباشرة،
               واستشارات فردية مع أفضل المختصين.
@@ -77,12 +78,12 @@ export const Footer = () => {
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.label}>
-                    <a
-                      href={link.href}
+                    <Link
+                      to={link.href}
                       className="text-background/70 hover:text-background transition-colors"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -1,8 +1,12 @@
 import { motion } from 'framer-motion';
 import { Award, BadgeCheck, Download, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const CertificatesSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section id="certificates" className="py-24 bg-background overflow-hidden">
       <div className="container mx-auto px-4">
@@ -41,10 +45,20 @@ export const CertificatesSection = () => {
 
               {/* Certificate Actions */}
               <div className="absolute bottom-6 left-6 right-6 flex justify-center gap-3">
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={() => toast.info('سيتم إتاحة تحميل الشهادات بعد إتمام الكورس')}
+                >
                   <Download className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={() => toast.info('سيتم إتاحة مشاركة الشهادات قريباً')}
+                >
                   <Share2 className="w-5 h-5" />
                 </Button>
               </div>
@@ -105,7 +119,7 @@ export const CertificatesSection = () => {
               ))}
             </div>
 
-            <Button variant="hero" size="lg">
+            <Button variant="hero" size="lg" onClick={() => navigate('/courses')}>
               ابدأ رحلة التعلم الآن
             </Button>
           </motion.div>

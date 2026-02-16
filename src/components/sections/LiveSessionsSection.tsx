@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
 import { Video, Calendar, Clock, Users, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import therapist1 from '@/assets/therapist-1.jpg';
 import therapist2 from '@/assets/therapist-2.jpg';
 
@@ -32,6 +35,17 @@ const sessions = [
 ];
 
 export const LiveSessionsSection = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleBookSeat = () => {
+    if (!user) {
+      navigate('/auth');
+    } else {
+      toast.info('سيتم إتاحة حجز الجلسات المباشرة قريباً');
+    }
+  };
+
   return (
     <section id="live-sessions" className="py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -117,8 +131,8 @@ export const LiveSessionsSection = () => {
                         <span className="text-muted-foreground"> مقعد متبقي من {session.spots}</span>
                       </span>
                     </div>
-                    <Button variant="default" size="sm" className="group/btn">
-                      <span>احجز مقعدك</span>
+                    <Button variant="default" size="sm" className="group/btn" onClick={handleBookSeat}>
+                      <span>{user ? 'احجز مقعدك' : 'سجّل للحجز'}</span>
                       <ArrowLeft className="w-4 h-4 group-hover/btn:-translate-x-1 transition-transform" />
                     </Button>
                   </div>
@@ -148,7 +162,13 @@ export const LiveSessionsSection = () => {
           viewport={{ once: true }}
           className="text-center mt-12"
         >
-          <Button variant="outline" size="lg">
+          <Button variant="outline" size="lg" onClick={() => {
+            if (!user) {
+              navigate('/auth');
+            } else {
+              toast.info('سيتم إتاحة التقويم الكامل قريباً');
+            }
+          }}>
             <Calendar className="w-5 h-5 ml-2" />
             عرض التقويم الكامل
           </Button>
