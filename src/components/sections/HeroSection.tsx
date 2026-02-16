@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion';
-import { Play, ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import heroBg from '@/assets/hero-bg.jpg';
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section
       id="hero"
@@ -78,13 +81,14 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Button variant="hero" size="xl" className="group">
+            <Button variant="hero" size="xl" className="group" onClick={() => navigate('/courses')}>
               <span>استكشف الكورسات</span>
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             </Button>
-            <Button variant="outline" size="xl" className="group">
-              <Play className="w-5 h-5" />
-              <span>شاهد الفيديو التعريفي</span>
+            <Button variant="outline" size="xl" className="group" onClick={() => {
+              document.getElementById('consultations')?.scrollIntoView({ behavior: 'smooth' });
+            }}>
+              <span>احجز استشارتك</span>
             </Button>
           </motion.div>
 

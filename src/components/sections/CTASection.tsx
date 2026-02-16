@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 export const CTASection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background */}
@@ -43,7 +46,7 @@ export const CTASection = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button variant="hero-outline" size="xl" className="group">
+            <Button variant="hero-outline" size="xl" className="group" onClick={() => navigate('/auth')}>
               <span>سجّل مجاناً الآن</span>
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             </Button>
@@ -51,6 +54,9 @@ export const CTASection = () => {
               variant="ghost"
               size="xl"
               className="text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={() => {
+                document.getElementById('consultations')?.scrollIntoView({ behavior: 'smooth' });
+              }}
             >
               تواصل معنا
             </Button>
