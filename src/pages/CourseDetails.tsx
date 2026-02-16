@@ -13,7 +13,13 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
-  Loader2
+  Loader2,
+  FileText,
+  Download,
+  Video,
+  Plus,
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -23,6 +29,8 @@ import { Footer } from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEnrollment } from '@/hooks/useEnrollment';
+import { useUserRole } from '@/hooks/useUserRole';
+import { MaterialUploadDialog } from '@/components/materials/MaterialUploadDialog';
 import { toast } from 'sonner';
 
 interface Course {
@@ -52,10 +60,21 @@ interface CourseProgress {
   is_completed: boolean | null;
 }
 
+interface CourseMaterial {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string;
+  file_type: string;
+  file_size: number | null;
+  youtube_url: string | null;
+}
+
 const CourseDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { canManageCourses } = useUserRole();
   
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -64,12 +83,16 @@ const CourseDetails = () => {
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
   const [enrolling, setEnrolling] = useState(false);
+  const [materials, setMaterials] = useState<CourseMaterial[]>([]);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [deletingMaterialId, setDeletingMaterialId] = useState<string | null>(null);
 
   const { enrollment, isEnrolled, isPending, enroll, activateEnrollment, loading: enrollmentLoading } = useEnrollment(id);
 
   useEffect(() => {
     if (id) {
       fetchCourseDetails();
+      fetchMaterials();
     }
   }, [id]);
 
@@ -135,6 +158,40 @@ const CourseDetails = () => {
 
     if (!error && data) {
       setProgress(data);
+    }
+  };
+
+  const fetchMaterials = async () => {
+    if (!id) return;
+    const { data, error } = await supabase
+      .from('course_materials')
+      .select('id, title, description, file_url, file_type, file_size, youtube_url')
+      .eq('course_id', id)
+      .order('created_at', { ascending: false });
+
+    if (!error) {
+      setMaterials(data || []);
+    }
+  };
+
+  const handleDeleteMaterial = async (material: CourseMaterial) => {
+    if (!confirm('هل تريد حذف هذا الملف؟')) return;
+    setDeletingMaterialId(material.id);
+    try {
+      if (material.file_type !== 'youtube' && material.file_url.includes('course-materials')) {
+        const path = material.file_url.split('/course-materials/')[1];
+        if (path) {
+          await supabase.storage.from('course-materials').remove([path]);
+        }
+      }
+      const { error } = await supabase.from('course_materials').delete().eq('id', material.id);
+      if (error) throw error;
+      toast.success('تم حذف الملف بنجاح');
+      fetchMaterials();
+    } catch (error) {
+      toast.error('حدث خطأ أثناء الحذف');
+    } finally {
+      setDeletingMaterialId(null);
     }
   };
 
@@ -516,7 +573,100 @@ const CourseDetails = () => {
             </div>
           </div>
         </section>
+
+        {/* Course Materials Section */}
+        {(materials.length > 0 || canManageCourses) && (
+          <section className="py-12 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-foreground">المواد التعليمية</h2>
+                {canManageCourses && (
+                  <Button onClick={() => setUploadOpen(true)} size="sm" className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    إضافة محتوى
+                  </Button>
+                )}
+              </div>
+
+              {materials.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">لا توجد مواد تعليمية بعد</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {materials.map((material) => (
+                    <div key={material.id} className="bg-card rounded-xl border border-border/50 p-4 hover:shadow-card transition-shadow">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          {material.file_type === 'youtube' || material.file_type === 'video' ? (
+                            <Video className="w-5 h-5 text-primary" />
+                          ) : (
+                            <FileText className="w-5 h-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-foreground truncate">{material.title}</h4>
+                          {material.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 mt-1">{material.description}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {material.file_type === 'pdf' ? 'PDF' : material.file_type === 'youtube' ? 'يوتيوب' : material.file_type === 'video' ? 'فيديو' : material.file_type}
+                            </Badge>
+                            {material.file_size && (
+                              <span className="text-xs text-muted-foreground">
+                                {(material.file_size / (1024 * 1024)).toFixed(1)} MB
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        {material.file_type === 'youtube' ? (
+                          <Button variant="outline" size="sm" className="flex-1 gap-2" asChild>
+                            <a href={material.youtube_url || material.file_url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="w-3 h-3" />
+                              مشاهدة
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" className="flex-1 gap-2" asChild>
+                            <a href={material.file_url} target="_blank" rel="noopener noreferrer" download>
+                              <Download className="w-3 h-3" />
+                              تحميل
+                            </a>
+                          </Button>
+                        )}
+                        {canManageCourses && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive h-8 w-8"
+                            onClick={() => handleDeleteMaterial(material)}
+                            disabled={deletingMaterialId === material.id}
+                          >
+                            {deletingMaterialId === material.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3 h-3" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
       </main>
+
+      <MaterialUploadDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        courseId={id}
+        target="course"
+        onSuccess={fetchMaterials}
+      />
 
       <Footer />
     </div>
