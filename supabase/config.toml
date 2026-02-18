@@ -2,3 +2,9 @@ project_id = "dthtiqmdhujkeykmqcfv"
 
 [functions.process-enrollment]
 verify_jwt = false
+
+[functions.get-users]
+verify_jwt = false
+
+[functions.delete-user]
+verify_jwt = false
