@@ -38,7 +38,9 @@ const SUPER_ADMIN_ID = '9a48cfb7-03ed-4df4-afc9-67a06d014d77';
 
 interface UserWithRole {
   user_id: string;
+  email: string | null;
   full_name: string | null;
+  phone: string | null;
   avatar_url: string | null;
   role: AppRole;
   created_at: string;
@@ -87,32 +89,17 @@ const AdminDashboard = () => {
       if (!isAdmin) return;
 
       try {
-        // Fetch profiles with their roles
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url, created_at');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
 
-        if (profilesError) throw profilesError;
-
-        const { data: roles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('user_id, role');
-
-        if (rolesError) throw rolesError;
-
-        // Combine profiles with roles
-        const usersWithRoles: UserWithRole[] = profiles.map((profile) => {
-          const userRole = roles.find((r) => r.user_id === profile.user_id);
-          return {
-            user_id: profile.user_id,
-            full_name: profile.full_name,
-            avatar_url: profile.avatar_url,
-            role: userRole?.role || 'student',
-            created_at: profile.created_at,
-          };
+        const response = await supabase.functions.invoke('get-users', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
         });
 
-        setUsers(usersWithRoles);
+        if (response.error) throw response.error;
+        
+        const data = response.data as { users: UserWithRole[] };
+        setUsers(data.users || []);
       } catch (error) {
         console.error('Error fetching users:', error);
         toast({
@@ -174,7 +161,9 @@ const AdminDashboard = () => {
   };
 
   const filteredUsers = users.filter((user) =>
-    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.phone?.includes(searchQuery)
   );
 
   const stats = {
@@ -302,6 +291,8 @@ const AdminDashboard = () => {
                           <TableHeader>
                             <TableRow>
                               <TableHead className="text-right">المستخدم</TableHead>
+                              <TableHead className="text-right">البريد الإلكتروني</TableHead>
+                              <TableHead className="text-right">الهاتف</TableHead>
                               <TableHead className="text-right">الصلاحية</TableHead>
                               <TableHead className="text-right">تاريخ الانضمام</TableHead>
                               <TableHead className="text-right">الإجراءات</TableHead>
@@ -337,6 +328,12 @@ const AdminDashboard = () => {
                                       )}
                                     </span>
                                   </div>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {u.email || '—'}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {u.phone || '—'}
                                 </TableCell>
                                 <TableCell>
                                   <Badge variant={roleBadgeVariants[u.role]}>
