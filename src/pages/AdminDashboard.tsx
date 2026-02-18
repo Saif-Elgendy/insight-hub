@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck } from 'lucide-react';
+import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck, Trash2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -68,6 +79,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -157,6 +169,35 @@ const AdminDashboard = () => {
       });
     } finally {
       setUpdatingUserId(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    setDeletingUserId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await supabase.functions.invoke('delete-user', {
+        body: { user_id: userId },
+      });
+
+      if (response.error) throw response.error;
+
+      setUsers((prev) => prev.filter((u) => u.user_id !== userId));
+      toast({
+        title: 'تم الحذف',
+        description: 'تم حذف حساب المستخدم بنجاح',
+      });
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: 'خطأ',
+        description: error?.message || 'حدث خطأ أثناء حذف المستخدم',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -344,47 +385,84 @@ const AdminDashboard = () => {
                                   {new Date(u.created_at).toLocaleDateString('ar-EG')}
                                 </TableCell>
                                 <TableCell>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={u.user_id === user?.id || u.user_id === SUPER_ADMIN_ID || updatingUserId === u.user_id}
-                                      >
-                                        {updatingUserId === u.user_id ? (
-                                          <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                                        ) : (
-                                          <>
-                                            تغيير الصلاحية
-                                            <ChevronDown className="w-4 h-4 mr-2" />
-                                          </>
-                                        )}
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem
-                                        onClick={() => handleRoleChange(u.user_id, 'admin')}
-                                        disabled={u.role === 'admin'}
-                                      >
-                                        <Shield className="w-4 h-4 ml-2" />
-                                        مسؤول
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() => handleRoleChange(u.user_id, 'instructor')}
-                                        disabled={u.role === 'instructor'}
-                                      >
-                                        <UserCog className="w-4 h-4 ml-2" />
-                                        مدرب
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() => handleRoleChange(u.user_id, 'student')}
-                                        disabled={u.role === 'student'}
-                                      >
-                                        <Users className="w-4 h-4 ml-2" />
-                                        طالب
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  <div className="flex items-center gap-2">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          disabled={u.user_id === user?.id || u.user_id === SUPER_ADMIN_ID || updatingUserId === u.user_id}
+                                        >
+                                          {updatingUserId === u.user_id ? (
+                                            <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                          ) : (
+                                            <>
+                                              تغيير الصلاحية
+                                              <ChevronDown className="w-4 h-4 mr-2" />
+                                            </>
+                                          )}
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                          onClick={() => handleRoleChange(u.user_id, 'admin')}
+                                          disabled={u.role === 'admin'}
+                                        >
+                                          <Shield className="w-4 h-4 ml-2" />
+                                          مسؤول
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => handleRoleChange(u.user_id, 'instructor')}
+                                          disabled={u.role === 'instructor'}
+                                        >
+                                          <UserCog className="w-4 h-4 ml-2" />
+                                          مدرب
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => handleRoleChange(u.user_id, 'student')}
+                                          disabled={u.role === 'student'}
+                                        >
+                                          <Users className="w-4 h-4 ml-2" />
+                                          طالب
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+
+                                    {u.user_id !== SUPER_ADMIN_ID && u.user_id !== user?.id && (
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            disabled={deletingUserId === u.user_id}
+                                          >
+                                            {deletingUserId === u.user_id ? (
+                                              <div className="w-4 h-4 border-2 border-destructive-foreground/30 border-t-destructive-foreground rounded-full animate-spin" />
+                                            ) : (
+                                              <Trash2 className="w-4 h-4" />
+                                            )}
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent dir="rtl">
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>حذف المستخدم</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              هل أنت متأكد من حذف حساب "{u.full_name || u.email}"؟ هذا الإجراء لا يمكن التراجع عنه.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter className="flex-row-reverse gap-2">
+                                            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={() => handleDeleteUser(u.user_id)}
+                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                              حذف
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}
