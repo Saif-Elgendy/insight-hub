@@ -7,6 +7,15 @@ import {
   Brain, Star, Clock, Award, Calendar, MapPin, ArrowRight,
   Video, Phone, MessageCircle, CheckCircle, User, Briefcase, MessageSquare
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +53,14 @@ const consultationTypes = [
   { value: 'chat', icon: MessageCircle, label: 'دردشة نصية', duration: '30 دقيقة', price: 100 },
 ] as const;
 
+const platformOptions = [
+  { value: 'zoom', label: 'Zoom' },
+  { value: 'teams', label: 'Microsoft Teams' },
+  { value: 'google_meet', label: 'Google Meet' },
+  { value: 'webex', label: 'Webex' },
+  { value: 'phone', label: 'مكالمة هاتفية' },
+];
+
 const SpecialistDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -59,6 +76,8 @@ const SpecialistDetails = () => {
   const [selectedType, setSelectedType] = useState<typeof consultationTypes[number] | null>(null);
   const [notes, setNotes] = useState('');
   const [showBookingSection, setShowBookingSection] = useState(false);
+  const [patientPhone, setPatientPhone] = useState('');
+  const [communicationPlatform, setCommunicationPlatform] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -129,6 +148,8 @@ const SpecialistDetails = () => {
       p_consultation_type: selectedType.value,
       p_price: selectedType.price,
       p_notes: notes || null,
+      p_patient_phone: (selectedType.value === 'audio' && communicationPlatform === 'phone') ? patientPhone.trim() : null,
+      p_communication_platform: (selectedType.value === 'audio' || selectedType.value === 'video') ? communicationPlatform || null : null,
     });
 
     if (error) {
@@ -450,10 +471,63 @@ const SpecialistDetails = () => {
                           <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">
                             4
                           </span>
-                          ملاحظات (اختياري)
+                          ملاحظات وبيانات التواصل
                         </h4>
+
+                        {/* Audio: communication method */}
+                        {selectedType?.value === 'audio' && (
+                          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/30 mb-4">
+                            <Label className="font-semibold">طريقة التواصل للمكالمة الصوتية</Label>
+                            <Select value={communicationPlatform} onValueChange={(val) => {
+                              setCommunicationPlatform(val);
+                              if (val !== 'phone') setPatientPhone('');
+                            }}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="اختر طريقة التواصل" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {platformOptions.map((opt) => (
+                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {communicationPlatform === 'phone' && (
+                              <div>
+                                <Label>رقم الهاتف</Label>
+                                <Input
+                                  type="tel"
+                                  placeholder="05xxxxxxxx"
+                                  value={patientPhone}
+                                  onChange={(e) => setPatientPhone(e.target.value.slice(0, 15))}
+                                  className="mt-1"
+                                  dir="ltr"
+                                  maxLength={15}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Video: platform selection */}
+                        {selectedType?.value === 'video' && (
+                          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/30 mb-4">
+                            <Label className="font-semibold">منصة الاجتماع المفضلة (اختياري)</Label>
+                            <Select value={communicationPlatform} onValueChange={setCommunicationPlatform}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="اختر المنصة المفضلة" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {platformOptions.filter(p => p.value !== 'phone').map((opt) => (
+                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">سيقوم الدكتور بإرسال رابط الاجتماع قبل الموعد</p>
+                          </div>
+                        )}
+
                         <Textarea
-                          placeholder="أي ملاحظات تود مشاركتها مع المختص..."
+                          placeholder="أي ملاحظات تود مشاركتها مع المختص... (اختياري)"
                           value={notes}
                           onChange={(e) => setNotes(e.target.value.slice(0, 1000))}
                           className="resize-none"

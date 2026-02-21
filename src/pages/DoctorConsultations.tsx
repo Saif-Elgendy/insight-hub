@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Brain, Calendar, Clock, User, Video, Phone, MessageSquare,
-  Check, X, Loader2, ArrowLeft, Filter, FileText, Save, Plus, Trash2
+  Check, X, Loader2, ArrowLeft, Filter, FileText, Save, Plus, Trash2, Link as LinkIcon, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,8 +47,11 @@ interface Consultation {
   price: number;
   created_at: string;
   updated_at: string;
+  meeting_link: string | null;
+  patient_phone: string | null;
+  communication_platform: string | null;
   patient_name?: string | null;
-  patient_phone?: string | null;
+  profile_phone?: string | null;
   slot_date?: string | null;
   slot_time?: string | null;
 }
@@ -90,6 +93,8 @@ const DoctorConsultations = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [doctorNotes, setDoctorNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  const [meetingLink, setMeetingLink] = useState('');
+  const [savingMeetingLink, setSavingMeetingLink] = useState(false);
   
   // Time slots form
   const [slotDialogOpen, setSlotDialogOpen] = useState(false);
@@ -162,7 +167,7 @@ const DoctorConsultations = () => {
         return {
           ...consultation,
           patient_name: profileData?.full_name || null,
-          patient_phone: profileData?.phone || null,
+          profile_phone: profileData?.phone || null,
           slot_date: slotData?.slot_date || null,
           slot_time: slotData?.slot_time || null,
         };
@@ -274,7 +279,36 @@ const DoctorConsultations = () => {
   const openDetails = (consultation: Consultation) => {
     setSelectedConsultation(consultation);
     setDoctorNotes(consultation.notes || '');
+    setMeetingLink(consultation.meeting_link || '');
     setDetailsOpen(true);
+  };
+
+  const saveMeetingLink = async () => {
+    if (!selectedConsultation) return;
+    
+    setSavingMeetingLink(true);
+    try {
+      const { error } = await supabase
+        .from('consultations')
+        .update({ meeting_link: meetingLink.trim() || null })
+        .eq('id', selectedConsultation.id);
+
+      if (error) throw error;
+      
+      toast.success('تم حفظ رابط الاجتماع');
+      setConsultations(prev => 
+        prev.map(c => c.id === selectedConsultation.id 
+          ? { ...c, meeting_link: meetingLink.trim() || null } 
+          : c
+        )
+      );
+      setSelectedConsultation(prev => prev ? { ...prev, meeting_link: meetingLink.trim() || null } : null);
+    } catch (error) {
+      console.error('Error saving meeting link:', error);
+      toast.error('حدث خطأ أثناء حفظ رابط الاجتماع');
+    } finally {
+      setSavingMeetingLink(false);
+    }
   };
 
   const saveNotes = async () => {
@@ -656,11 +690,24 @@ const DoctorConsultations = () => {
                   {selectedConsultation.patient_name || 'غير محدد'}
                 </span>
               </div>
-              {selectedConsultation.patient_phone && (
+              {(selectedConsultation.patient_phone || selectedConsultation.profile_phone) && (
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">الهاتف</span>
+                  <span className="text-muted-foreground">هاتف المريض</span>
                   <span className="font-medium" dir="ltr">
-                    {selectedConsultation.patient_phone}
+                    {selectedConsultation.patient_phone || selectedConsultation.profile_phone}
+                  </span>
+                </div>
+              )}
+              {selectedConsultation.communication_platform && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">منصة التواصل</span>
+                  <span className="font-medium">
+                    {selectedConsultation.communication_platform === 'zoom' ? 'Zoom' :
+                     selectedConsultation.communication_platform === 'teams' ? 'Microsoft Teams' :
+                     selectedConsultation.communication_platform === 'google_meet' ? 'Google Meet' :
+                     selectedConsultation.communication_platform === 'webex' ? 'Webex' :
+                     selectedConsultation.communication_platform === 'phone' ? 'مكالمة هاتفية' :
+                     selectedConsultation.communication_platform}
                   </span>
                 </div>
               )}
@@ -684,6 +731,36 @@ const DoctorConsultations = () => {
                 <span className="text-muted-foreground">السعر</span>
                 <span className="font-medium">{selectedConsultation.price} ر.س</span>
               </div>
+
+              {/* Meeting Link Section - for video/audio */}
+              {(selectedConsultation.consultation_type === 'video' || selectedConsultation.consultation_type === 'audio') && selectedConsultation.communication_platform !== 'phone' && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 mb-2">
+                    <LinkIcon className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-medium">رابط الاجتماع</span>
+                  </div>
+                  <Input
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                    placeholder="الصق رابط Zoom أو Teams أو Google Meet هنا..."
+                    className="mb-3"
+                    dir="ltr"
+                  />
+                  <Button
+                    onClick={saveMeetingLink}
+                    disabled={savingMeetingLink}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    {savingMeetingLink ? (
+                      <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                    ) : (
+                      <Save className="w-4 h-4 ml-2" />
+                    )}
+                    حفظ رابط الاجتماع
+                  </Button>
+                </div>
+              )}
               
               {/* Doctor Notes Section */}
               <div className="pt-4 border-t">
