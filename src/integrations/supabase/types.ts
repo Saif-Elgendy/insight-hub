@@ -52,10 +52,13 @@ export type Database = {
       }
       consultations: {
         Row: {
+          communication_platform: string | null
           consultation_type: Database["public"]["Enums"]["consultation_type"]
           created_at: string
           id: string
+          meeting_link: string | null
           notes: string | null
+          patient_phone: string | null
           price: number
           specialist_id: string
           status: Database["public"]["Enums"]["consultation_status"]
@@ -64,10 +67,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          communication_platform?: string | null
           consultation_type: Database["public"]["Enums"]["consultation_type"]
           created_at?: string
           id?: string
+          meeting_link?: string | null
           notes?: string | null
+          patient_phone?: string | null
           price: number
           specialist_id: string
           status?: Database["public"]["Enums"]["consultation_status"]
@@ -76,10 +82,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          communication_platform?: string | null
           consultation_type?: Database["public"]["Enums"]["consultation_type"]
           created_at?: string
           id?: string
+          meeting_link?: string | null
           notes?: string | null
+          patient_phone?: string | null
           price?: number
           specialist_id?: string
           status?: Database["public"]["Enums"]["consultation_status"]
