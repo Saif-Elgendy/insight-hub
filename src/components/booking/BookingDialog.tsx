@@ -13,6 +13,15 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,6 +52,14 @@ const consultationTypes = [
   { value: 'chat', icon: MessageCircle, label: 'دردشة نصية', duration: '30 دقيقة', price: 100 },
 ] as const;
 
+const platformOptions = [
+  { value: 'zoom', label: 'Zoom' },
+  { value: 'teams', label: 'Microsoft Teams' },
+  { value: 'google_meet', label: 'Google Meet' },
+  { value: 'webex', label: 'Webex' },
+  { value: 'phone', label: 'مكالمة هاتفية' },
+];
+
 interface BookingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -62,6 +79,8 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [notes, setNotes] = useState('');
+  const [patientPhone, setPatientPhone] = useState('');
+  const [communicationPlatform, setCommunicationPlatform] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -123,22 +142,28 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
       return;
     }
 
+    // Validate phone for audio with phone platform
+    if (selectedType.value === 'audio' && communicationPlatform === 'phone' && !patientPhone.trim()) {
+      toast.error('يرجى إدخال رقم الهاتف للمكالمة الصوتية');
+      return;
+    }
+
     setBooking(true);
 
-    // Use secure RPC function for atomic booking
     const { data, error } = await supabase.rpc('book_consultation', {
       p_time_slot_id: selectedSlot.id,
       p_specialist_id: selectedSpecialist.id,
       p_consultation_type: selectedType.value,
       p_price: selectedType.price,
       p_notes: notes || null,
+      p_patient_phone: (selectedType.value === 'audio' && communicationPlatform === 'phone') ? patientPhone.trim() : null,
+      p_communication_platform: (selectedType.value === 'audio' || selectedType.value === 'video') ? communicationPlatform || null : null,
     });
 
     if (error) {
       console.error('Error creating consultation:', error);
       if (error.message.includes('not available')) {
         toast.error('عذراً، هذا الموعد لم يعد متاحاً. يرجى اختيار موعد آخر.');
-        // Refresh time slots
         fetchTimeSlots();
         setSelectedSlot(null);
       } else if (error.message.includes('Authentication required')) {
@@ -165,6 +190,8 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
     setSelectedDate(undefined);
     setSelectedSlot(null);
     setNotes('');
+    setPatientPhone('');
+    setCommunicationPlatform('');
   };
 
   const canProceed = () => {
@@ -274,7 +301,12 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                   <button
                     key={type.value}
                     type="button"
-                    onClick={() => setSelectedType(type)}
+                    onClick={() => {
+                      setSelectedType(type);
+                      // Reset phone/platform when type changes
+                      setPatientPhone('');
+                      setCommunicationPlatform('');
+                    }}
                     aria-pressed={selectedType?.value === type.value}
                     aria-label={`اختيار ${type.label} - ${type.duration} - ${type.price} ريال`}
                     className={cn(
@@ -405,6 +437,58 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                   <span className="font-bold text-primary">{selectedType?.price} ر.س</span>
                 </div>
               </div>
+
+              {/* Audio consultation: communication method */}
+              {selectedType?.value === 'audio' && (
+                <div className="space-y-3 p-4 rounded-xl border border-border bg-card">
+                  <Label className="font-semibold">طريقة التواصل للمكالمة الصوتية</Label>
+                  <Select value={communicationPlatform} onValueChange={(val) => {
+                    setCommunicationPlatform(val);
+                    if (val !== 'phone') setPatientPhone('');
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر طريقة التواصل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {platformOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {communicationPlatform === 'phone' && (
+                    <div>
+                      <Label>رقم الهاتف</Label>
+                      <Input
+                        type="tel"
+                        placeholder="05xxxxxxxx"
+                        value={patientPhone}
+                        onChange={(e) => setPatientPhone(e.target.value.slice(0, 15))}
+                        className="mt-1"
+                        dir="ltr"
+                        maxLength={15}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Video consultation: platform selection */}
+              {selectedType?.value === 'video' && (
+                <div className="space-y-3 p-4 rounded-xl border border-border bg-card">
+                  <Label className="font-semibold">منصة الاجتماع المفضلة (اختياري)</Label>
+                  <Select value={communicationPlatform} onValueChange={setCommunicationPlatform}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر المنصة المفضلة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {platformOptions.filter(p => p.value !== 'phone').map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">سيقوم الدكتور بإرسال رابط الاجتماع قبل الموعد</p>
+                </div>
+              )}
 
               <div>
                 <label className="text-sm font-medium mb-2 block">ملاحظات (اختياري)</label>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Star } from 'lucide-react';
+import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Star, ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,9 @@ interface Consultation {
   created_at: string;
   time_slot_id: string;
   specialist_id: string;
+  meeting_link: string | null;
+  patient_phone: string | null;
+  communication_platform: string | null;
   time_slot: {
     slot_date: string;
     slot_time: string;
@@ -154,6 +157,9 @@ const StudentConsultations = () => {
           created_at,
           time_slot_id,
           specialist_id,
+          meeting_link,
+          patient_phone,
+          communication_platform,
           time_slot:time_slots!consultations_time_slot_id_fkey(slot_date, slot_time),
           specialist:specialists!consultations_specialist_id_fkey(id, full_name, specialty, image_url)
         `)
@@ -510,6 +516,46 @@ const StudentConsultations = () => {
                           )}
                         </div>
                       </div>
+
+                      {/* Meeting Link - shown for confirmed video/audio consultations */}
+                      {consultation.meeting_link && (consultation.status === 'confirmed' || consultation.status === 'completed') && (
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <div className="flex items-start gap-2">
+                            <LinkIcon className="w-4 h-4 text-primary mt-0.5" />
+                            <div className="flex-grow">
+                              <p className="text-sm font-medium text-foreground mb-1">رابط الاجتماع</p>
+                              <a 
+                                href={consultation.meeting_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-sm text-primary hover:underline flex items-center gap-1"
+                              >
+                                انضم للاجتماع
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Communication Platform Info */}
+                      {consultation.communication_platform && (consultation.status === 'confirmed' || consultation.status === 'pending') && (
+                        <div className={`${consultation.meeting_link ? '' : 'mt-4 pt-4 border-t border-border'}`}>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground px-2 py-1">
+                            <Phone className="w-3 h-3" />
+                            <span>
+                              طريقة التواصل: {
+                                consultation.communication_platform === 'zoom' ? 'Zoom' :
+                                consultation.communication_platform === 'teams' ? 'Microsoft Teams' :
+                                consultation.communication_platform === 'google_meet' ? 'Google Meet' :
+                                consultation.communication_platform === 'webex' ? 'Webex' :
+                                consultation.communication_platform === 'phone' ? 'مكالمة هاتفية' :
+                                consultation.communication_platform
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Notes Section */}
                       {consultation.notes && (
