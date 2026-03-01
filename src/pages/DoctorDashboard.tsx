@@ -53,7 +53,7 @@ interface Lesson {
 
 const DoctorDashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { canManageCourses, loading: roleLoading } = useUserRole();
+  const { canManageCourses, isAdmin, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState<Course[]>([]);
