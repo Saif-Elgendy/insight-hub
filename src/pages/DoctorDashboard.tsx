@@ -105,10 +105,10 @@ const DoctorDashboard = () => {
   }, [roleLoading, canManageCourses, user, navigate]);
 
   useEffect(() => {
-    if (canManageCourses) {
+    if (canManageCourses && user) {
       fetchCourses();
     }
-  }, [canManageCourses]);
+  }, [canManageCourses, isAdmin, user]);
 
   useEffect(() => {
     if (selectedCourse) {
