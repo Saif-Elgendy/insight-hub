@@ -50,6 +50,50 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
+          consultation_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          sender_id: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          consultation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          sender_id: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          consultation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultations: {
         Row: {
           communication_platform: string | null
@@ -728,6 +772,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_consultation_participant: {
+        Args: { _consultation_id: string; _user_id: string }
         Returns: boolean
       }
     }

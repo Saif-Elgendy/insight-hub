@@ -457,6 +457,21 @@ const StudentConsultations = () => {
                             {format(new Date(consultation.created_at), 'dd/MM/yyyy', { locale: ar })}
                           </p>
                           
+                          {/* Chat Button - for confirmed/pending */}
+                          {(consultation.status === 'confirmed' || consultation.status === 'pending' || consultation.status === 'completed') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-1 gap-1"
+                              asChild
+                            >
+                              <Link to={`/chat/${consultation.id}`}>
+                                <MessageCircle className="w-4 h-4" />
+                                الدردشة
+                              </Link>
+                            </Button>
+                          )}
+
                           {/* Cancel Button - Only for pending consultations */}
                           {consultation.status === 'pending' && (
                             <AlertDialog>
@@ -464,7 +479,7 @@ const StudentConsultations = () => {
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
-                                  className="mt-2"
+                                  className="mt-1"
                                   disabled={cancellingId === consultation.id}
                                 >
                                   {cancellingId === consultation.id ? (
@@ -498,7 +513,7 @@ const StudentConsultations = () => {
                           {/* Review Button - Only for completed consultations */}
                           {consultation.status === 'completed' && (
                             reviewedConsultations.has(consultation.id) ? (
-                              <Badge variant="outline" className="mt-2 gap-1">
+                              <Badge variant="outline" className="mt-1 gap-1">
                                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                                 تم التقييم
                               </Badge>
@@ -506,7 +521,7 @@ const StudentConsultations = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="mt-2 gap-1"
+                                className="mt-1 gap-1"
                                 onClick={() => handleOpenReviewDialog(consultation)}
                               >
                                 <Star className="w-4 h-4" />
