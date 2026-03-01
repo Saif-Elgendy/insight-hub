@@ -524,6 +524,12 @@ const DoctorConsultations = () => {
                             )}
                           </Button>
                         )}
+                        <Link to={`/chat/${consultation.id}`}>
+                          <Button size="sm" variant="ghost">
+                            <MessageSquare className="w-4 h-4 ml-1" />
+                            الدردشة
+                          </Button>
+                        </Link>
                         <Button
                           size="sm"
                           variant="ghost"
