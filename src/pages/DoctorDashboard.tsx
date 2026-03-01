@@ -118,10 +118,17 @@ const DoctorDashboard = () => {
 
   const fetchCourses = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('courses')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Instructors only see their own courses, admins see all
+      if (!isAdmin && user) {
+        query = query.eq('instructor_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setCourses(data || []);
