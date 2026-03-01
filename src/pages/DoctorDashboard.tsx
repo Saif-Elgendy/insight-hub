@@ -279,6 +279,7 @@ const DoctorDashboard = () => {
             category: courseForm.category || null,
             image_url: imageUrl || null,
             is_featured: courseForm.is_featured,
+            instructor_id: user?.id,
           });
 
         if (error) throw error;
