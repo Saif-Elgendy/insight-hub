@@ -222,6 +222,7 @@ export type Database = {
           duration: string | null
           id: string
           image_url: string | null
+          instructor_id: string | null
           is_featured: boolean | null
           lessons_count: number | null
           title: string
@@ -233,6 +234,7 @@ export type Database = {
           duration?: string | null
           id?: string
           image_url?: string | null
+          instructor_id?: string | null
           is_featured?: boolean | null
           lessons_count?: number | null
           title: string
@@ -244,6 +246,7 @@ export type Database = {
           duration?: string | null
           id?: string
           image_url?: string | null
+          instructor_id?: string | null
           is_featured?: boolean | null
           lessons_count?: number | null
           title?: string

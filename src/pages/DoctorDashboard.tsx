@@ -53,7 +53,7 @@ interface Lesson {
 
 const DoctorDashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { canManageCourses, loading: roleLoading } = useUserRole();
+  const { canManageCourses, isAdmin, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -105,10 +105,10 @@ const DoctorDashboard = () => {
   }, [roleLoading, canManageCourses, user, navigate]);
 
   useEffect(() => {
-    if (canManageCourses) {
+    if (canManageCourses && user) {
       fetchCourses();
     }
-  }, [canManageCourses]);
+  }, [canManageCourses, isAdmin, user]);
 
   useEffect(() => {
     if (selectedCourse) {
@@ -118,10 +118,17 @@ const DoctorDashboard = () => {
 
   const fetchCourses = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('courses')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Instructors only see their own courses, admins see all
+      if (!isAdmin && user) {
+        query = query.eq('instructor_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setCourses(data || []);
@@ -272,6 +279,7 @@ const DoctorDashboard = () => {
             category: courseForm.category || null,
             image_url: imageUrl || null,
             is_featured: courseForm.is_featured,
+            instructor_id: user?.id,
           });
 
         if (error) throw error;
