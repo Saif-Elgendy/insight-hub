@@ -539,6 +539,45 @@ const ProfilePage = () => {
                   )}
                 </div>
 
+                {/* Profile Visibility Toggle */}
+                <div className="pt-4 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {profile?.is_public_profile ? (
+                        <Globe className="w-4 h-4 text-primary" />
+                      ) : (
+                        <LockKeyhole className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {profile?.is_public_profile ? 'ملف شخصي عام' : 'ملف شخصي خاص'}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {profile?.is_public_profile 
+                            ? 'يمكن للطلاب الآخرين رؤية ملفك الشخصي' 
+                            : 'ملفك الشخصي مخفي عن الطلاب الآخرين'}
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={profile?.is_public_profile ?? false}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ is_public_profile: checked } as any)
+                          .eq('user_id', user.id);
+                        if (error) {
+                          toast.error('حدث خطأ أثناء تحديث إعدادات الخصوصية');
+                        } else {
+                          setProfile(prev => prev ? { ...prev, is_public_profile: checked } : null);
+                          toast.success(checked ? 'تم جعل ملفك الشخصي عاماً' : 'تم جعل ملفك الشخصي خاصاً');
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
                 {/* Password Change Section */}
                 <div className="pt-4 border-t border-border">
                   {!isChangingPassword ? (
