@@ -243,6 +243,39 @@ const StudentConsultations = () => {
     }
   };
 
+  const handleReportViolation = async (specialistUserId: string, consultationId: string) => {
+    // Get specialist's user_id from specialist table
+    const consultation = consultations.find(c => c.id === consultationId);
+    if (!consultation) return;
+    
+    const { data: specialist } = await supabase
+      .from('specialists')
+      .select('user_id')
+      .eq('id', consultation.specialist_id)
+      .maybeSingle();
+    
+    if (!specialist?.user_id) {
+      toast({ title: 'خطأ', description: 'لا يمكن تسجيل المخالفة', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('violations')
+        .insert({
+          user_id: specialist.user_id,
+          consultation_id: consultationId,
+          reason: 'عدم حضور المختص للموعد',
+        });
+
+      if (error) throw error;
+      toast({ title: 'تم', description: 'تم تسجيل المخالفة بنجاح' });
+    } catch (error) {
+      console.error('Error reporting violation:', error);
+      toast({ title: 'خطأ', description: 'حدث خطأ أثناء تسجيل المخالفة', variant: 'destructive' });
+    }
+  };
+
   const handleOpenReviewDialog = (consultation: Consultation) => {
     setSelectedConsultation(consultation);
     setReviewDialogOpen(true);
