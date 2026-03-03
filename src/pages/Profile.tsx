@@ -22,6 +22,7 @@ interface Profile {
   phone: string | null;
   bio: string | null;
   avatar_url: string | null;
+  is_public_profile: boolean;
 }
 
 interface CourseProgress {
