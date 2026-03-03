@@ -482,6 +482,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          is_banned: boolean
           is_public_profile: boolean
           phone: string | null
           updated_at: string
@@ -493,6 +494,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_banned?: boolean
           is_public_profile?: boolean
           phone?: string | null
           updated_at?: string
@@ -504,6 +506,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_banned?: boolean
           is_public_profile?: boolean
           phone?: string | null
           updated_at?: string
@@ -719,6 +722,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      violations: {
+        Row: {
+          consultation_id: string | null
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          consultation_id?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          consultation_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "violations_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
