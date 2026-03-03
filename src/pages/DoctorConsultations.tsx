@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Brain, Calendar, Clock, User, Video, Phone, MessageSquare,
-  Check, X, Loader2, ArrowLeft, Filter, FileText, Save, Plus, Trash2, Link as LinkIcon, ExternalLink
+  Check, X, Loader2, ArrowLeft, Filter, FileText, Save, Plus, Trash2, Link as LinkIcon, ExternalLink, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
