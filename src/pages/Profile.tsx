@@ -4,12 +4,13 @@ import { motion } from 'framer-motion';
 import { 
   Brain, User, Mail, Phone, Edit2, Save, LogOut, 
   BookOpen, Award, Clock, ChevronLeft, ArrowLeft, Lock, Eye, EyeOff, Camera, Loader2, Trash2,
-  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3
+  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3, Globe, LockKeyhole
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,6 +23,7 @@ interface Profile {
   phone: string | null;
   bio: string | null;
   avatar_url: string | null;
+  is_public_profile: boolean;
 }
 
 interface CourseProgress {
@@ -141,7 +143,7 @@ const ProfilePage = () => {
       if (error) throw error;
       
       if (data) {
-        setProfile(data);
+        setProfile(data as Profile);
         setFormData({
           full_name: data.full_name || '',
           phone: data.phone || '',
@@ -535,6 +537,45 @@ const ProfilePage = () => {
                       {formData.bio || 'لم يتم إضافة نبذة بعد'}
                     </div>
                   )}
+                </div>
+
+                {/* Profile Visibility Toggle */}
+                <div className="pt-4 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {profile?.is_public_profile ? (
+                        <Globe className="w-4 h-4 text-primary" />
+                      ) : (
+                        <LockKeyhole className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {profile?.is_public_profile ? 'ملف شخصي عام' : 'ملف شخصي خاص'}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {profile?.is_public_profile 
+                            ? 'يمكن للطلاب الآخرين رؤية ملفك الشخصي' 
+                            : 'ملفك الشخصي مخفي عن الطلاب الآخرين'}
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={profile?.is_public_profile ?? false}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ is_public_profile: checked } as any)
+                          .eq('user_id', user.id);
+                        if (error) {
+                          toast.error('حدث خطأ أثناء تحديث إعدادات الخصوصية');
+                        } else {
+                          setProfile(prev => prev ? { ...prev, is_public_profile: checked } : null);
+                          toast.success(checked ? 'تم جعل ملفك الشخصي عاماً' : 'تم جعل ملفك الشخصي خاصاً');
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Password Change Section */}
