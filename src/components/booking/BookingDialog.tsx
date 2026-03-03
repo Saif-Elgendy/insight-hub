@@ -119,7 +119,6 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
       .select('*')
       .eq('specialist_id', selectedSpecialist.id)
       .eq('slot_date', formattedDate)
-      .eq('is_booked', false)
       .order('slot_time');
     
     if (error) {
