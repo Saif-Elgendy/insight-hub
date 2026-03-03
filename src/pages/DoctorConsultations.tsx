@@ -339,6 +339,26 @@ const DoctorConsultations = () => {
     }
   };
 
+  const handleReportViolation = async (violationUserId: string, consultationId: string, reason: string) => {
+    if (!confirm(`هل أنت متأكد من تسجيل مخالفة؟ السبب: ${reason}`)) return;
+    
+    try {
+      const { error } = await supabase
+        .from('violations')
+        .insert({
+          user_id: violationUserId,
+          consultation_id: consultationId,
+          reason,
+        });
+
+      if (error) throw error;
+      toast.success('تم تسجيل المخالفة بنجاح');
+    } catch (error) {
+      console.error('Error reporting violation:', error);
+      toast.error('حدث خطأ أثناء تسجيل المخالفة');
+    }
+  };
+
   if (authLoading || roleLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
