@@ -136,6 +136,18 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
       return;
     }
 
+    // Check if user is banned
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_banned')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (profile?.is_banned) {
+      toast.error('تم إيقاف حسابك بسبب المخالفات. لا يمكنك حجز استشارات.');
+      return;
+    }
+
     if (!selectedSpecialist || !selectedType || !selectedSlot) {
       toast.error('يرجى إكمال جميع الخطوات');
       return;
