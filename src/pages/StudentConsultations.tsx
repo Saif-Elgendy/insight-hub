@@ -562,6 +562,19 @@ const StudentConsultations = () => {
                               </Button>
                             )
                           )}
+
+                          {/* Report Violation - for confirmed/completed consultations */}
+                          {(consultation.status === 'confirmed' || consultation.status === 'completed') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-1 gap-1 text-destructive hover:text-destructive"
+                              onClick={() => handleReportViolation(consultation.specialist_id, consultation.id)}
+                            >
+                              <AlertTriangle className="w-4 h-4" />
+                              إبلاغ عن مخالفة
+                            </Button>
+                          )}
                         </div>
                       </div>
 
