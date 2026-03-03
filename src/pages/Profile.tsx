@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   Brain, User, Mail, Phone, Edit2, Save, LogOut, 
   BookOpen, Award, Clock, ChevronLeft, ArrowLeft, Lock, Eye, EyeOff, Camera, Loader2, Trash2,
-  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3
+  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3, Globe, LockKeyhole
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
