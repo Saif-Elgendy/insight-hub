@@ -143,7 +143,7 @@ const ProfilePage = () => {
       if (error) throw error;
       
       if (data) {
-        setProfile(data);
+        setProfile(data as Profile);
         setFormData({
           full_name: data.full_name || '',
           phone: data.phone || '',
