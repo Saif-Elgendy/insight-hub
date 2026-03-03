@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Star, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { Calendar, Clock, Video, Phone, MessageCircle, ArrowRight, CheckCircle, XCircle, Clock3, FileText, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Star, ExternalLink, Link as LinkIcon, AlertTriangle } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -240,6 +240,39 @@ const StudentConsultations = () => {
       });
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleReportViolation = async (specialistUserId: string, consultationId: string) => {
+    // Get specialist's user_id from specialist table
+    const consultation = consultations.find(c => c.id === consultationId);
+    if (!consultation) return;
+    
+    const { data: specialist } = await supabase
+      .from('specialists')
+      .select('user_id')
+      .eq('id', consultation.specialist_id)
+      .maybeSingle();
+    
+    if (!specialist?.user_id) {
+      toast({ title: 'خطأ', description: 'لا يمكن تسجيل المخالفة', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('violations')
+        .insert({
+          user_id: specialist.user_id,
+          consultation_id: consultationId,
+          reason: 'عدم حضور المختص للموعد',
+        });
+
+      if (error) throw error;
+      toast({ title: 'تم', description: 'تم تسجيل المخالفة بنجاح' });
+    } catch (error) {
+      console.error('Error reporting violation:', error);
+      toast({ title: 'خطأ', description: 'حدث خطأ أثناء تسجيل المخالفة', variant: 'destructive' });
     }
   };
 
@@ -528,6 +561,19 @@ const StudentConsultations = () => {
                                 قيّم المختص
                               </Button>
                             )
+                          )}
+
+                          {/* Report Violation - for confirmed/completed consultations */}
+                          {(consultation.status === 'confirmed' || consultation.status === 'completed') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-1 gap-1 text-destructive hover:text-destructive"
+                              onClick={() => handleReportViolation(consultation.specialist_id, consultation.id)}
+                            >
+                              <AlertTriangle className="w-4 h-4" />
+                              إبلاغ عن مخالفة
+                            </Button>
                           )}
                         </div>
                       </div>

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Brain, Calendar, Clock, User, Video, Phone, MessageSquare,
-  Check, X, Loader2, ArrowLeft, Filter, FileText, Save, Plus, Trash2, Link as LinkIcon, ExternalLink
+  Check, X, Loader2, ArrowLeft, Filter, FileText, Save, Plus, Trash2, Link as LinkIcon, ExternalLink, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -339,6 +339,26 @@ const DoctorConsultations = () => {
     }
   };
 
+  const handleReportViolation = async (violationUserId: string, consultationId: string, reason: string) => {
+    if (!confirm(`هل أنت متأكد من تسجيل مخالفة؟ السبب: ${reason}`)) return;
+    
+    try {
+      const { error } = await supabase
+        .from('violations')
+        .insert({
+          user_id: violationUserId,
+          consultation_id: consultationId,
+          reason,
+        });
+
+      if (error) throw error;
+      toast.success('تم تسجيل المخالفة بنجاح');
+    } catch (error) {
+      console.error('Error reporting violation:', error);
+      toast.error('حدث خطأ أثناء تسجيل المخالفة');
+    }
+  };
+
   if (authLoading || roleLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -537,6 +557,17 @@ const DoctorConsultations = () => {
                         >
                           التفاصيل
                         </Button>
+                        {(consultation.status === 'confirmed' || consultation.status === 'completed') && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleReportViolation(consultation.user_id, consultation.id, 'عدم حضور المريض للموعد')}
+                          >
+                            <AlertTriangle className="w-4 h-4 ml-1" />
+                            مخالفة
+                          </Button>
+                        )}
                       </div>
                     </motion.div>
                   );
