@@ -537,6 +537,17 @@ const DoctorConsultations = () => {
                         >
                           التفاصيل
                         </Button>
+                        {(consultation.status === 'confirmed' || consultation.status === 'completed') && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleReportViolation(consultation.user_id, consultation.id, 'عدم حضور المريض للموعد')}
+                          >
+                            <AlertTriangle className="w-4 h-4 ml-1" />
+                            مخالفة
+                          </Button>
+                        )}
                       </div>
                     </motion.div>
                   );

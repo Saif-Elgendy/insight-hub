@@ -387,27 +387,46 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
 
               {selectedDate && (
                 <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-3 text-center">الأوقات المتاحة</h4>
+                  <h4 className="text-sm font-medium mb-3 text-center">المواعيد</h4>
                   {timeSlots.length === 0 ? (
-                    <p className="text-center text-muted-foreground">لا توجد أوقات متاحة في هذا اليوم</p>
+                    <p className="text-center text-muted-foreground">لا توجد مواعيد في هذا اليوم</p>
                   ) : (
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                      {timeSlots.map((slot) => (
-                        <Button
-                          key={slot.id}
-                          variant={selectedSlot?.id === slot.id ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setSelectedSlot(slot)}
-                          className="flex items-center gap-1"
-                          aria-pressed={selectedSlot?.id === slot.id}
-                          aria-label={`اختيار الوقت ${slot.slot_time.slice(0, 5)}`}
-                        >
-                          <Clock className="w-3 h-3" aria-hidden="true" />
-                          {slot.slot_time.slice(0, 5)}
-                        </Button>
-                      ))}
+                      {timeSlots.map((slot) => {
+                        const isBooked = slot.is_booked;
+                        const isSelected = selectedSlot?.id === slot.id;
+                        return (
+                          <Button
+                            key={slot.id}
+                            variant={isSelected ? 'default' : isBooked ? 'ghost' : 'outline'}
+                            size="sm"
+                            onClick={() => !isBooked && setSelectedSlot(slot)}
+                            disabled={isBooked}
+                            className={cn(
+                              "flex items-center gap-1 relative",
+                              isBooked && "opacity-50 line-through cursor-not-allowed bg-destructive/10 text-destructive border-destructive/20",
+                              !isBooked && !isSelected && "border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-950/30"
+                            )}
+                            aria-pressed={isSelected}
+                            aria-label={isBooked ? `الوقت ${slot.slot_time.slice(0, 5)} - محجوز` : `اختيار الوقت ${slot.slot_time.slice(0, 5)} - متاح`}
+                          >
+                            <Clock className="w-3 h-3" aria-hidden="true" />
+                            {slot.slot_time.slice(0, 5)}
+                          </Button>
+                        );
+                      })}
                     </div>
                   )}
+                  <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded border border-green-300 bg-green-50 dark:bg-green-950/30"></span>
+                      متاح
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded bg-destructive/10 border border-destructive/20"></span>
+                      محجوز
+                    </span>
+                  </div>
                 </div>
               )}
             </motion.div>
