@@ -58,15 +58,15 @@ export const Footer = () => {
             <div className="space-y-3 text-background/70">
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5" />
-                <span>info@nafsi.com</span>
+                <span>Saifelgendy495@gmail.com</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5" />
-                <span>+966 50 000 0000</span>
+                <span>01023863755</span>
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-5 h-5" />
-                <span>الرياض، المملكة العربية السعودية</span>
+                <span>مصر، طنطا</span>
               </div>
             </div>
           </div>
