@@ -98,7 +98,10 @@ const DoctorConsultations = () => {
   
   // Time slots form
   const [slotDialogOpen, setSlotDialogOpen] = useState(false);
-  const [slotForm, setSlotForm] = useState({ date: '', time: '' });
+  const [slotDate, setSlotDate] = useState('');
+  const [slotTimes, setSlotTimes] = useState<string[]>([]);
+  const [newTime, setNewTime] = useState('');
+  const [repeatWeeks, setRepeatWeeks] = useState(1);
   const [savingSlot, setSavingSlot] = useState(false);
 
   useEffect(() => {
@@ -201,31 +204,59 @@ const DoctorConsultations = () => {
     }
   };
 
+  const handleAddTimesToSlot = () => {
+    if (!newTime) return;
+    if (slotTimes.includes(newTime)) {
+      toast.error('هذا الوقت مضاف مسبقاً');
+      return;
+    }
+    setSlotTimes(prev => [...prev, newTime].sort());
+    setNewTime('');
+  };
+
+  const handleRemoveTime = (time: string) => {
+    setSlotTimes(prev => prev.filter(t => t !== time));
+  };
+
   const handleAddTimeSlot = async () => {
-    if (!slotForm.date || !slotForm.time || !specialistId) {
-      toast.error('الرجاء إدخال التاريخ والوقت');
+    if (!slotDate || slotTimes.length === 0 || !specialistId) {
+      toast.error('الرجاء إدخال التاريخ وإضافة وقت واحد على الأقل');
       return;
     }
 
     setSavingSlot(true);
     try {
+      const slotsToInsert: { specialist_id: string; slot_date: string; slot_time: string }[] = [];
+      
+      for (let week = 0; week < repeatWeeks; week++) {
+        const baseDate = new Date(slotDate);
+        baseDate.setDate(baseDate.getDate() + (week * 7));
+        const dateStr = baseDate.toISOString().split('T')[0];
+        
+        for (const time of slotTimes) {
+          slotsToInsert.push({
+            specialist_id: specialistId,
+            slot_date: dateStr,
+            slot_time: time,
+          });
+        }
+      }
+
       const { error } = await supabase
         .from('time_slots')
-        .insert({
-          specialist_id: specialistId,
-          slot_date: slotForm.date,
-          slot_time: slotForm.time,
-        });
+        .insert(slotsToInsert);
 
       if (error) throw error;
       
-      toast.success('تم إضافة الموعد بنجاح');
+      toast.success(`تم إضافة ${slotsToInsert.length} موعد بنجاح`);
       setSlotDialogOpen(false);
-      setSlotForm({ date: '', time: '' });
+      setSlotDate('');
+      setSlotTimes([]);
+      setRepeatWeeks(1);
       await fetchTimeSlots(specialistId);
     } catch (error) {
-      console.error('Error adding time slot:', error);
-      toast.error('حدث خطأ أثناء إضافة الموعد');
+      console.error('Error adding time slots:', error);
+      toast.error('حدث خطأ أثناء إضافة المواعيد');
     } finally {
       setSavingSlot(false);
     }
@@ -587,33 +618,74 @@ const DoctorConsultations = () => {
                     إضافة موعد
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-sm">
+                <DialogContent className="max-w-md">
                   <DialogHeader>
-                    <DialogTitle>إضافة موعد جديد</DialogTitle>
+                    <DialogTitle>إضافة مواعيد جديدة</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div>
-                      <Label>التاريخ *</Label>
+                      <Label>التاريخ (يوم البداية) *</Label>
                       <Input
                         type="date"
-                        value={slotForm.date}
-                        onChange={(e) => setSlotForm({ ...slotForm, date: e.target.value })}
+                        value={slotDate}
+                        onChange={(e) => setSlotDate(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
                         className="mt-1"
                       />
                     </div>
+                    
                     <div>
-                      <Label>الوقت *</Label>
-                      <Input
-                        type="time"
-                        value={slotForm.time}
-                        onChange={(e) => setSlotForm({ ...slotForm, time: e.target.value })}
-                        className="mt-1"
-                      />
+                      <Label>أضف أوقات المواعيد *</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="time"
+                          value={newTime}
+                          onChange={(e) => setNewTime(e.target.value)}
+                          className="flex-1"
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddTimesToSlot()}
+                        />
+                        <Button type="button" variant="outline" size="icon" onClick={handleAddTimesToSlot} disabled={!newTime}>
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {slotTimes.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {slotTimes.map(time => (
+                            <Badge key={time} variant="secondary" className="gap-1 px-3 py-1.5 text-sm">
+                              {time}
+                              <button onClick={() => handleRemoveTime(time)} className="mr-1 hover:text-destructive">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      {slotTimes.length === 0 && (
+                        <p className="text-xs text-muted-foreground mt-2">أدخل وقتاً واضغط + لإضافته</p>
+                      )}
                     </div>
+
+                    <div>
+                      <Label>تكرار أسبوعي</Label>
+                      <Select value={String(repeatWeeks)} onValueChange={(v) => setRepeatWeeks(Number(v))}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">هذا الأسبوع فقط</SelectItem>
+                          <SelectItem value="2">أسبوعين</SelectItem>
+                          <SelectItem value="3">3 أسابيع</SelectItem>
+                          <SelectItem value="4">4 أسابيع (شهر)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        سيتم إنشاء {slotTimes.length * repeatWeeks} موعد إجمالاً
+                      </p>
+                    </div>
+
                     <Button
                       onClick={handleAddTimeSlot}
-                      disabled={savingSlot}
+                      disabled={savingSlot || !slotDate || slotTimes.length === 0}
                       className="w-full"
                       variant="hero"
                     >
@@ -622,7 +694,7 @@ const DoctorConsultations = () => {
                       ) : (
                         <Plus className="w-4 h-4 ml-2" />
                       )}
-                      إضافة الموعد
+                      إضافة {slotTimes.length * repeatWeeks} موعد
                     </Button>
                   </div>
                 </DialogContent>
