@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Brain, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Brain, Mail, Phone, MapPin, Facebook, Github, Instagram, Linkedin } from 'lucide-react';
 
 const footerLinks = {
   platform: {
