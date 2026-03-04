@@ -21,7 +21,7 @@ const consultationTypes = [
     title: 'مكالمة صوتية',
     description: 'استشارة صوتية خاصة ومريحة',
     duration: '45 دقيقة',
-    price: '150 ر.س',
+    price: '150 ج.م',
   },
   {
     icon: MessageCircle,
