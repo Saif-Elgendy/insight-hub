@@ -14,7 +14,7 @@ const consultationTypes = [
     title: 'جلسة فيديو',
     description: 'جلسة تفاعلية وجهاً لوجه عبر الفيديو',
     duration: '60 دقيقة',
-    price: '200 ر.س',
+    price: '200 ج.م',
   },
   {
     icon: Phone,
