@@ -28,7 +28,7 @@ const consultationTypes = [
     title: 'دردشة نصية',
     description: 'تواصل مكتوب مع المختص',
     duration: '30 دقيقة',
-    price: '100 ر.س',
+    price: '100 ج.م',
   },
 ];
 
