@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, Video, Phone, Shield, Clock, CheckCircle2, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BookingDialog } from '@/components/booking/BookingDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import therapist1 from '@/assets/therapist-1.jpg';
-import therapist2 from '@/assets/therapist-2.jpg';
+import { supabase } from '@/integrations/supabase/client';
 
 const consultationTypes = [
   {
@@ -39,15 +38,31 @@ const features = [
   'متابعة مستمرة بعد الجلسة',
 ];
 
-const specialists = [
-  { image: therapist1, name: 'د. سارة أحمد' },
-  { image: therapist2, name: 'د. محمد علي' },
-];
-
 export const ConsultationsSection = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [specialists, setSpecialists] = useState<{ full_name: string; image_url: string | null }[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    const fetchSpecialists = async () => {
+      const { data, count } = await supabase
+        .from('specialists')
+        .select('full_name, image_url', { count: 'exact' })
+        .eq('is_available', true)
+        .limit(5);
+      
+      if (data) {
+        setSpecialists(data);
+        setTotalCount(count || data.length);
+      }
+    };
+
+    if (user) {
+      fetchSpecialists();
+    }
+  }, [user]);
 
   const handleBookingClick = () => {
     if (!user) {
@@ -100,29 +115,39 @@ export const ConsultationsSection = () => {
               ))}
             </div>
 
-            {/* Specialists */}
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-3 space-x-reverse">
-                {specialists.map((specialist, index) => (
-                  <div
-                    key={index}
-                    className="w-12 h-12 rounded-full border-2 border-background overflow-hidden"
-                  >
-                    <img
-                      src={specialist.image}
-                      alt={specialist.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
-                <div className="w-12 h-12 rounded-full border-2 border-background bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
-                  +28
+            {/* Specialists from DB */}
+            {specialists.length > 0 && (
+              <div className="flex items-center gap-4">
+                <div className="flex -space-x-3 space-x-reverse">
+                  {specialists.map((specialist, index) => (
+                    <div
+                      key={index}
+                      className="w-12 h-12 rounded-full border-2 border-background overflow-hidden bg-muted flex items-center justify-center"
+                    >
+                      {specialist.image_url ? (
+                        <img
+                          src={specialist.image_url}
+                          alt={specialist.full_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-bold text-primary">
+                          {specialist.full_name.charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {totalCount > 5 && (
+                    <div className="w-12 h-12 rounded-full border-2 border-background bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
+                      +{totalCount - 5}
+                    </div>
+                  )}
                 </div>
+                <span className="text-muted-foreground text-sm">
+                  {totalCount} مختص جاهز لمساعدتك
+                </span>
               </div>
-              <span className="text-muted-foreground text-sm">
-                +30 مختص جاهز لمساعدتك
-              </span>
-            </div>
+            )}
 
             {/* Guest User Message */}
             {!user && (
@@ -142,7 +167,7 @@ export const ConsultationsSection = () => {
                       سجّل الآن للوصول للمختصين
                     </h4>
                     <p className="text-sm text-muted-foreground mb-3">
-                      أنشئ حساباً مجانياً للتواصل مع أكثر من 30 مختصاً معتمداً وحجز جلساتك الخاصة.
+                      أنشئ حساباً مجانياً للتواصل مع المختصين المعتمدين وحجز جلساتك الخاصة.
                     </p>
                     <Button 
                       variant="wellness" 
