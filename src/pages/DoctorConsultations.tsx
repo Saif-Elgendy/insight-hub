@@ -204,31 +204,59 @@ const DoctorConsultations = () => {
     }
   };
 
+  const handleAddTimesToSlot = () => {
+    if (!newTime) return;
+    if (slotTimes.includes(newTime)) {
+      toast.error('هذا الوقت مضاف مسبقاً');
+      return;
+    }
+    setSlotTimes(prev => [...prev, newTime].sort());
+    setNewTime('');
+  };
+
+  const handleRemoveTime = (time: string) => {
+    setSlotTimes(prev => prev.filter(t => t !== time));
+  };
+
   const handleAddTimeSlot = async () => {
-    if (!slotForm.date || !slotForm.time || !specialistId) {
-      toast.error('الرجاء إدخال التاريخ والوقت');
+    if (!slotDate || slotTimes.length === 0 || !specialistId) {
+      toast.error('الرجاء إدخال التاريخ وإضافة وقت واحد على الأقل');
       return;
     }
 
     setSavingSlot(true);
     try {
+      const slotsToInsert: { specialist_id: string; slot_date: string; slot_time: string }[] = [];
+      
+      for (let week = 0; week < repeatWeeks; week++) {
+        const baseDate = new Date(slotDate);
+        baseDate.setDate(baseDate.getDate() + (week * 7));
+        const dateStr = baseDate.toISOString().split('T')[0];
+        
+        for (const time of slotTimes) {
+          slotsToInsert.push({
+            specialist_id: specialistId,
+            slot_date: dateStr,
+            slot_time: time,
+          });
+        }
+      }
+
       const { error } = await supabase
         .from('time_slots')
-        .insert({
-          specialist_id: specialistId,
-          slot_date: slotForm.date,
-          slot_time: slotForm.time,
-        });
+        .insert(slotsToInsert);
 
       if (error) throw error;
       
-      toast.success('تم إضافة الموعد بنجاح');
+      toast.success(`تم إضافة ${slotsToInsert.length} موعد بنجاح`);
       setSlotDialogOpen(false);
-      setSlotForm({ date: '', time: '' });
+      setSlotDate('');
+      setSlotTimes([]);
+      setRepeatWeeks(1);
       await fetchTimeSlots(specialistId);
     } catch (error) {
-      console.error('Error adding time slot:', error);
-      toast.error('حدث خطأ أثناء إضافة الموعد');
+      console.error('Error adding time slots:', error);
+      toast.error('حدث خطأ أثناء إضافة المواعيد');
     } finally {
       setSavingSlot(false);
     }
