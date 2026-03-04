@@ -33,9 +33,9 @@ const footerLinks = {
 
 const socialLinks = [
   { icon: Facebook, href: '#', label: 'Facebook' },
-  { icon: Twitter, href: '#', label: 'Twitter' },
+  { icon: Github, href: 'https://github.com/Saif-Elgendy', label: 'GitHub' },
   { icon: Instagram, href: '#', label: 'Instagram' },
-  { icon: Linkedin, href: '#', label: 'LinkedIn' },
+  { icon: Linkedin, href: 'https://www.linkedin.com/in/saif-mahmoud-elgendy', label: 'LinkedIn' },
 ];
 
 export const Footer = () => {
