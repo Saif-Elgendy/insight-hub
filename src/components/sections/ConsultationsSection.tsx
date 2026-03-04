@@ -14,21 +14,21 @@ const consultationTypes = [
     title: 'جلسة فيديو',
     description: 'جلسة تفاعلية وجهاً لوجه عبر الفيديو',
     duration: '60 دقيقة',
-    price: '200 ر.س',
+    price: '200 ج.م',
   },
   {
     icon: Phone,
     title: 'مكالمة صوتية',
     description: 'استشارة صوتية خاصة ومريحة',
     duration: '45 دقيقة',
-    price: '150 ر.س',
+    price: '150 ج.م',
   },
   {
     icon: MessageCircle,
     title: 'دردشة نصية',
     description: 'تواصل مكتوب مع المختص',
     duration: '30 دقيقة',
-    price: '100 ر.س',
+    price: '100 ج.م',
   },
 ];
 
