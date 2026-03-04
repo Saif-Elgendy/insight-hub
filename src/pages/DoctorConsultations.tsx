@@ -98,7 +98,10 @@ const DoctorConsultations = () => {
   
   // Time slots form
   const [slotDialogOpen, setSlotDialogOpen] = useState(false);
-  const [slotForm, setSlotForm] = useState({ date: '', time: '' });
+  const [slotDate, setSlotDate] = useState('');
+  const [slotTimes, setSlotTimes] = useState<string[]>([]);
+  const [newTime, setNewTime] = useState('');
+  const [repeatWeeks, setRepeatWeeks] = useState(1);
   const [savingSlot, setSavingSlot] = useState(false);
 
   useEffect(() => {
