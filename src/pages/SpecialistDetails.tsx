@@ -129,7 +129,6 @@ const SpecialistDetails = () => {
       .select('*')
       .eq('specialist_id', specialist.id)
       .eq('slot_date', formattedDate)
-      .eq('is_booked', false)
       .order('slot_time');
 
     if (error) {
