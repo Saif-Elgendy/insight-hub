@@ -387,8 +387,8 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                       mode="single"
                       selected={selectedDate}
                       onSelect={setSelectedDate}
-                      disabled={(date) => date < new Date() || date > new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
-                      initialFocus
+                       disabled={isPastDate}
+                       initialFocus
                       className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
