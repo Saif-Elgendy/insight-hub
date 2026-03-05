@@ -474,11 +474,11 @@ const StudentConsultations = () => {
                           {/* Price */}
                           <div className="flex items-center gap-2">
                             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                              ر.س
+                              ج.م
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground">السعر</p>
-                              <p className="font-medium text-foreground">{consultation.price} ر.س</p>
+                              <p className="font-medium text-foreground">{consultation.price} ج.م</p>
                             </div>
                           </div>
                         </div>

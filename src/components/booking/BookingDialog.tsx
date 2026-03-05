@@ -345,7 +345,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                         <h4 className="font-bold text-foreground">{type.label}</h4>
                         <p className="text-sm text-muted-foreground">{type.duration}</p>
                       </div>
-                      <div className="text-lg font-bold text-primary">{type.price} ر.س</div>
+                      <div className="text-lg font-bold text-primary">{type.price} ج.م</div>
                     </div>
                   </button>
                 ))}
@@ -474,7 +474,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                 </div>
                 <div className="flex justify-between border-t pt-3">
                   <span className="font-bold">المبلغ الإجمالي:</span>
-                  <span className="font-bold text-primary">{selectedType?.price} ر.س</span>
+                  <span className="font-bold text-primary">{selectedType?.price} ج.م</span>
                 </div>
               </div>
 

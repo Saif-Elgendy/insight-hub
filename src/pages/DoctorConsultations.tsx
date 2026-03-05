@@ -493,7 +493,7 @@ const DoctorConsultations = () => {
                               استشارة {typeConfig[consultation.consultation_type].label}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              {consultation.price} ر.س
+                              {consultation.price} ج.م
                             </p>
                           </div>
                         </div>
@@ -838,7 +838,7 @@ const DoctorConsultations = () => {
               )}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">السعر</span>
-                <span className="font-medium">{selectedConsultation.price} ر.س</span>
+                <span className="font-medium">{selectedConsultation.price} ج.م</span>
               </div>
 
               {/* Meeting Link Section - for video/audio */}

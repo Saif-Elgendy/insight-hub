@@ -366,7 +366,7 @@ const SpecialistDetails = () => {
                         </div>
                         <h4 className="font-bold text-foreground">{type.label}</h4>
                         <p className="text-sm text-muted-foreground mt-1">{type.duration}</p>
-                        <p className="text-lg font-bold text-primary mt-2">{type.price} ر.س</p>
+                        <p className="text-lg font-bold text-primary mt-2">{type.price} ج.م</p>
                       </div>
                     ))}
                   </div>
@@ -413,7 +413,7 @@ const SpecialistDetails = () => {
                             <type.icon className="w-6 h-6 mx-auto mb-2 text-primary" />
                             <h5 className="font-medium text-foreground text-sm">{type.label}</h5>
                             <p className="text-xs text-muted-foreground">{type.duration}</p>
-                            <p className="text-sm font-bold text-primary mt-1">{type.price} ر.س</p>
+                            <p className="text-sm font-bold text-primary mt-1">{type.price} ج.م</p>
                           </button>
                         ))}
                       </div>
@@ -592,7 +592,7 @@ const SpecialistDetails = () => {
                           </div>
                           <div className="flex justify-between border-t pt-2">
                             <span className="font-bold">المبلغ الإجمالي:</span>
-                            <span className="font-bold text-primary">{selectedType.price} ر.س</span>
+                            <span className="font-bold text-primary">{selectedType.price} ج.م</span>
                           </div>
                         </div>
 
