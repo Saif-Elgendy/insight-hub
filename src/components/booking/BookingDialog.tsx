@@ -533,7 +533,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               <div>
                 <label className="text-sm font-medium mb-2 block">ملاحظات (اختياري)</label>
                 <Textarea
-                  placeholder="أي ملاحظات تود مشاركتها مع المختص..."
+                  placeholder="أي ملاحظات تود مشاركتها مع المدرب..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value.slice(0, 1000))}
                   className="resize-none"

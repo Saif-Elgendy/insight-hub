@@ -555,7 +555,7 @@ const SpecialistDetails = () => {
                         )}
 
                         <Textarea
-                          placeholder="أي ملاحظات تود مشاركتها مع المختص... (اختياري)"
+                          placeholder="أي ملاحظات تود مشاركتها مع المدرب... (اختياري)"
                           value={notes}
                           onChange={(e) => setNotes(e.target.value.slice(0, 1000))}
                           className="resize-none"
