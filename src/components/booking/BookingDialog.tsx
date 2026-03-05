@@ -235,11 +235,11 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
 
         {/* Progress Steps */}
         <nav className="flex justify-center gap-2 mb-6" aria-label="مراحل الحجز">
-          {[
-            { num: 1, label: 'اختيار المختص' },
-            { num: 2, label: 'نوع الاستشارة' },
-            { num: 3, label: 'اختيار الموعد' },
-            { num: 4, label: 'تأكيد الحجز' }
+            {[
+              { num: 1, label: 'اختيار المدرب' },
+              { num: 2, label: 'نوع الاستشارة' },
+              { num: 3, label: 'اختيار الموعد' },
+              { num: 4, label: 'تأكيد الحجز' }
           ].map((s) => (
             <div
               key={s.num}
