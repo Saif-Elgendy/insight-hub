@@ -366,7 +366,7 @@ const SpecialistDetails = () => {
                         </div>
                         <h4 className="font-bold text-foreground">{type.label}</h4>
                         <p className="text-sm text-muted-foreground mt-1">{type.duration}</p>
-                        <p className="text-lg font-bold text-primary mt-2">{type.price} ر.س</p>
+                        <p className="text-lg font-bold text-primary mt-2">{type.price} ج.م</p>
                       </div>
                     ))}
                   </div>
