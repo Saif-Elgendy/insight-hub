@@ -455,7 +455,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               
               <div className="bg-muted/50 rounded-xl p-4 space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">المختص:</span>
+                  <span className="text-muted-foreground">المدرب:</span>
                   <span className="font-medium">{selectedSpecialist?.full_name}</span>
                 </div>
                 <div className="flex justify-between">
