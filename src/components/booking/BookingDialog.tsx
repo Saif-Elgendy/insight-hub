@@ -82,6 +82,16 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
   const [patientPhone, setPatientPhone] = useState('');
   const [communicationPlatform, setCommunicationPlatform] = useState('');
 
+  const isPastDate = (date: Date) => {
+    const selectedDay = new Date(date);
+    selectedDay.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return selectedDay < today;
+  };
+
   useEffect(() => {
     if (open) {
       fetchSpecialists();
@@ -103,7 +113,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
     
     if (error) {
       console.error('Error fetching specialists:', error);
-      toast.error('حدث خطأ في تحميل المختصين');
+      toast.error('حدث خطأ في تحميل المدربين');
     } else {
       setSpecialists(data || []);
     }
@@ -225,11 +235,11 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
 
         {/* Progress Steps */}
         <nav className="flex justify-center gap-2 mb-6" aria-label="مراحل الحجز">
-          {[
-            { num: 1, label: 'اختيار المختص' },
-            { num: 2, label: 'نوع الاستشارة' },
-            { num: 3, label: 'اختيار الموعد' },
-            { num: 4, label: 'تأكيد الحجز' }
+            {[
+              { num: 1, label: 'اختيار المدرب' },
+              { num: 2, label: 'نوع الاستشارة' },
+              { num: 3, label: 'اختيار الموعد' },
+              { num: 4, label: 'تأكيد الحجز' }
           ].map((s) => (
             <div
               key={s.num}
@@ -258,7 +268,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-4"
             >
-              <h3 className="text-lg font-semibold text-center mb-4">اختر المختص</h3>
+              <h3 className="text-lg font-semibold text-center mb-4">اختر المدرب</h3>
               <div className="grid gap-3">
                 {specialists.map((specialist) => (
                   <button
@@ -377,8 +387,8 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                       mode="single"
                       selected={selectedDate}
                       onSelect={setSelectedDate}
-                      disabled={(date) => date < new Date() || date > new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
-                      initialFocus
+                       disabled={isPastDate}
+                       initialFocus
                       className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
@@ -445,7 +455,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               
               <div className="bg-muted/50 rounded-xl p-4 space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">المختص:</span>
+                  <span className="text-muted-foreground">المدرب:</span>
                   <span className="font-medium">{selectedSpecialist?.full_name}</span>
                 </div>
                 <div className="flex justify-between">
@@ -516,14 +526,14 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">سيقوم الدكتور بإرسال رابط الاجتماع قبل الموعد</p>
+                  <p className="text-xs text-muted-foreground">سيقوم المدرب بإرسال رابط الاجتماع قبل الموعد</p>
                 </div>
               )}
 
               <div>
                 <label className="text-sm font-medium mb-2 block">ملاحظات (اختياري)</label>
                 <Textarea
-                  placeholder="أي ملاحظات تود مشاركتها مع المختص..."
+                  placeholder="أي ملاحظات تود مشاركتها مع المدرب..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value.slice(0, 1000))}
                   className="resize-none"
