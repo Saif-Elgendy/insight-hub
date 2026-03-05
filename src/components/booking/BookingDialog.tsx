@@ -113,7 +113,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
     
     if (error) {
       console.error('Error fetching specialists:', error);
-      toast.error('حدث خطأ في تحميل المختصين');
+      toast.error('حدث خطأ في تحميل المدربين');
     } else {
       setSpecialists(data || []);
     }
