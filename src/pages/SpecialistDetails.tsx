@@ -432,10 +432,7 @@ const SpecialistDetails = () => {
                           mode="single"
                           selected={selectedDate}
                           onSelect={setSelectedDate}
-                          disabled={(date) =>
-                            date < new Date() ||
-                            date > new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                          }
+                          disabled={isPastDate}
                           className="rounded-xl border"
                         />
                       </div>
