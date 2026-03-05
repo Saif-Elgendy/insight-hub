@@ -526,7 +526,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">سيقوم الدكتور بإرسال رابط الاجتماع قبل الموعد</p>
+                  <p className="text-xs text-muted-foreground">سيقوم المدرب بإرسال رابط الاجتماع قبل الموعد</p>
                 </div>
               )}
 
