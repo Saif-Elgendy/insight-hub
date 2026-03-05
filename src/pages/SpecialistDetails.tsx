@@ -413,7 +413,7 @@ const SpecialistDetails = () => {
                             <type.icon className="w-6 h-6 mx-auto mb-2 text-primary" />
                             <h5 className="font-medium text-foreground text-sm">{type.label}</h5>
                             <p className="text-xs text-muted-foreground">{type.duration}</p>
-                            <p className="text-sm font-bold text-primary mt-1">{type.price} ر.س</p>
+                            <p className="text-sm font-bold text-primary mt-1">{type.price} ج.م</p>
                           </button>
                         ))}
                       </div>
