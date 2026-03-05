@@ -493,7 +493,7 @@ const DoctorConsultations = () => {
                               استشارة {typeConfig[consultation.consultation_type].label}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              {consultation.price} ر.س
+                              {consultation.price} ج.م
                             </p>
                           </div>
                         </div>
