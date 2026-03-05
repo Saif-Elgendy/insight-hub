@@ -82,6 +82,16 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
   const [patientPhone, setPatientPhone] = useState('');
   const [communicationPlatform, setCommunicationPlatform] = useState('');
 
+  const isPastDate = (date: Date) => {
+    const selectedDay = new Date(date);
+    selectedDay.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return selectedDay < today;
+  };
+
   useEffect(() => {
     if (open) {
       fetchSpecialists();
