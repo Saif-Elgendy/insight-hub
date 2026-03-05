@@ -268,7 +268,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-4"
             >
-              <h3 className="text-lg font-semibold text-center mb-4">اختر المختص</h3>
+              <h3 className="text-lg font-semibold text-center mb-4">اختر المدرب</h3>
               <div className="grid gap-3">
                 {specialists.map((specialist) => (
                   <button
