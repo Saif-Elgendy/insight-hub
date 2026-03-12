@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Brain, User, LogOut, LayoutDashboard, Calendar, Shield } from 'lucide-react';
+import { Menu, X, Brain, User, LogOut, LayoutDashboard, Calendar, Shield, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
