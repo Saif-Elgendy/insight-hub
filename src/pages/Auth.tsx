@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, BookOpen, KeyRound } from 'lucide-react';
+import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, BookOpen, KeyRound, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
