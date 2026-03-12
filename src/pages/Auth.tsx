@@ -18,7 +18,7 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   fullName: z.string().trim().min(2, { message: 'الاسم يجب أن يكون حرفين على الأقل' }).max(100),
   confirmPassword: z.string(),
-  role: z.enum(['student', 'instructor']),
+  role: z.enum(['student', 'instructor', 'consultant']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'كلمتا المرور غير متطابقتين',
   path: ['confirmPassword'],
