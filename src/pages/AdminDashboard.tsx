@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ErrorLogsTable } from '@/components/admin/ErrorLogsTable';
 import { ActivityLogsTable } from '@/components/admin/ActivityLogsTable';
 import { InstructorRequestsTable } from '@/components/admin/InstructorRequestsTable';
+import { ConsultantRequestsTable } from '@/components/admin/ConsultantRequestsTable';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -61,12 +62,14 @@ const roleLabels: Record<AppRole, string> = {
   admin: 'مسؤول',
   instructor: 'مدرب',
   student: 'طالب',
+  consultant: 'استشاري',
 };
 
 const roleBadgeVariants: Record<AppRole, 'default' | 'secondary' | 'outline'> = {
   admin: 'default',
   instructor: 'secondary',
   student: 'outline',
+  consultant: 'secondary',
 };
 
 const AdminDashboard = () => {
@@ -211,6 +214,7 @@ const AdminDashboard = () => {
     total: users.length,
     admins: users.filter((u) => u.role === 'admin').length,
     instructors: users.filter((u) => u.role === 'instructor').length,
+    consultants: users.filter((u) => u.role === 'consultant').length,
     students: users.filter((u) => u.role === 'student').length,
   };
 
@@ -249,7 +253,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>إجمالي المستخدمين</CardDescription>
@@ -270,6 +274,12 @@ const AdminDashboard = () => {
               </Card>
               <Card>
                 <CardHeader className="pb-2">
+                  <CardDescription>الاستشاريين</CardDescription>
+                  <CardTitle className="text-3xl text-secondary-foreground">{stats.consultants}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
                   <CardDescription>الطلاب</CardDescription>
                   <CardTitle className="text-3xl text-muted-foreground">{stats.students}</CardTitle>
                 </CardHeader>
@@ -278,7 +288,7 @@ const AdminDashboard = () => {
 
             {/* Tabs for different sections */}
             <Tabs defaultValue="users" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4 max-w-lg">
+              <TabsList className="grid w-full grid-cols-5 max-w-2xl">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   المستخدمين
@@ -286,6 +296,10 @@ const AdminDashboard = () => {
                 <TabsTrigger value="instructor-requests" className="flex items-center gap-2">
                   <UserCheck className="w-4 h-4" />
                   طلبات المدربين
+                </TabsTrigger>
+                <TabsTrigger value="consultant-requests" className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  طلبات الاستشاريين
                 </TabsTrigger>
                 <TabsTrigger value="errors" className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
@@ -412,6 +426,13 @@ const AdminDashboard = () => {
                                           مسؤول
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
+                                          onClick={() => handleRoleChange(u.user_id, 'consultant')}
+                                          disabled={u.role === 'consultant'}
+                                        >
+                                          <UserCog className="w-4 h-4 ml-2" />
+                                          استشاري
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
                                           onClick={() => handleRoleChange(u.user_id, 'instructor')}
                                           disabled={u.role === 'instructor'}
                                         >
@@ -476,6 +497,10 @@ const AdminDashboard = () => {
 
               <TabsContent value="instructor-requests">
                 <InstructorRequestsTable />
+              </TabsContent>
+
+              <TabsContent value="consultant-requests">
+                <ConsultantRequestsTable />
               </TabsContent>
 
               <TabsContent value="errors">

@@ -18,6 +18,7 @@ import ResetPassword from "./pages/ResetPassword";
 import SpecialistDetails from "./pages/SpecialistDetails";
 import ResourceLibrary from "./pages/ResourceLibrary";
 import ConsultationChat from "./pages/ConsultationChat";
+import ConsultantDashboard from "./pages/ConsultantDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/my-consultations" element={<StudentConsultations />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/resources" element={<ResourceLibrary />} />
+            <Route path="/consultant-dashboard" element={<ConsultantDashboard />} />
             <Route path="/chat/:id" element={<ConsultationChat />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

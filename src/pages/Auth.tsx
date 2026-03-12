@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, BookOpen, KeyRound } from 'lucide-react';
+import { Brain, Mail, Lock, User, Eye, EyeOff, ArrowLeft, GraduationCap, BookOpen, KeyRound, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,7 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   fullName: z.string().trim().min(2, { message: 'الاسم يجب أن يكون حرفين على الأقل' }).max(100),
   confirmPassword: z.string(),
-  role: z.enum(['student', 'instructor']),
+  role: z.enum(['student', 'instructor', 'consultant']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'كلمتا المرور غير متطابقتين',
   path: ['confirmPassword'],
@@ -30,7 +30,7 @@ const AuthPage = () => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'student' | 'instructor'>('student');
+  const [selectedRole, setSelectedRole] = useState<'student' | 'instructor' | 'consultant'>('student');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -139,6 +139,11 @@ const AuthPage = () => {
           if (selectedRole === 'instructor') {
             toast.success('تم إنشاء حسابك بنجاح! 🎉', {
               description: 'تم تسجيلك كطالب مؤقتاً. سيتم مراجعة طلب المدرب من قبل المسؤول وترقيتك عند الموافقة.',
+              duration: 8000,
+            });
+          } else if (selectedRole === 'consultant') {
+            toast.success('تم إنشاء حسابك بنجاح! 🎉', {
+              description: 'تم تسجيلك كطالب مؤقتاً. يرجى إكمال بياناتك وشهاداتك من صفحة الملف الشخصي ليتم مراجعة طلبك كاستشاري.',
               duration: 8000,
             });
           } else {
@@ -280,7 +285,7 @@ const AuthPage = () => {
                     {/* Role Selection */}
                     <div className="space-y-3">
                       <Label>نوع الحساب</Label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-3 gap-3">
                         <button
                           type="button"
                           onClick={() => setSelectedRole('student')}
@@ -292,7 +297,7 @@ const AuthPage = () => {
                         >
                           <GraduationCap className="w-6 h-6" />
                           <span className="font-medium text-sm">طالب</span>
-                          <span className="text-[10px] text-muted-foreground">قراءة فقط</span>
+                          <span className="text-[10px] text-muted-foreground">تصفح وتعلم</span>
                         </button>
                         <button
                           type="button"
@@ -305,7 +310,20 @@ const AuthPage = () => {
                         >
                           <BookOpen className="w-6 h-6" />
                           <span className="font-medium text-sm">مدرب</span>
-                          <span className="text-[10px] text-muted-foreground">يتطلب موافقة المسؤول</span>
+                          <span className="text-[10px] text-muted-foreground">رفع كورسات</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRole('consultant')}
+                          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                            selectedRole === 'consultant'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <Stethoscope className="w-6 h-6" />
+                          <span className="font-medium text-sm">استشاري</span>
+                          <span className="text-[10px] text-muted-foreground">تقديم استشارات</span>
                         </button>
                       </div>
                     </div>

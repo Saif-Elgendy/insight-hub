@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Brain, User, LogOut, LayoutDashboard, Calendar, Shield } from 'lucide-react';
+import { Menu, X, Brain, User, LogOut, LayoutDashboard, Calendar, Shield, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -20,7 +20,7 @@ const navLinks = [
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
-  const { isAdmin, canManageCourses } = useUserRole();
+  const { isAdmin, canManageCourses, isConsultant } = useUserRole();
 
   const handleSignOut = async () => {
     await signOut();
@@ -86,6 +86,13 @@ export const Navbar = () => {
                     <Link to="/doctor-dashboard" className="gap-2">
                       <LayoutDashboard className="w-4 h-4" />
                       لوحة التحكم
+                    </Link>
+                  </Button>
+                ) : isConsultant ? (
+                  <Button variant="ghost" asChild>
+                    <Link to="/consultant-dashboard" className="gap-2">
+                      <Stethoscope className="w-4 h-4" />
+                      لوحة الاستشاري
                     </Link>
                   </Button>
                 ) : (
@@ -176,6 +183,13 @@ export const Navbar = () => {
                         <Link to="/doctor-dashboard" className="gap-2">
                           <LayoutDashboard className="w-4 h-4" />
                           لوحة التحكم
+                        </Link>
+                      </Button>
+                    ) : isConsultant ? (
+                      <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
+                        <Link to="/consultant-dashboard" className="gap-2">
+                          <Stethoscope className="w-4 h-4" />
+                          لوحة الاستشاري
                         </Link>
                       </Button>
                     ) : (

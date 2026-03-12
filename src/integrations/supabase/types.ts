@@ -94,6 +94,60 @@ export type Database = {
           },
         ]
       }
+      consultant_requests: {
+        Row: {
+          bio: string | null
+          certificates_urls: string[] | null
+          consultation_price: number | null
+          created_at: string
+          id: string
+          photo_url: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          specialty: string
+          status: string
+          updated_at: string
+          user_id: string
+          video_url: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          bio?: string | null
+          certificates_urls?: string[] | null
+          consultation_price?: number | null
+          created_at?: string
+          id?: string
+          photo_url?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialty: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          bio?: string | null
+          certificates_urls?: string[] | null
+          consultation_price?: number | null
+          created_at?: string
+          id?: string
+          photo_url?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialty?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
       consultations: {
         Row: {
           communication_platform: string | null
@@ -104,6 +158,7 @@ export type Database = {
           notes: string | null
           patient_phone: string | null
           price: number
+          rejection_reason: string | null
           specialist_id: string
           status: Database["public"]["Enums"]["consultation_status"]
           time_slot_id: string
@@ -119,6 +174,7 @@ export type Database = {
           notes?: string | null
           patient_phone?: string | null
           price: number
+          rejection_reason?: string | null
           specialist_id: string
           status?: Database["public"]["Enums"]["consultation_status"]
           time_slot_id: string
@@ -134,6 +190,7 @@ export type Database = {
           notes?: string | null
           patient_phone?: string | null
           price?: number
+          rejection_reason?: string | null
           specialist_id?: string
           status?: Database["public"]["Enums"]["consultation_status"]
           time_slot_id?: string
@@ -760,6 +817,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_expire_consultations: { Args: never; Returns: undefined }
       book_consultation:
         | {
             Args: {
@@ -832,7 +890,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "instructor" | "student"
+      app_role: "admin" | "instructor" | "student" | "consultant"
       consultation_status: "pending" | "confirmed" | "completed" | "cancelled"
       consultation_type: "video" | "audio" | "chat"
       enrollment_status: "pending" | "active" | "completed" | "cancelled"
@@ -963,7 +1021,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "instructor", "student"],
+      app_role: ["admin", "instructor", "student", "consultant"],
       consultation_status: ["pending", "confirmed", "completed", "cancelled"],
       consultation_type: ["video", "audio", "chat"],
       enrollment_status: ["pending", "active", "completed", "cancelled"],
