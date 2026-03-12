@@ -30,7 +30,7 @@ const AuthPage = () => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'student' | 'instructor'>('student');
+  const [selectedRole, setSelectedRole] = useState<'student' | 'instructor' | 'consultant'>('student');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
