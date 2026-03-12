@@ -499,6 +499,10 @@ const AdminDashboard = () => {
                 <InstructorRequestsTable />
               </TabsContent>
 
+              <TabsContent value="consultant-requests">
+                <ConsultantRequestsTable />
+              </TabsContent>
+
               <TabsContent value="errors">
                 <ErrorLogsTable />
               </TabsContent>
