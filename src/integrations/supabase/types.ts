@@ -763,6 +763,20 @@ export type Database = {
       book_consultation:
         | {
             Args: {
+              p_communication_platform?: string
+              p_consultation_type: Database["public"]["Enums"]["consultation_type"]
+              p_notes?: string
+              p_patient_phone?: string
+              p_price: number
+              p_slot_date?: string
+              p_slot_time?: string
+              p_specialist_id: string
+              p_time_slot_id?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
               p_consultation_type: Database["public"]["Enums"]["consultation_type"]
               p_notes?: string
               p_price: number
