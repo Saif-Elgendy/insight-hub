@@ -88,6 +88,13 @@ export const Navbar = () => {
                       لوحة التحكم
                     </Link>
                   </Button>
+                ) : isConsultant ? (
+                  <Button variant="ghost" asChild>
+                    <Link to="/consultant-dashboard" className="gap-2">
+                      <Stethoscope className="w-4 h-4" />
+                      لوحة الاستشاري
+                    </Link>
+                  </Button>
                 ) : (
                   <Button variant="ghost" asChild>
                     <Link to="/my-consultations" className="gap-2">
