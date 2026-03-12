@@ -426,6 +426,13 @@ const AdminDashboard = () => {
                                           مسؤول
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
+                                          onClick={() => handleRoleChange(u.user_id, 'consultant')}
+                                          disabled={u.role === 'consultant'}
+                                        >
+                                          <UserCog className="w-4 h-4 ml-2" />
+                                          استشاري
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
                                           onClick={() => handleRoleChange(u.user_id, 'instructor')}
                                           disabled={u.role === 'instructor'}
                                         >
