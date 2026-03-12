@@ -18,6 +18,7 @@ import ResetPassword from "./pages/ResetPassword";
 import SpecialistDetails from "./pages/SpecialistDetails";
 import ResourceLibrary from "./pages/ResourceLibrary";
 import ConsultationChat from "./pages/ConsultationChat";
+import ConsultantDashboard from "./pages/ConsultantDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
