@@ -61,12 +61,14 @@ const roleLabels: Record<AppRole, string> = {
   admin: 'مسؤول',
   instructor: 'مدرب',
   student: 'طالب',
+  consultant: 'استشاري',
 };
 
 const roleBadgeVariants: Record<AppRole, 'default' | 'secondary' | 'outline'> = {
   admin: 'default',
   instructor: 'secondary',
   student: 'outline',
+  consultant: 'secondary',
 };
 
 const AdminDashboard = () => {

@@ -44,7 +44,8 @@ export const useUserRole = () => {
   const isAdmin = role === 'admin';
   const isInstructor = role === 'instructor';
   const isStudent = role === 'student';
+  const isConsultant = role === 'consultant';
   const canManageCourses = isAdmin || isInstructor;
 
-  return { role, loading, isAdmin, isInstructor, isStudent, canManageCourses };
+  return { role, loading, isAdmin, isInstructor, isStudent, isConsultant, canManageCourses };
 };
