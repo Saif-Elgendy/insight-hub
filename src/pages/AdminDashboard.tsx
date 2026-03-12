@@ -288,7 +288,7 @@ const AdminDashboard = () => {
 
             {/* Tabs for different sections */}
             <Tabs defaultValue="users" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4 max-w-lg">
+              <TabsList className="grid w-full grid-cols-5 max-w-2xl">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   المستخدمين
@@ -296,6 +296,10 @@ const AdminDashboard = () => {
                 <TabsTrigger value="instructor-requests" className="flex items-center gap-2">
                   <UserCheck className="w-4 h-4" />
                   طلبات المدربين
+                </TabsTrigger>
+                <TabsTrigger value="consultant-requests" className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  طلبات الاستشاريين
                 </TabsTrigger>
                 <TabsTrigger value="errors" className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
