@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ErrorLogsTable } from '@/components/admin/ErrorLogsTable';
 import { ActivityLogsTable } from '@/components/admin/ActivityLogsTable';
 import { InstructorRequestsTable } from '@/components/admin/InstructorRequestsTable';
+import { ConsultantRequestsTable } from '@/components/admin/ConsultantRequestsTable';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
