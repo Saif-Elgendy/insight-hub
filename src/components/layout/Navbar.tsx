@@ -20,7 +20,7 @@ const navLinks = [
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
-  const { isAdmin, canManageCourses } = useUserRole();
+  const { isAdmin, canManageCourses, isConsultant } = useUserRole();
 
   const handleSignOut = async () => {
     await signOut();
