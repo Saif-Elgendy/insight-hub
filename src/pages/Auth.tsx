@@ -280,7 +280,7 @@ const AuthPage = () => {
                     {/* Role Selection */}
                     <div className="space-y-3">
                       <Label>نوع الحساب</Label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-3 gap-3">
                         <button
                           type="button"
                           onClick={() => setSelectedRole('student')}
@@ -292,7 +292,7 @@ const AuthPage = () => {
                         >
                           <GraduationCap className="w-6 h-6" />
                           <span className="font-medium text-sm">طالب</span>
-                          <span className="text-[10px] text-muted-foreground">قراءة فقط</span>
+                          <span className="text-[10px] text-muted-foreground">تصفح وتعلم</span>
                         </button>
                         <button
                           type="button"
@@ -305,7 +305,20 @@ const AuthPage = () => {
                         >
                           <BookOpen className="w-6 h-6" />
                           <span className="font-medium text-sm">مدرب</span>
-                          <span className="text-[10px] text-muted-foreground">يتطلب موافقة المسؤول</span>
+                          <span className="text-[10px] text-muted-foreground">رفع كورسات</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRole('consultant')}
+                          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                            selectedRole === 'consultant'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <Stethoscope className="w-6 h-6" />
+                          <span className="font-medium text-sm">استشاري</span>
+                          <span className="text-[10px] text-muted-foreground">تقديم استشارات</span>
                         </button>
                       </div>
                     </div>
