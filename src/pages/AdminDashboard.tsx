@@ -214,6 +214,7 @@ const AdminDashboard = () => {
     total: users.length,
     admins: users.filter((u) => u.role === 'admin').length,
     instructors: users.filter((u) => u.role === 'instructor').length,
+    consultants: users.filter((u) => u.role === 'consultant').length,
     students: users.filter((u) => u.role === 'student').length,
   };
 
