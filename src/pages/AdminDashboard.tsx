@@ -253,7 +253,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>إجمالي المستخدمين</CardDescription>
@@ -270,6 +270,12 @@ const AdminDashboard = () => {
                 <CardHeader className="pb-2">
                   <CardDescription>المدربين</CardDescription>
                   <CardTitle className="text-3xl text-secondary-foreground">{stats.instructors}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>الاستشاريين</CardDescription>
+                  <CardTitle className="text-3xl text-secondary-foreground">{stats.consultants}</CardTitle>
                 </CardHeader>
               </Card>
               <Card>
