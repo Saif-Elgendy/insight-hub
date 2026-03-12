@@ -124,6 +124,8 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
     if (!selectedSpecialist || !selectedDate) return;
     
     const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+    
+    // Fetch booked slots from DB
     const { data, error } = await supabase
       .from('time_slots')
       .select('*')
@@ -133,9 +135,25 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
     
     if (error) {
       console.error('Error fetching time slots:', error);
-    } else {
-      setTimeSlots(data || []);
     }
+
+    const bookedSlots = (data || []).filter(s => s.is_booked);
+    const bookedTimes = new Set(bookedSlots.map(s => s.slot_time));
+
+    // Generate default time slots from 9 AM to 9 PM
+    const defaultSlots: TimeSlot[] = [];
+    for (let hour = 9; hour <= 21; hour++) {
+      const time = `${hour.toString().padStart(2, '0')}:00`;
+      const existingSlot = (data || []).find(s => s.slot_time === time);
+      defaultSlots.push({
+        id: existingSlot?.id || `generated-${hour}`,
+        slot_date: formattedDate,
+        slot_time: time,
+        is_booked: bookedTimes.has(time),
+      });
+    }
+    
+    setTimeSlots(defaultSlots);
   };
 
   const handleBooking = async () => {
