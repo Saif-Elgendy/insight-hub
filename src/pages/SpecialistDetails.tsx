@@ -168,15 +168,26 @@ const SpecialistDetails = () => {
 
     setBooking(true);
 
-    const { error } = await supabase.rpc('book_consultation', {
-      p_time_slot_id: selectedSlot.id,
+    const isGeneratedSlot = selectedSlot.id.startsWith('generated-');
+    const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
+
+    const rpcParams: Record<string, unknown> = {
       p_specialist_id: specialist.id,
       p_consultation_type: selectedType.value,
       p_price: selectedType.price,
       p_notes: notes || null,
       p_patient_phone: (selectedType.value === 'audio' && communicationPlatform === 'phone') ? patientPhone.trim() : null,
       p_communication_platform: (selectedType.value === 'audio' || selectedType.value === 'video') ? communicationPlatform || null : null,
-    });
+    };
+
+    if (isGeneratedSlot) {
+      rpcParams.p_slot_date = formattedDate;
+      rpcParams.p_slot_time = selectedSlot.slot_time;
+    } else {
+      rpcParams.p_time_slot_id = selectedSlot.id;
+    }
+
+    const { error } = await supabase.rpc('book_consultation', rpcParams as any);
 
     if (error) {
       console.error('Error creating consultation:', error);
