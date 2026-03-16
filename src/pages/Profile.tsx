@@ -48,6 +48,21 @@ interface InstructorRequest {
   reviewed_at: string | null;
 }
 
+interface ConsultantRequest {
+  id: string;
+  user_id: string;
+  specialty: string;
+  bio: string | null;
+  consultation_price: number | null;
+  years_experience: number | null;
+  photo_url: string | null;
+  video_url: string | null;
+  certificates_urls: string[] | null;
+  status: string;
+  rejection_reason: string | null;
+  created_at: string;
+}
+
 const ProfilePage = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { isStudent, isInstructor, isAdmin } = useUserRole();
