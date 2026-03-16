@@ -65,7 +65,7 @@ interface ConsultantRequest {
 
 const ProfilePage = () => {
   const { user, signOut, loading: authLoading } = useAuth();
-  const { isStudent, isInstructor, isAdmin } = useUserRole();
+  const { isStudent, isInstructor, isAdmin, isConsultant } = useUserRole();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
