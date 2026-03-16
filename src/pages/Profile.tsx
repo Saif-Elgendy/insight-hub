@@ -868,16 +868,222 @@ const ProfilePage = () => {
                     )}
                   </div>
                 )}
+                {/* Consultant Profile Section */}
+                {isConsultant && consultantRequest && (
+                  <div className="pt-4 border-t border-border">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <Stethoscope className="w-4 h-4" />
+                      بيانات الاستشاري
+                    </h3>
+
+                    {/* Status Badge */}
+                    <div className="mb-4">
+                      {consultantRequest.status === 'pending' && (
+                        <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/20">
+                          <Clock3 className="w-3 h-3 ml-1" />
+                          قيد المراجعة
+                        </Badge>
+                      )}
+                      {consultantRequest.status === 'approved' && (
+                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
+                          <CheckCircle2 className="w-3 h-3 ml-1" />
+                          تمت الموافقة
+                        </Badge>
+                      )}
+                      {consultantRequest.status === 'rejected' && (
+                        <div className="space-y-2">
+                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                            <XCircle className="w-3 h-3 ml-1" />
+                            مرفوض
+                          </Badge>
+                          {consultantRequest.rejection_reason && (
+                            <p className="text-sm text-destructive">{consultantRequest.rejection_reason}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Specialty */}
+                      <div className="space-y-2">
+                        <Label>التخصص *</Label>
+                        <Input
+                          value={consultantFormData.specialty}
+                          onChange={(e) => setConsultantFormData({ ...consultantFormData, specialty: e.target.value })}
+                          placeholder="مثال: طب نفسي، إرشاد أسري"
+                        />
+                      </div>
+
+                      {/* Bio */}
+                      <div className="space-y-2">
+                        <Label>نبذة مهنية</Label>
+                        <Textarea
+                          value={consultantFormData.bio}
+                          onChange={(e) => setConsultantFormData({ ...consultantFormData, bio: e.target.value })}
+                          placeholder="اكتب نبذة عن خبرتك وتخصصك..."
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Price & Experience */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3" />
+                            سعر الاستشارة (ج.م)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={consultantFormData.consultation_price}
+                            onChange={(e) => setConsultantFormData({ ...consultantFormData, consultation_price: e.target.value })}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1">
+                            <Briefcase className="w-3 h-3" />
+                            سنوات الخبرة
+                          </Label>
+                          <Input
+                            type="number"
+                            value={consultantFormData.years_experience}
+                            onChange={(e) => setConsultantFormData({ ...consultantFormData, years_experience: e.target.value })}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Save Button */}
+                      <Button
+                        onClick={handleSaveConsultantData}
+                        disabled={savingConsultant}
+                        className="w-full gap-2"
+                      >
+                        {savingConsultant ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {savingConsultant ? 'جاري الحفظ...' : 'حفظ البيانات'}
+                      </Button>
+
+                      {/* Photo Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <Camera className="w-3 h-3" />
+                          صورة الاستشاري
+                        </Label>
+                        {consultantRequest.photo_url ? (
+                          <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-border">
+                            <img src={consultantRequest.photo_url} alt="صورة" className="w-full h-full object-cover" />
+                          </div>
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => photoInputRef.current?.click()}
+                          disabled={uploadingPhoto}
+                          className="gap-2"
+                        >
+                          {uploadingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {consultantRequest.photo_url ? 'تغيير الصورة' : 'رفع صورة'}
+                        </Button>
+                        <input
+                          ref={photoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 5 * 1024 * 1024) { toast.error('الحد الأقصى 5 ميجابايت'); return; }
+                              handleConsultantFileUpload(file, 'photo');
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* Video Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <Video className="w-3 h-3" />
+                          فيديو تعريفي
+                        </Label>
+                        {consultantRequest.video_url ? (
+                          <video src={consultantRequest.video_url} controls className="w-full rounded-xl max-h-48" />
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => videoInputRef.current?.click()}
+                          disabled={uploadingVideo}
+                          className="gap-2"
+                        >
+                          {uploadingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {consultantRequest.video_url ? 'تغيير الفيديو' : 'رفع فيديو'}
+                        </Button>
+                        <input
+                          ref={videoInputRef}
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 50 * 1024 * 1024) { toast.error('الحد الأقصى 50 ميجابايت'); return; }
+                              handleConsultantFileUpload(file, 'video');
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* Certificates Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <FileText className="w-3 h-3" />
+                          الشهادات والمؤهلات
+                        </Label>
+                        {(consultantRequest.certificates_urls || []).length > 0 && (
+                          <div className="space-y-2">
+                            {(consultantRequest.certificates_urls || []).map((url, idx) => (
+                              <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                                <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate flex-1">
+                                  شهادة {idx + 1}
+                                </a>
+                                <button onClick={() => handleRemoveCertificate(url)} className="text-destructive hover:text-destructive/80">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => certInputRef.current?.click()}
+                          disabled={uploadingCert}
+                          className="gap-2"
+                        >
+                          {uploadingCert ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          رفع شهادة
+                        </Button>
+                        <input
+                          ref={certInputRef}
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 10 * 1024 * 1024) { toast.error('الحد الأقصى 10 ميجابايت'); return; }
+                              handleConsultantFileUpload(file, 'certificate');
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
-
-          {/* Courses Progress */}
-          <div className="lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
             >
               <h2 className="text-xl font-bold text-foreground mb-6">كورساتي</h2>
 
