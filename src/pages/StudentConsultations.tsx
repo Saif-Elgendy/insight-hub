@@ -203,10 +203,35 @@ const StudentConsultations = () => {
     }
   };
 
+  const canCancelConsultation = (consultation: Consultation): { allowed: boolean; message: string } => {
+    if (consultation.status !== 'pending' && consultation.status !== 'confirmed') {
+      return { allowed: false, message: '' };
+    }
+
+    if (!consultation.time_slot?.slot_date || !consultation.time_slot?.slot_time) {
+      // If no slot info, allow cancellation for pending only
+      return consultation.status === 'pending' 
+        ? { allowed: true, message: '' } 
+        : { allowed: false, message: 'لا يمكن إلغاء هذه الاستشارة' };
+    }
+
+    const slotDateTime = new Date(`${consultation.time_slot.slot_date}T${consultation.time_slot.slot_time}`);
+    const now = new Date();
+    const hoursUntilSlot = (slotDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursUntilSlot < 24) {
+      return { 
+        allowed: false, 
+        message: 'لا يمكن إلغاء الاستشارة قبل أقل من 24 ساعة من الموعد. يرجى التواصل مع الاستشاري مباشرة.'
+      };
+    }
+
+    return { allowed: true, message: '' };
+  };
+
   const handleCancelConsultation = async (consultationId: string, timeSlotId: string) => {
     setCancellingId(consultationId);
     try {
-      // Update consultation status to cancelled
       const { error: consultationError } = await supabase
         .from('consultations')
         .update({ status: 'cancelled' })
@@ -214,22 +239,18 @@ const StudentConsultations = () => {
 
       if (consultationError) throw consultationError;
 
-      // Free up the time slot
       const { error: slotError } = await supabase
         .from('time_slots')
         .update({ is_booked: false })
         .eq('id', timeSlotId);
 
-      if (slotError) {
-        console.error('Error freeing time slot:', slotError);
-      }
+      if (slotError) console.error('Error freeing time slot:', slotError);
 
       toast({
         title: 'تم إلغاء الاستشارة',
-        description: 'تم إلغاء الاستشارة بنجاح',
+        description: 'تم إلغاء الاستشارة بنجاح وتحرير الموعد',
       });
 
-      // Refresh consultations
       fetchConsultations();
     } catch (error) {
       console.error('Error cancelling consultation:', error);
@@ -505,43 +526,51 @@ const StudentConsultations = () => {
                             </Button>
                           )}
 
-                          {/* Cancel Button - Only for pending consultations */}
-                          {consultation.status === 'pending' && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="destructive" 
-                                  size="sm"
-                                  className="mt-1"
-                                  disabled={cancellingId === consultation.id}
-                                >
-                                  {cancellingId === consultation.id ? (
-                                    <Loader2 className="w-4 h-4 animate-spin ml-1" />
-                                  ) : (
-                                    <XCircle className="w-4 h-4 ml-1" />
-                                  )}
-                                  إلغاء الاستشارة
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent dir="rtl">
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>تأكيد إلغاء الاستشارة</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    هل أنت متأكد من إلغاء هذه الاستشارة؟ لا يمكن التراجع عن هذا الإجراء.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter className="flex-row-reverse gap-2">
-                                  <AlertDialogCancel>تراجع</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleCancelConsultation(consultation.id, consultation.time_slot_id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          {/* Cancel Button - for pending/confirmed with 24h rule */}
+                          {(consultation.status === 'pending' || consultation.status === 'confirmed') && (() => {
+                            const { allowed, message } = canCancelConsultation(consultation);
+                            return allowed ? (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    className="mt-1"
+                                    disabled={cancellingId === consultation.id}
                                   >
-                                    نعم، إلغاء الاستشارة
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+                                    {cancellingId === consultation.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin ml-1" />
+                                    ) : (
+                                      <XCircle className="w-4 h-4 ml-1" />
+                                    )}
+                                    إلغاء الاستشارة
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent dir="rtl">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>تأكيد إلغاء الاستشارة</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      هل أنت متأكد من إلغاء هذه الاستشارة؟ لا يمكن التراجع عن هذا الإجراء.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter className="flex-row-reverse gap-2">
+                                    <AlertDialogCancel>تراجع</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleCancelConsultation(consultation.id, consultation.time_slot_id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      نعم، إلغاء الاستشارة
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            ) : message ? (
+                              <div className="mt-1 flex items-start gap-1.5 p-2 rounded-lg bg-amber-500/10 max-w-[250px]">
+                                <Clock3 className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                <p className="text-xs text-amber-700 dark:text-amber-400">{message}</p>
+                              </div>
+                            ) : null;
+                          })()}
                           
                           {/* Review Button - Only for completed consultations */}
                           {consultation.status === 'completed' && (
