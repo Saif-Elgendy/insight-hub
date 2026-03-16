@@ -1083,7 +1083,13 @@ const ProfilePage = () => {
                 )}
               </div>
             </motion.div>
-          </div>
+
+          {/* Courses Progress */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
             >
               <h2 className="text-xl font-bold text-foreground mb-6">كورساتي</h2>
 
