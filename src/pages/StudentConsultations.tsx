@@ -203,10 +203,35 @@ const StudentConsultations = () => {
     }
   };
 
+  const canCancelConsultation = (consultation: Consultation): { allowed: boolean; message: string } => {
+    if (consultation.status !== 'pending' && consultation.status !== 'confirmed') {
+      return { allowed: false, message: '' };
+    }
+
+    if (!consultation.time_slot?.slot_date || !consultation.time_slot?.slot_time) {
+      // If no slot info, allow cancellation for pending only
+      return consultation.status === 'pending' 
+        ? { allowed: true, message: '' } 
+        : { allowed: false, message: 'لا يمكن إلغاء هذه الاستشارة' };
+    }
+
+    const slotDateTime = new Date(`${consultation.time_slot.slot_date}T${consultation.time_slot.slot_time}`);
+    const now = new Date();
+    const hoursUntilSlot = (slotDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursUntilSlot < 24) {
+      return { 
+        allowed: false, 
+        message: 'لا يمكن إلغاء الاستشارة قبل أقل من 24 ساعة من الموعد. يرجى التواصل مع الاستشاري مباشرة.'
+      };
+    }
+
+    return { allowed: true, message: '' };
+  };
+
   const handleCancelConsultation = async (consultationId: string, timeSlotId: string) => {
     setCancellingId(consultationId);
     try {
-      // Update consultation status to cancelled
       const { error: consultationError } = await supabase
         .from('consultations')
         .update({ status: 'cancelled' })
@@ -214,22 +239,18 @@ const StudentConsultations = () => {
 
       if (consultationError) throw consultationError;
 
-      // Free up the time slot
       const { error: slotError } = await supabase
         .from('time_slots')
         .update({ is_booked: false })
         .eq('id', timeSlotId);
 
-      if (slotError) {
-        console.error('Error freeing time slot:', slotError);
-      }
+      if (slotError) console.error('Error freeing time slot:', slotError);
 
       toast({
         title: 'تم إلغاء الاستشارة',
-        description: 'تم إلغاء الاستشارة بنجاح',
+        description: 'تم إلغاء الاستشارة بنجاح وتحرير الموعد',
       });
 
-      // Refresh consultations
       fetchConsultations();
     } catch (error) {
       console.error('Error cancelling consultation:', error);
