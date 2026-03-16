@@ -166,6 +166,115 @@ const ProfilePage = () => {
     }
   };
 
+  const fetchConsultantRequest = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('consultant_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setConsultantRequest(data as ConsultantRequest);
+        setConsultantFormData({
+          specialty: data.specialty || '',
+          bio: data.bio || '',
+          consultation_price: data.consultation_price?.toString() || '',
+          years_experience: data.years_experience?.toString() || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching consultant request:', error);
+    }
+  };
+
+  const handleSaveConsultantData = async () => {
+    if (!user || !consultantRequest) return;
+    if (!consultantFormData.specialty.trim()) {
+      toast.error('يرجى إدخال التخصص');
+      return;
+    }
+    setSavingConsultant(true);
+    try {
+      const { error } = await supabase
+        .from('consultant_requests')
+        .update({
+          specialty: consultantFormData.specialty.trim(),
+          bio: consultantFormData.bio.trim() || null,
+          consultation_price: parseInt(consultantFormData.consultation_price) || 0,
+          years_experience: parseInt(consultantFormData.years_experience) || 0,
+        })
+        .eq('id', consultantRequest.id);
+
+      if (error) throw error;
+      toast.success('تم حفظ البيانات بنجاح');
+      fetchConsultantRequest();
+    } catch (error) {
+      console.error('Error saving consultant data:', error);
+      toast.error('حدث خطأ أثناء حفظ البيانات');
+    } finally {
+      setSavingConsultant(false);
+    }
+  };
+
+  const handleConsultantFileUpload = async (
+    file: File,
+    type: 'photo' | 'video' | 'certificate'
+  ) => {
+    if (!user || !consultantRequest) return;
+
+    const setUploading = type === 'photo' ? setUploadingPhoto : type === 'video' ? setUploadingVideo : setUploadingCert;
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${type}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('consultant-documents')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('consultant-documents')
+        .getPublicUrl(fileName);
+
+      if (type === 'photo') {
+        await supabase.from('consultant_requests').update({ photo_url: publicUrl }).eq('id', consultantRequest.id);
+      } else if (type === 'video') {
+        await supabase.from('consultant_requests').update({ video_url: publicUrl }).eq('id', consultantRequest.id);
+      } else {
+        const currentCerts = consultantRequest.certificates_urls || [];
+        await supabase.from('consultant_requests').update({ certificates_urls: [...currentCerts, publicUrl] }).eq('id', consultantRequest.id);
+      }
+
+      toast.success(type === 'photo' ? 'تم رفع الصورة' : type === 'video' ? 'تم رفع الفيديو' : 'تم رفع الشهادة');
+      fetchConsultantRequest();
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('حدث خطأ أثناء رفع الملف');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveCertificate = async (url: string) => {
+    if (!consultantRequest) return;
+    try {
+      const updatedCerts = (consultantRequest.certificates_urls || []).filter(c => c !== url);
+      await supabase.from('consultant_requests').update({ certificates_urls: updatedCerts }).eq('id', consultantRequest.id);
+      toast.success('تم حذف الشهادة');
+      fetchConsultantRequest();
+    } catch (error) {
+      toast.error('حدث خطأ');
+    }
+  };
+
   const fetchProfile = async () => {
     try {
       const { data, error } = await supabase
