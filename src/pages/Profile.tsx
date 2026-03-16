@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { 
   Brain, User, Mail, Phone, Edit2, Save, LogOut, 
   BookOpen, Award, Clock, ChevronLeft, ArrowLeft, Lock, Eye, EyeOff, Camera, Loader2, Trash2,
-  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3, Globe, LockKeyhole
+  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3, Globe, LockKeyhole,
+  Stethoscope, Upload, FileText, Video, DollarSign, Briefcase, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/useUserRole';
+import { Badge } from '@/components/ui/badge';
 
 interface Profile {
   id: string;
