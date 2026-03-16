@@ -1083,6 +1083,7 @@ const ProfilePage = () => {
                 )}
               </div>
             </motion.div>
+          </div>
 
           {/* Courses Progress */}
           <div className="lg:col-span-2">
