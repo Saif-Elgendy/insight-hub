@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { 
   Brain, User, Mail, Phone, Edit2, Save, LogOut, 
   BookOpen, Award, Clock, ChevronLeft, ArrowLeft, Lock, Eye, EyeOff, Camera, Loader2, Trash2,
-  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3, Globe, LockKeyhole
+  GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock3, Globe, LockKeyhole,
+  Stethoscope, Upload, FileText, Video, DollarSign, Briefcase, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/useUserRole';
+import { Badge } from '@/components/ui/badge';
 
 interface Profile {
   id: string;
@@ -46,9 +48,24 @@ interface InstructorRequest {
   reviewed_at: string | null;
 }
 
+interface ConsultantRequest {
+  id: string;
+  user_id: string;
+  specialty: string;
+  bio: string | null;
+  consultation_price: number | null;
+  years_experience: number | null;
+  photo_url: string | null;
+  video_url: string | null;
+  certificates_urls: string[] | null;
+  status: string;
+  rejection_reason: string | null;
+  created_at: string;
+}
+
 const ProfilePage = () => {
   const { user, signOut, loading: authLoading } = useAuth();
-  const { isStudent, isInstructor, isAdmin } = useUserRole();
+  const { isStudent, isInstructor, isAdmin, isConsultant } = useUserRole();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
@@ -82,6 +99,22 @@ const ProfilePage = () => {
   const [instructorRequest, setInstructorRequest] = useState<InstructorRequest | null>(null);
   const [resubmitting, setResubmitting] = useState(false);
 
+  // Consultant request state
+  const [consultantRequest, setConsultantRequest] = useState<ConsultantRequest | null>(null);
+  const [consultantFormData, setConsultantFormData] = useState({
+    specialty: '',
+    bio: '',
+    consultation_price: '',
+    years_experience: '',
+  });
+  const [savingConsultant, setSavingConsultant] = useState(false);
+  const [uploadingCert, setUploadingCert] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const certInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
@@ -93,6 +126,7 @@ const ProfilePage = () => {
       fetchProfile();
       fetchCourseProgress();
       fetchInstructorRequest();
+      fetchConsultantRequest();
     }
   }, [user]);
 
@@ -129,6 +163,115 @@ const ProfilePage = () => {
       toast.error('حدث خطأ أثناء إعادة إرسال الطلب');
     } finally {
       setResubmitting(false);
+    }
+  };
+
+  const fetchConsultantRequest = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('consultant_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setConsultantRequest(data as ConsultantRequest);
+        setConsultantFormData({
+          specialty: data.specialty || '',
+          bio: data.bio || '',
+          consultation_price: data.consultation_price?.toString() || '',
+          years_experience: data.years_experience?.toString() || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching consultant request:', error);
+    }
+  };
+
+  const handleSaveConsultantData = async () => {
+    if (!user || !consultantRequest) return;
+    if (!consultantFormData.specialty.trim()) {
+      toast.error('يرجى إدخال التخصص');
+      return;
+    }
+    setSavingConsultant(true);
+    try {
+      const { error } = await supabase
+        .from('consultant_requests')
+        .update({
+          specialty: consultantFormData.specialty.trim(),
+          bio: consultantFormData.bio.trim() || null,
+          consultation_price: parseInt(consultantFormData.consultation_price) || 0,
+          years_experience: parseInt(consultantFormData.years_experience) || 0,
+        })
+        .eq('id', consultantRequest.id);
+
+      if (error) throw error;
+      toast.success('تم حفظ البيانات بنجاح');
+      fetchConsultantRequest();
+    } catch (error) {
+      console.error('Error saving consultant data:', error);
+      toast.error('حدث خطأ أثناء حفظ البيانات');
+    } finally {
+      setSavingConsultant(false);
+    }
+  };
+
+  const handleConsultantFileUpload = async (
+    file: File,
+    type: 'photo' | 'video' | 'certificate'
+  ) => {
+    if (!user || !consultantRequest) return;
+
+    const setUploading = type === 'photo' ? setUploadingPhoto : type === 'video' ? setUploadingVideo : setUploadingCert;
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${type}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('consultant-documents')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('consultant-documents')
+        .getPublicUrl(fileName);
+
+      if (type === 'photo') {
+        await supabase.from('consultant_requests').update({ photo_url: publicUrl }).eq('id', consultantRequest.id);
+      } else if (type === 'video') {
+        await supabase.from('consultant_requests').update({ video_url: publicUrl }).eq('id', consultantRequest.id);
+      } else {
+        const currentCerts = consultantRequest.certificates_urls || [];
+        await supabase.from('consultant_requests').update({ certificates_urls: [...currentCerts, publicUrl] }).eq('id', consultantRequest.id);
+      }
+
+      toast.success(type === 'photo' ? 'تم رفع الصورة' : type === 'video' ? 'تم رفع الفيديو' : 'تم رفع الشهادة');
+      fetchConsultantRequest();
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('حدث خطأ أثناء رفع الملف');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveCertificate = async (url: string) => {
+    if (!consultantRequest) return;
+    try {
+      const updatedCerts = (consultantRequest.certificates_urls || []).filter(c => c !== url);
+      await supabase.from('consultant_requests').update({ certificates_urls: updatedCerts }).eq('id', consultantRequest.id);
+      toast.success('تم حذف الشهادة');
+      fetchConsultantRequest();
+    } catch (error) {
+      toast.error('حدث خطأ');
     }
   };
 
@@ -723,6 +866,219 @@ const ProfilePage = () => {
                         </Button>
                       </div>
                     )}
+                  </div>
+                )}
+                {/* Consultant Profile Section */}
+                {(isConsultant || consultantRequest) && consultantRequest && (
+                  <div className="pt-4 border-t border-border">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <Stethoscope className="w-4 h-4" />
+                      بيانات الاستشاري
+                    </h3>
+
+                    {/* Status Badge */}
+                    <div className="mb-4">
+                      {consultantRequest.status === 'pending' && (
+                        <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/20">
+                          <Clock3 className="w-3 h-3 ml-1" />
+                          قيد المراجعة
+                        </Badge>
+                      )}
+                      {consultantRequest.status === 'approved' && (
+                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
+                          <CheckCircle2 className="w-3 h-3 ml-1" />
+                          تمت الموافقة
+                        </Badge>
+                      )}
+                      {consultantRequest.status === 'rejected' && (
+                        <div className="space-y-2">
+                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                            <XCircle className="w-3 h-3 ml-1" />
+                            مرفوض
+                          </Badge>
+                          {consultantRequest.rejection_reason && (
+                            <p className="text-sm text-destructive">{consultantRequest.rejection_reason}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Specialty */}
+                      <div className="space-y-2">
+                        <Label>التخصص *</Label>
+                        <Input
+                          value={consultantFormData.specialty}
+                          onChange={(e) => setConsultantFormData({ ...consultantFormData, specialty: e.target.value })}
+                          placeholder="مثال: طب نفسي، إرشاد أسري"
+                        />
+                      </div>
+
+                      {/* Bio */}
+                      <div className="space-y-2">
+                        <Label>نبذة مهنية</Label>
+                        <Textarea
+                          value={consultantFormData.bio}
+                          onChange={(e) => setConsultantFormData({ ...consultantFormData, bio: e.target.value })}
+                          placeholder="اكتب نبذة عن خبرتك وتخصصك..."
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Price & Experience */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3" />
+                            سعر الاستشارة (ج.م)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={consultantFormData.consultation_price}
+                            onChange={(e) => setConsultantFormData({ ...consultantFormData, consultation_price: e.target.value })}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1">
+                            <Briefcase className="w-3 h-3" />
+                            سنوات الخبرة
+                          </Label>
+                          <Input
+                            type="number"
+                            value={consultantFormData.years_experience}
+                            onChange={(e) => setConsultantFormData({ ...consultantFormData, years_experience: e.target.value })}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Save Button */}
+                      <Button
+                        onClick={handleSaveConsultantData}
+                        disabled={savingConsultant}
+                        className="w-full gap-2"
+                      >
+                        {savingConsultant ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {savingConsultant ? 'جاري الحفظ...' : 'حفظ البيانات'}
+                      </Button>
+
+                      {/* Photo Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <Camera className="w-3 h-3" />
+                          صورة الاستشاري
+                        </Label>
+                        {consultantRequest.photo_url ? (
+                          <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-border">
+                            <img src={consultantRequest.photo_url} alt="صورة" className="w-full h-full object-cover" />
+                          </div>
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => photoInputRef.current?.click()}
+                          disabled={uploadingPhoto}
+                          className="gap-2"
+                        >
+                          {uploadingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {consultantRequest.photo_url ? 'تغيير الصورة' : 'رفع صورة'}
+                        </Button>
+                        <input
+                          ref={photoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 5 * 1024 * 1024) { toast.error('الحد الأقصى 5 ميجابايت'); return; }
+                              handleConsultantFileUpload(file, 'photo');
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* Video Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <Video className="w-3 h-3" />
+                          فيديو تعريفي
+                        </Label>
+                        {consultantRequest.video_url ? (
+                          <video src={consultantRequest.video_url} controls className="w-full rounded-xl max-h-48" />
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => videoInputRef.current?.click()}
+                          disabled={uploadingVideo}
+                          className="gap-2"
+                        >
+                          {uploadingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {consultantRequest.video_url ? 'تغيير الفيديو' : 'رفع فيديو'}
+                        </Button>
+                        <input
+                          ref={videoInputRef}
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 50 * 1024 * 1024) { toast.error('الحد الأقصى 50 ميجابايت'); return; }
+                              handleConsultantFileUpload(file, 'video');
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* Certificates Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <FileText className="w-3 h-3" />
+                          الشهادات والمؤهلات
+                        </Label>
+                        {(consultantRequest.certificates_urls || []).length > 0 && (
+                          <div className="space-y-2">
+                            {(consultantRequest.certificates_urls || []).map((url, idx) => (
+                              <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                                <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate flex-1">
+                                  شهادة {idx + 1}
+                                </a>
+                                <button onClick={() => handleRemoveCertificate(url)} className="text-destructive hover:text-destructive/80">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => certInputRef.current?.click()}
+                          disabled={uploadingCert}
+                          className="gap-2"
+                        >
+                          {uploadingCert ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          رفع شهادة
+                        </Button>
+                        <input
+                          ref={certInputRef}
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 10 * 1024 * 1024) { toast.error('الحد الأقصى 10 ميجابايت'); return; }
+                              handleConsultantFileUpload(file, 'certificate');
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
