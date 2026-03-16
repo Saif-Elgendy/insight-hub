@@ -869,7 +869,7 @@ const ProfilePage = () => {
                   </div>
                 )}
                 {/* Consultant Profile Section */}
-                {isConsultant && consultantRequest && (
+                {(isConsultant || consultantRequest) && consultantRequest && (
                   <div className="pt-4 border-t border-border">
                     <h3 className="font-semibold text-foreground flex items-center gap-2 mb-3">
                       <Stethoscope className="w-4 h-4" />
