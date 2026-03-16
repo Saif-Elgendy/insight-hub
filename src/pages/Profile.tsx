@@ -126,6 +126,7 @@ const ProfilePage = () => {
       fetchProfile();
       fetchCourseProgress();
       fetchInstructorRequest();
+      fetchConsultantRequest();
     }
   }, [user]);
 
