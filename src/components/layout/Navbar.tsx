@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
+import { MessagesBadge } from '@/components/layout/MessagesBadge';
 
 const navLinks = [
   { label: 'الرئيسية', href: '/', isRoute: true },
