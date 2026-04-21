@@ -353,159 +353,190 @@ const ConsultantDashboard = () => {
           </Card>
         </div>
 
-        {/* Filter */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">الاستشارات ({filteredConsultations.length})</h2>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="فلتر الحالة" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع الحالات</SelectItem>
-                <SelectItem value="pending">قيد الانتظار</SelectItem>
-                <SelectItem value="confirmed">مؤكد</SelectItem>
-                <SelectItem value="completed">مكتمل</SelectItem>
-                <SelectItem value="cancelled">ملغي</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <Tabs defaultValue="consultations" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="consultations">الاستشارات</TabsTrigger>
+            <TabsTrigger value="messages">
+              <MessageSquare className="w-4 h-4 ml-2" />
+              المحادثات
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Consultations Grid */}
-        {filteredConsultations.length === 0 ? (
-          <div className="text-center py-16">
-            <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-medium mb-2">لا توجد استشارات</h3>
-            <p className="text-muted-foreground">لم يتم حجز أي استشارات بعد</p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredConsultations.map((consultation, index) => {
-              const TypeIcon = typeConfig[consultation.consultation_type].icon;
-              const createdAt = new Date(consultation.created_at);
-              const diffHours = (new Date().getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-              const isUrgent = consultation.status === 'pending' && diffHours > 24;
+          <TabsContent value="consultations" className="space-y-6 mt-6">
+            {/* Filter */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">الاستشارات ({filteredConsultations.length})</h2>
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="فلتر الحالة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع الحالات</SelectItem>
+                    <SelectItem value="pending">قيد الانتظار</SelectItem>
+                    <SelectItem value="confirmed">مؤكد</SelectItem>
+                    <SelectItem value="completed">مكتمل</SelectItem>
+                    <SelectItem value="cancelled">ملغي</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-              return (
-                <motion.div
-                  key={consultation.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className={`bg-card rounded-2xl border p-6 hover:shadow-lg transition-shadow ${
-                    isUrgent ? 'border-yellow-500' : 'border-border'
-                  }`}
-                >
-                  {isUrgent && (
-                    <div className="flex items-center gap-2 text-yellow-600 text-sm mb-3">
-                      <AlertTriangle className="w-4 h-4" />
-                      <span>يرجى الرد قبل الرفض التلقائي</span>
-                    </div>
-                  )}
+            {/* Consultations Grid */}
+            {filteredConsultations.length === 0 ? (
+              <div className="text-center py-16">
+                <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-medium mb-2">لا توجد استشارات</h3>
+                <p className="text-muted-foreground">لم يتم حجز أي استشارات بعد</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredConsultations.map((consultation, index) => {
+                  const TypeIcon = typeConfig[consultation.consultation_type].icon;
+                  const createdAt = new Date(consultation.created_at);
+                  const diffHours = (new Date().getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+                  const isUrgent = consultation.status === 'pending' && diffHours > 24;
 
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center ${typeConfig[consultation.consultation_type].color}`}>
-                        <TypeIcon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{consultation.patient_name || 'مريض'}</h3>
-                        <p className="text-sm text-muted-foreground">{typeConfig[consultation.consultation_type].label}</p>
-                      </div>
-                    </div>
-                    <Badge className={statusConfig[consultation.status].color}>
-                      {statusConfig[consultation.status].label}
-                    </Badge>
-                  </div>
+                  return (
+                    <motion.div
+                      key={consultation.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={`bg-card rounded-2xl border p-6 hover:shadow-lg transition-shadow ${
+                        isUrgent ? 'border-yellow-500' : 'border-border'
+                      }`}
+                    >
+                      {isUrgent && (
+                        <div className="flex items-center gap-2 text-yellow-600 text-sm mb-3">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span>يرجى الرد قبل الرفض التلقائي</span>
+                        </div>
+                      )}
 
-                  {/* Date/Time */}
-                  <div className="space-y-2 mb-4 text-sm">
-                    {consultation.slot_date && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="w-4 h-4" />
-                        <span>{format(new Date(consultation.slot_date), 'dd MMMM yyyy', { locale: ar })}</span>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center ${typeConfig[consultation.consultation_type].color}`}>
+                            <TypeIcon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{consultation.patient_name || 'مريض'}</h3>
+                            <p className="text-sm text-muted-foreground">{typeConfig[consultation.consultation_type].label}</p>
+                          </div>
+                        </div>
+                        <Badge className={statusConfig[consultation.status].color}>
+                          {statusConfig[consultation.status].label}
+                        </Badge>
                       </div>
-                    )}
-                    {consultation.slot_time && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="w-4 h-4" />
-                        <span>{consultation.slot_time}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <FileText className="w-4 h-4" />
-                      <span>{consultation.price} ج.م</span>
-                    </div>
-                    {consultation.communication_platform && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <ExternalLink className="w-4 h-4" />
-                        <span>{consultation.communication_platform}</span>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    {consultation.status === 'pending' && (
-                      <>
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleAccept(consultation.id)}
-                          disabled={updating === consultation.id}
-                        >
-                          <Check className="w-4 h-4 ml-1" />
-                          قبول
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="flex-1"
-                          onClick={() => {
-                            setRejectingId(consultation.id);
-                            setRejectDialogOpen(true);
-                          }}
-                          disabled={updating === consultation.id}
-                        >
-                          <X className="w-4 h-4 ml-1" />
-                          رفض
-                        </Button>
-                      </>
-                    )}
-                    {consultation.status === 'confirmed' && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            setSelectedConsultation(consultation);
-                            setMeetingLink(consultation.meeting_link || '');
-                            setDetailsOpen(true);
-                          }}
-                        >
-                          <ExternalLink className="w-4 h-4 ml-1" />
-                          رابط الاجتماع
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleComplete(consultation.id)}
-                          disabled={updating === consultation.id}
-                        >
-                          <Check className="w-4 h-4 ml-1" />
-                          إكمال
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
+                      {/* Date/Time */}
+                      <div className="space-y-2 mb-4 text-sm">
+                        {consultation.slot_date && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            <span>{format(new Date(consultation.slot_date), 'dd MMMM yyyy', { locale: ar })}</span>
+                          </div>
+                        )}
+                        {consultation.slot_time && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            <span>{consultation.slot_time}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <FileText className="w-4 h-4" />
+                          <span>{consultation.price} ج.م</span>
+                        </div>
+                        {consultation.communication_platform && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <ExternalLink className="w-4 h-4" />
+                            <span>{consultation.communication_platform}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap gap-2">
+                        {(consultation.status === 'confirmed' || consultation.status === 'pending') && (
+                          <Link to={`/chat/${consultation.id}`} className="flex-1 min-w-[120px]">
+                            <Button size="sm" variant="outline" className="w-full">
+                              <MessageSquare className="w-4 h-4 ml-1" />
+                              محادثة
+                            </Button>
+                          </Link>
+                        )}
+                        {consultation.status === 'pending' && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="flex-1 min-w-[100px]"
+                              onClick={() => handleAccept(consultation.id)}
+                              disabled={updating === consultation.id}
+                            >
+                              <Check className="w-4 h-4 ml-1" />
+                              قبول
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="flex-1 min-w-[100px]"
+                              onClick={() => {
+                                setRejectingId(consultation.id);
+                                setRejectDialogOpen(true);
+                              }}
+                              disabled={updating === consultation.id}
+                            >
+                              <X className="w-4 h-4 ml-1" />
+                              رفض
+                            </Button>
+                          </>
+                        )}
+                        {consultation.status === 'confirmed' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 min-w-[120px]"
+                              onClick={() => {
+                                setSelectedConsultation(consultation);
+                                setMeetingLink(consultation.meeting_link || '');
+                                setDetailsOpen(true);
+                              }}
+                            >
+                              <ExternalLink className="w-4 h-4 ml-1" />
+                              رابط الاجتماع
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1 min-w-[100px]"
+                              onClick={() => handleComplete(consultation.id)}
+                              disabled={updating === consultation.id}
+                            >
+                              <Check className="w-4 h-4 ml-1" />
+                              إكمال
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="messages" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">المحادثات الواردة</h2>
+            {user && specialistId ? (
+              <MessagesInbox userId={user.id} specialistId={specialistId} />
+            ) : (
+              <div className="text-center py-16 text-muted-foreground">
+                لا يمكن تحميل المحادثات. يجب أن تكون مسجلاً كاستشاري معتمد.
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Rejection Reason Dialog */}
