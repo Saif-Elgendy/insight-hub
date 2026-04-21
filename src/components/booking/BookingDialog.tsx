@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { CalendarIcon, Video, Phone, MessageCircle, Star, Clock, CheckCircle } from 'lucide-react';
+import { CalendarIcon, Video, Phone, MessageCircle, Star, Clock, CheckCircle, FileText, PlayCircle, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface Specialist {
   id: string;
+  user_id: string | null;
   full_name: string;
   title: string;
   specialty: string;
@@ -37,6 +38,8 @@ interface Specialist {
   image_url: string | null;
   years_experience: number | null;
   rating: number | null;
+  video_url?: string | null;
+  certificates_urls?: string[] | null;
 }
 
 interface TimeSlot {
@@ -110,13 +113,42 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
       .from('specialists')
       .select('*')
       .eq('is_available', true);
-    
+
     if (error) {
       console.error('Error fetching specialists:', error);
       toast.error('حدث خطأ في تحميل المدربين');
-    } else {
-      setSpecialists(data || []);
+      setLoading(false);
+      return;
     }
+
+    const userIds = (data || []).map((s) => s.user_id).filter((id): id is string => !!id);
+    let extrasMap: Record<string, { video_url: string | null; certificates_urls: string[] | null; photo_url: string | null }> = {};
+    if (userIds.length > 0) {
+      const { data: reqs } = await supabase
+        .from('consultant_requests')
+        .select('user_id, video_url, certificates_urls, photo_url, status')
+        .in('user_id', userIds)
+        .eq('status', 'approved');
+      (reqs || []).forEach((r) => {
+        extrasMap[r.user_id] = {
+          video_url: r.video_url,
+          certificates_urls: r.certificates_urls,
+          photo_url: r.photo_url,
+        };
+      });
+    }
+
+    const enriched: Specialist[] = (data || []).map((s) => {
+      const extras = s.user_id ? extrasMap[s.user_id] : undefined;
+      return {
+        ...s,
+        image_url: s.image_url || extras?.photo_url || null,
+        video_url: extras?.video_url || null,
+        certificates_urls: extras?.certificates_urls || null,
+      };
+    });
+
+    setSpecialists(enriched);
     setLoading(false);
   };
 
@@ -299,39 +331,112 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
             >
               <h3 className="text-lg font-semibold text-center mb-4">اختر المدرب</h3>
               <div className="grid gap-3">
-                {specialists.map((specialist) => (
-                  <button
-                    key={specialist.id}
-                    type="button"
-                    onClick={() => setSelectedSpecialist(specialist)}
-                    aria-pressed={selectedSpecialist?.id === specialist.id}
-                    aria-label={`اختيار ${specialist.full_name} - ${specialist.title}`}
-                    className={cn(
-                      'p-4 rounded-xl border cursor-pointer transition-all text-right w-full',
-                      selectedSpecialist?.id === specialist.id
-                        ? 'border-primary bg-primary/5 shadow-md'
-                        : 'border-border hover:border-primary/50'
-                    )}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 rounded-full bg-gradient-accent flex items-center justify-center text-xl font-bold text-primary">
-                        {specialist.full_name.charAt(0)}
-                      </div>
-                      <div className="flex-grow">
-                        <h4 className="font-bold text-foreground">{specialist.full_name}</h4>
-                        <p className="text-sm text-muted-foreground">{specialist.title}</p>
-                        <p className="text-sm text-primary">{specialist.specialty}</p>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            {specialist.rating}
-                          </span>
-                          <span>{specialist.years_experience} سنوات خبرة</span>
+                {specialists.map((specialist) => {
+                  const isSelected = selectedSpecialist?.id === specialist.id;
+                  const hasMedia = !!(specialist.video_url || (specialist.certificates_urls && specialist.certificates_urls.length > 0));
+                  return (
+                    <div
+                      key={specialist.id}
+                      className={cn(
+                        'rounded-xl border transition-all overflow-hidden',
+                        isSelected
+                          ? 'border-primary bg-primary/5 shadow-md'
+                          : 'border-border hover:border-primary/50'
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSpecialist(specialist)}
+                        aria-pressed={isSelected}
+                        aria-label={`اختيار ${specialist.full_name} - ${specialist.title}`}
+                        className="p-4 cursor-pointer text-right w-full"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="w-16 h-16 rounded-full bg-gradient-accent flex items-center justify-center text-xl font-bold text-primary overflow-hidden flex-shrink-0">
+                            {specialist.image_url ? (
+                              <img
+                                src={specialist.image_url}
+                                alt={specialist.full_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              specialist.full_name.charAt(0)
+                            )}
+                          </div>
+                          <div className="flex-grow">
+                            <h4 className="font-bold text-foreground">{specialist.full_name}</h4>
+                            <p className="text-sm text-muted-foreground">{specialist.title}</p>
+                            <p className="text-sm text-primary">{specialist.specialty}</p>
+                            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
+                              <span className="flex items-center gap-1">
+                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                {specialist.rating}
+                              </span>
+                              <span>{specialist.years_experience} سنوات خبرة</span>
+                              {specialist.video_url && (
+                                <span className="flex items-center gap-1 text-primary">
+                                  <PlayCircle className="w-4 h-4" />
+                                  فيديو تعريفي
+                                </span>
+                              )}
+                              {specialist.certificates_urls && specialist.certificates_urls.length > 0 && (
+                                <span className="flex items-center gap-1 text-primary">
+                                  <FileText className="w-4 h-4" />
+                                  {specialist.certificates_urls.length} شهادة
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </button>
+
+                      {isSelected && hasMedia && (
+                        <div className="border-t border-primary/20 p-4 space-y-4 bg-background/50">
+                          {specialist.bio && (
+                            <p className="text-sm text-muted-foreground leading-relaxed">{specialist.bio}</p>
+                          )}
+
+                          {specialist.video_url && (
+                            <div>
+                              <Label className="text-sm font-semibold mb-2 block flex items-center gap-2">
+                                <PlayCircle className="w-4 h-4 text-primary" />
+                                فيديو تعريفي
+                              </Label>
+                              <video
+                                src={specialist.video_url}
+                                controls
+                                className="w-full rounded-lg max-h-64 bg-black"
+                              />
+                            </div>
+                          )}
+
+                          {specialist.certificates_urls && specialist.certificates_urls.length > 0 && (
+                            <div>
+                              <Label className="text-sm font-semibold mb-2 block flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-primary" />
+                                الشهادات ({specialist.certificates_urls.length})
+                              </Label>
+                              <div className="flex flex-wrap gap-2">
+                                {specialist.certificates_urls.map((url, i) => (
+                                  <a
+                                    key={i}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm transition-colors"
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                    شهادة {i + 1}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           )}
