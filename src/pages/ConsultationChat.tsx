@@ -219,7 +219,7 @@ const ConsultationChat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [consultationId]);
+  }, [consultationId, user, playNotificationSound]);
 
   // Auto scroll on new messages
   useEffect(() => {
