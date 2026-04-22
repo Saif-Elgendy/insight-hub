@@ -51,9 +51,50 @@ const ConsultationChat = () => {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const hasInteractedRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  // Short notification "ping" using Web Audio API (no asset needed)
+  const playNotificationSound = useCallback(() => {
+    try {
+      if (!audioCtxRef.current) {
+        const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+        if (!Ctx) return;
+        audioCtxRef.current = new Ctx();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.36);
+    } catch (e) {
+      // Silently ignore – sound is a nice-to-have
+    }
+  }, []);
+
+  // Mark that the user interacted (required by browsers to allow audio playback)
+  useEffect(() => {
+    const markInteracted = () => { hasInteractedRef.current = true; };
+    window.addEventListener('click', markInteracted, { once: true });
+    window.addEventListener('keydown', markInteracted, { once: true });
+    return () => {
+      window.removeEventListener('click', markInteracted);
+      window.removeEventListener('keydown', markInteracted);
+    };
   }, []);
 
   useEffect(() => {
@@ -154,6 +195,10 @@ const ConsultationChat = () => {
             if (prev.find(m => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
+          // Play sound only for incoming messages from the other party
+          if (user && newMsg.sender_id !== user.id && hasInteractedRef.current) {
+            playNotificationSound();
+          }
         }
       )
       .on(
@@ -174,7 +219,7 @@ const ConsultationChat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [consultationId]);
+  }, [consultationId, user, playNotificationSound]);
 
   // Auto scroll on new messages
   useEffect(() => {
