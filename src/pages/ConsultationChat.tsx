@@ -195,6 +195,10 @@ const ConsultationChat = () => {
             if (prev.find(m => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
+          // Play sound only for incoming messages from the other party
+          if (user && newMsg.sender_id !== user.id && hasInteractedRef.current) {
+            playNotificationSound();
+          }
         }
       )
       .on(
