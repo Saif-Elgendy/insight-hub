@@ -275,10 +275,12 @@ export type Database = {
         Row: {
           certificate_issued: boolean | null
           completed_at: string | null
+          completed_lesson_ids: string[]
           completed_lessons: number | null
           course_id: string
           id: string
           is_completed: boolean | null
+          last_lesson_id: string | null
           started_at: string
           total_lessons: number | null
           user_id: string
@@ -286,10 +288,12 @@ export type Database = {
         Insert: {
           certificate_issued?: boolean | null
           completed_at?: string | null
+          completed_lesson_ids?: string[]
           completed_lessons?: number | null
           course_id: string
           id?: string
           is_completed?: boolean | null
+          last_lesson_id?: string | null
           started_at?: string
           total_lessons?: number | null
           user_id: string
@@ -297,10 +301,12 @@ export type Database = {
         Update: {
           certificate_issued?: boolean | null
           completed_at?: string | null
+          completed_lesson_ids?: string[]
           completed_lessons?: number | null
           course_id?: string
           id?: string
           is_completed?: boolean | null
+          last_lesson_id?: string | null
           started_at?: string
           total_lessons?: number | null
           user_id?: string
