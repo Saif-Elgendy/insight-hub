@@ -18,6 +18,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageLoader } from '@/components/ui/page-loader';
 
 interface Specialist {
   id: string;
@@ -283,9 +284,7 @@ const Specialists = () => {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-          </div>
+          <PageLoader label="جارٍ تحميل المختصين..." size="lg" />
         ) : filteredSpecialists.length === 0 ? (
           /* Empty State */
           <div className="text-center py-16">

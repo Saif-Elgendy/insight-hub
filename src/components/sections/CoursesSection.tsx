@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Clock, Users, Star, Play, BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { PageLoader } from '@/components/ui/page-loader';
 
 interface Course {
   id: string;
@@ -82,11 +83,7 @@ export const CoursesSection = () => {
 
         {/* Courses Grid */}
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse bg-card rounded-2xl h-96" />
-            ))}
-          </div>
+          <PageLoader label="جارٍ تحميل الكورسات..." />
         ) : (
           <motion.div
             variants={containerVariants}
