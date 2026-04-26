@@ -18,6 +18,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageLoader } from '@/components/ui/page-loader';
 
 interface Specialist {
   id: string;
