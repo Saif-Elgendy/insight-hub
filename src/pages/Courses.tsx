@@ -358,6 +358,25 @@ const Courses = () => {
                               </div>
                             )}
                           </div>
+
+                          {progressMap[course.id] && progressMap[course.id].total_lessons > 0 && (() => {
+                            const p = progressMap[course.id];
+                            const pct = Math.round((p.completed_lessons / p.total_lessons) * 100);
+                            return (
+                              <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-muted-foreground">
+                                    {p.completed_lessons} / {p.total_lessons} درس
+                                  </span>
+                                  <span className="font-semibold text-primary">{pct}%</span>
+                                </div>
+                                <Progress value={pct} className="h-2" />
+                                <p className="text-xs text-primary font-medium">
+                                  {p.last_lesson_id ? 'متابعة المشاهدة ←' : 'ابدأ التعلم ←'}
+                                </p>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     </Link>
