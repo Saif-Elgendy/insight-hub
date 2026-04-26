@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageLoader } from '@/components/ui/page-loader';
+import { CourseSkeletonGrid } from '@/components/ui/card-skeletons';
 
 interface Course {
   id: string;
@@ -250,7 +250,7 @@ const Courses = () => {
             </div>
 
             {loading ? (
-              <PageLoader label="جارٍ تحميل الكورسات..." size="lg" />
+              <CourseSkeletonGrid count={6} />
             ) : filteredCourses.length === 0 ? (
               <div className="text-center py-16">
                 <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />

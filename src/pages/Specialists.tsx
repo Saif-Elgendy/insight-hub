@@ -18,7 +18,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { PageLoader } from '@/components/ui/page-loader';
+import { SpecialistSkeletonGrid } from '@/components/ui/card-skeletons';
 
 interface Specialist {
   id: string;
@@ -284,7 +284,7 @@ const Specialists = () => {
 
         {/* Loading State */}
         {loading ? (
-          <PageLoader label="جارٍ تحميل المختصين..." size="lg" />
+          <SpecialistSkeletonGrid count={8} />
         ) : filteredSpecialists.length === 0 ? (
           /* Empty State */
           <div className="text-center py-16">
