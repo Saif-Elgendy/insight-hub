@@ -239,6 +239,17 @@ const CourseDetails = () => {
     }
   };
 
+  // Resume: jump to last viewed lesson once both progress and lessons are loaded
+  useEffect(() => {
+    if (progress?.last_lesson_id && lessons.length > 0) {
+      const last = lessons.find(l => l.id === progress.last_lesson_id);
+      if (last && canAccessLesson(last)) {
+        setActiveLesson(last);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress?.last_lesson_id, lessons.length, isEnrolled]);
+
   const toggleLessonExpand = (lessonId: string) => {
     const newExpanded = new Set(expandedLessons);
     if (newExpanded.has(lessonId)) {
@@ -253,16 +264,70 @@ const CourseDetails = () => {
     return lesson.is_free || (user && isEnrolled);
   };
 
+  const persistLastLesson = async (lessonId: string) => {
+    if (!user || !id || !isEnrolled) return;
+    const payload = {
+      user_id: user.id,
+      course_id: id,
+      last_lesson_id: lessonId,
+      completed_lesson_ids: progress?.completed_lesson_ids ?? [],
+    };
+    const { error } = await supabase
+      .from('course_progress')
+      .upsert(payload, { onConflict: 'user_id,course_id' });
+    if (!error) {
+      setProgress(p => ({
+        completed_lessons: p?.completed_lessons ?? 0,
+        total_lessons: p?.total_lessons ?? lessons.length,
+        is_completed: p?.is_completed ?? false,
+        completed_lesson_ids: p?.completed_lesson_ids ?? [],
+        last_lesson_id: lessonId,
+      }));
+    }
+  };
+
   const selectLesson = (lesson: Lesson) => {
     if (canAccessLesson(lesson)) {
       setActiveLesson(lesson);
+      persistLastLesson(lesson.id);
     } else {
       toast.error('يرجى التسجيل في الكورس للوصول لهذا الدرس');
     }
   };
 
-  const progressPercentage = progress 
-    ? ((progress.completed_lessons || 0) / (progress.total_lessons || 1)) * 100 
+  const isLessonCompleted = (lessonId: string) =>
+    (progress?.completed_lesson_ids ?? []).includes(lessonId);
+
+  const toggleLessonComplete = async (lesson: Lesson) => {
+    if (!user || !id || !isEnrolled) return;
+    const current = progress?.completed_lesson_ids ?? [];
+    const already = current.includes(lesson.id);
+    const next = already
+      ? current.filter(x => x !== lesson.id)
+      : [...current, lesson.id];
+
+    const { error } = await supabase
+      .from('course_progress')
+      .upsert(
+        {
+          user_id: user.id,
+          course_id: id,
+          last_lesson_id: lesson.id,
+          completed_lesson_ids: next,
+        },
+        { onConflict: 'user_id,course_id' }
+      );
+
+    if (error) {
+      toast.error('تعذّر تحديث التقدم');
+      return;
+    }
+    toast.success(already ? 'تم إلغاء إكمال الدرس' : 'تم تسجيل الدرس كمكتمل');
+    fetchProgress();
+  };
+
+  const progressPercentage = progress
+    ? ((progress.completed_lessons || 0) / (progress.total_lessons || lessons.length || 1)) * 100
     : 0;
 
   if (loading) {
