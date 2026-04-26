@@ -535,12 +535,16 @@ const CourseDetails = () => {
                         >
                           <div className={`
                             w-10 h-10 rounded-full flex items-center justify-center shrink-0
-                            ${canAccessLesson(lesson) 
-                              ? 'bg-primary/10 text-primary' 
-                              : 'bg-muted text-muted-foreground'
+                            ${isLessonCompleted(lesson.id)
+                              ? 'bg-green-500/15 text-green-600 dark:text-green-400'
+                              : canAccessLesson(lesson)
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-muted text-muted-foreground'
                             }
                           `}>
-                            {canAccessLesson(lesson) ? (
+                            {isLessonCompleted(lesson.id) ? (
+                              <CheckCircle className="w-4 h-4" aria-hidden="true" />
+                            ) : canAccessLesson(lesson) ? (
                               <Play className="w-4 h-4" aria-hidden="true" />
                             ) : (
                               <Lock className="w-4 h-4" aria-hidden="true" />
