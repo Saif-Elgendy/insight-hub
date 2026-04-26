@@ -138,8 +138,8 @@ const CourseDetails = () => {
       console.error('Error fetching lessons:', lessonsError);
     } else {
       setLessons(lessonsData || []);
-      // Set first lesson as active by default
-      if (lessonsData && lessonsData.length > 0) {
+      // Default active lesson — will be overridden by Resume effect if progress exists
+      if (lessonsData && lessonsData.length > 0 && !activeLesson) {
         const firstFreeLesson = lessonsData.find(l => l.is_free);
         setActiveLesson(firstFreeLesson || lessonsData[0]);
       }
