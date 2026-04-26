@@ -83,11 +83,7 @@ export const CoursesSection = () => {
 
         {/* Courses Grid */}
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse bg-card rounded-2xl h-96" />
-            ))}
-          </div>
+          <PageLoader label="جارٍ تحميل الكورسات..." />
         ) : (
           <motion.div
             variants={containerVariants}
