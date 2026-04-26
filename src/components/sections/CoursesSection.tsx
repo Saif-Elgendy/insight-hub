@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Clock, Users, Star, Play, BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { PageLoader } from '@/components/ui/page-loader';
 
 interface Course {
   id: string;
