@@ -250,18 +250,7 @@ const Courses = () => {
             </div>
 
             {loading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden animate-pulse">
-                    <div className="h-48 bg-muted" />
-                    <div className="p-6 space-y-3">
-                      <div className="h-4 bg-muted rounded w-3/4" />
-                      <div className="h-3 bg-muted rounded w-full" />
-                      <div className="h-3 bg-muted rounded w-1/2" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <PageLoader label="جارٍ تحميل الكورسات..." size="lg" />
             ) : filteredCourses.length === 0 ? (
               <div className="text-center py-16">
                 <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
