@@ -58,6 +58,8 @@ interface CourseProgress {
   completed_lessons: number | null;
   total_lessons: number | null;
   is_completed: boolean | null;
+  last_lesson_id: string | null;
+  completed_lesson_ids: string[] | null;
 }
 
 interface CourseMaterial {
@@ -151,13 +153,13 @@ const CourseDetails = () => {
 
     const { data, error } = await supabase
       .from('course_progress')
-      .select('completed_lessons, total_lessons, is_completed')
+      .select('completed_lessons, total_lessons, is_completed, last_lesson_id, completed_lesson_ids')
       .eq('user_id', user.id)
       .eq('course_id', id)
       .maybeSingle();
 
     if (!error && data) {
-      setProgress(data);
+      setProgress(data as CourseProgress);
     }
   };
 
