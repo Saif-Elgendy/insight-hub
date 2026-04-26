@@ -589,16 +589,27 @@ const CourseDetails = () => {
                                 <p className="text-muted-foreground text-sm mb-4 pr-14">
                                   {lesson.description}
                                 </p>
-                                <Button
-                                  size="sm"
-                                  variant={canAccessLesson(lesson) ? 'default' : 'outline'}
-                                  onClick={() => selectLesson(lesson)}
-                                  disabled={!canAccessLesson(lesson)}
-                                  className="mr-14"
-                                  aria-label={canAccessLesson(lesson) ? `مشاهدة ${lesson.title}` : 'يرجى التسجيل أولاً'}
-                                >
-                                  {canAccessLesson(lesson) ? 'مشاهدة الدرس' : 'يرجى التسجيل'}
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-2 mr-14">
+                                  <Button
+                                    size="sm"
+                                    variant={canAccessLesson(lesson) ? 'default' : 'outline'}
+                                    onClick={() => selectLesson(lesson)}
+                                    disabled={!canAccessLesson(lesson)}
+                                    aria-label={canAccessLesson(lesson) ? `مشاهدة ${lesson.title}` : 'يرجى التسجيل أولاً'}
+                                  >
+                                    {canAccessLesson(lesson) ? 'مشاهدة الدرس' : 'يرجى التسجيل'}
+                                  </Button>
+                                  {isEnrolled && canAccessLesson(lesson) && (
+                                    <Button
+                                      size="sm"
+                                      variant={isLessonCompleted(lesson.id) ? 'secondary' : 'outline'}
+                                      onClick={() => toggleLessonComplete(lesson)}
+                                    >
+                                      <CheckCircle className="w-4 h-4 ml-2" />
+                                      {isLessonCompleted(lesson.id) ? 'تم الإكمال' : 'تحديد كمكتمل'}
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </motion.div>
                           )}
