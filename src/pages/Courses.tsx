@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CourseSkeletonGrid } from '@/components/ui/card-skeletons';
+import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Course {
   id: string;
@@ -51,8 +53,16 @@ const parseDurationToHours = (duration: string | null): number | null => {
   return hours > 0 ? hours : null;
 };
 
+interface ProgressInfo {
+  completed_lessons: number;
+  total_lessons: number;
+  last_lesson_id: string | null;
+}
+
 const Courses = () => {
+  const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<string, ProgressInfo>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -61,6 +71,11 @@ const Courses = () => {
   useEffect(() => {
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    if (user) fetchProgress();
+    else setProgressMap({});
+  }, [user]);
 
   const fetchCourses = async () => {
     try {
@@ -75,6 +90,25 @@ const Courses = () => {
       console.error('Error fetching courses:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProgress = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('course_progress')
+      .select('course_id, completed_lessons, total_lessons, last_lesson_id')
+      .eq('user_id', user.id);
+    if (!error && data) {
+      const map: Record<string, ProgressInfo> = {};
+      data.forEach((row: any) => {
+        map[row.course_id] = {
+          completed_lessons: row.completed_lessons || 0,
+          total_lessons: row.total_lessons || 0,
+          last_lesson_id: row.last_lesson_id,
+        };
+      });
+      setProgressMap(map);
     }
   };
 
@@ -324,6 +358,25 @@ const Courses = () => {
                               </div>
                             )}
                           </div>
+
+                          {progressMap[course.id] && progressMap[course.id].total_lessons > 0 && (() => {
+                            const p = progressMap[course.id];
+                            const pct = Math.round((p.completed_lessons / p.total_lessons) * 100);
+                            return (
+                              <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-muted-foreground">
+                                    {p.completed_lessons} / {p.total_lessons} درس
+                                  </span>
+                                  <span className="font-semibold text-primary">{pct}%</span>
+                                </div>
+                                <Progress value={pct} className="h-2" />
+                                <p className="text-xs text-primary font-medium">
+                                  {p.last_lesson_id ? 'متابعة المشاهدة ←' : 'ابدأ التعلم ←'}
+                                </p>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     </Link>

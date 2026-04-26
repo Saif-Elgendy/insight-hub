@@ -58,6 +58,8 @@ interface CourseProgress {
   completed_lessons: number | null;
   total_lessons: number | null;
   is_completed: boolean | null;
+  last_lesson_id: string | null;
+  completed_lesson_ids: string[] | null;
 }
 
 interface CourseMaterial {
@@ -136,8 +138,8 @@ const CourseDetails = () => {
       console.error('Error fetching lessons:', lessonsError);
     } else {
       setLessons(lessonsData || []);
-      // Set first lesson as active by default
-      if (lessonsData && lessonsData.length > 0) {
+      // Default active lesson — will be overridden by Resume effect if progress exists
+      if (lessonsData && lessonsData.length > 0 && !activeLesson) {
         const firstFreeLesson = lessonsData.find(l => l.is_free);
         setActiveLesson(firstFreeLesson || lessonsData[0]);
       }
@@ -151,13 +153,13 @@ const CourseDetails = () => {
 
     const { data, error } = await supabase
       .from('course_progress')
-      .select('completed_lessons, total_lessons, is_completed')
+      .select('completed_lessons, total_lessons, is_completed, last_lesson_id, completed_lesson_ids')
       .eq('user_id', user.id)
       .eq('course_id', id)
       .maybeSingle();
 
     if (!error && data) {
-      setProgress(data);
+      setProgress(data as CourseProgress);
     }
   };
 
@@ -237,6 +239,17 @@ const CourseDetails = () => {
     }
   };
 
+  // Resume: jump to last viewed lesson once both progress and lessons are loaded
+  useEffect(() => {
+    if (progress?.last_lesson_id && lessons.length > 0) {
+      const last = lessons.find(l => l.id === progress.last_lesson_id);
+      if (last && canAccessLesson(last)) {
+        setActiveLesson(last);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress?.last_lesson_id, lessons.length, isEnrolled]);
+
   const toggleLessonExpand = (lessonId: string) => {
     const newExpanded = new Set(expandedLessons);
     if (newExpanded.has(lessonId)) {
@@ -251,16 +264,70 @@ const CourseDetails = () => {
     return lesson.is_free || (user && isEnrolled);
   };
 
+  const persistLastLesson = async (lessonId: string) => {
+    if (!user || !id || !isEnrolled) return;
+    const payload = {
+      user_id: user.id,
+      course_id: id,
+      last_lesson_id: lessonId,
+      completed_lesson_ids: progress?.completed_lesson_ids ?? [],
+    };
+    const { error } = await supabase
+      .from('course_progress')
+      .upsert(payload, { onConflict: 'user_id,course_id' });
+    if (!error) {
+      setProgress(p => ({
+        completed_lessons: p?.completed_lessons ?? 0,
+        total_lessons: p?.total_lessons ?? lessons.length,
+        is_completed: p?.is_completed ?? false,
+        completed_lesson_ids: p?.completed_lesson_ids ?? [],
+        last_lesson_id: lessonId,
+      }));
+    }
+  };
+
   const selectLesson = (lesson: Lesson) => {
     if (canAccessLesson(lesson)) {
       setActiveLesson(lesson);
+      persistLastLesson(lesson.id);
     } else {
       toast.error('يرجى التسجيل في الكورس للوصول لهذا الدرس');
     }
   };
 
-  const progressPercentage = progress 
-    ? ((progress.completed_lessons || 0) / (progress.total_lessons || 1)) * 100 
+  const isLessonCompleted = (lessonId: string) =>
+    (progress?.completed_lesson_ids ?? []).includes(lessonId);
+
+  const toggleLessonComplete = async (lesson: Lesson) => {
+    if (!user || !id || !isEnrolled) return;
+    const current = progress?.completed_lesson_ids ?? [];
+    const already = current.includes(lesson.id);
+    const next = already
+      ? current.filter(x => x !== lesson.id)
+      : [...current, lesson.id];
+
+    const { error } = await supabase
+      .from('course_progress')
+      .upsert(
+        {
+          user_id: user.id,
+          course_id: id,
+          last_lesson_id: lesson.id,
+          completed_lesson_ids: next,
+        },
+        { onConflict: 'user_id,course_id' }
+      );
+
+    if (error) {
+      toast.error('تعذّر تحديث التقدم');
+      return;
+    }
+    toast.success(already ? 'تم إلغاء إكمال الدرس' : 'تم تسجيل الدرس كمكتمل');
+    fetchProgress();
+  };
+
+  const progressPercentage = progress
+    ? ((progress.completed_lessons || 0) / (progress.total_lessons || lessons.length || 1)) * 100
     : 0;
 
   if (loading) {
@@ -378,12 +445,29 @@ const CourseDetails = () => {
                     {progress && (
                       <>
                         <div className="flex items-center justify-between text-primary-foreground text-sm">
-                          <span>تقدمك في الكورس</span>
+                          <span>
+                            تقدمك في الكورس ({progress.completed_lessons || 0} / {progress.total_lessons || lessons.length})
+                          </span>
                           <span>{Math.round(progressPercentage)}%</span>
                         </div>
                         <Progress value={progressPercentage} className="h-3 bg-primary-foreground/20" />
                       </>
                     )}
+                    {progress?.last_lesson_id && (() => {
+                      const last = lessons.find(l => l.id === progress.last_lesson_id);
+                      if (!last) return null;
+                      return (
+                        <Button
+                          size="sm"
+                          variant="hero-outline"
+                          onClick={() => selectLesson(last)}
+                          className="w-fit"
+                        >
+                          <Play className="w-4 h-4 ml-2" />
+                          متابعة من: {last.title}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 )}
               </motion.div>
@@ -451,12 +535,16 @@ const CourseDetails = () => {
                         >
                           <div className={`
                             w-10 h-10 rounded-full flex items-center justify-center shrink-0
-                            ${canAccessLesson(lesson) 
-                              ? 'bg-primary/10 text-primary' 
-                              : 'bg-muted text-muted-foreground'
+                            ${isLessonCompleted(lesson.id)
+                              ? 'bg-green-500/15 text-green-600 dark:text-green-400'
+                              : canAccessLesson(lesson)
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-muted text-muted-foreground'
                             }
                           `}>
-                            {canAccessLesson(lesson) ? (
+                            {isLessonCompleted(lesson.id) ? (
+                              <CheckCircle className="w-4 h-4" aria-hidden="true" />
+                            ) : canAccessLesson(lesson) ? (
                               <Play className="w-4 h-4" aria-hidden="true" />
                             ) : (
                               <Lock className="w-4 h-4" aria-hidden="true" />
@@ -501,16 +589,27 @@ const CourseDetails = () => {
                                 <p className="text-muted-foreground text-sm mb-4 pr-14">
                                   {lesson.description}
                                 </p>
-                                <Button
-                                  size="sm"
-                                  variant={canAccessLesson(lesson) ? 'default' : 'outline'}
-                                  onClick={() => selectLesson(lesson)}
-                                  disabled={!canAccessLesson(lesson)}
-                                  className="mr-14"
-                                  aria-label={canAccessLesson(lesson) ? `مشاهدة ${lesson.title}` : 'يرجى التسجيل أولاً'}
-                                >
-                                  {canAccessLesson(lesson) ? 'مشاهدة الدرس' : 'يرجى التسجيل'}
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-2 mr-14">
+                                  <Button
+                                    size="sm"
+                                    variant={canAccessLesson(lesson) ? 'default' : 'outline'}
+                                    onClick={() => selectLesson(lesson)}
+                                    disabled={!canAccessLesson(lesson)}
+                                    aria-label={canAccessLesson(lesson) ? `مشاهدة ${lesson.title}` : 'يرجى التسجيل أولاً'}
+                                  >
+                                    {canAccessLesson(lesson) ? 'مشاهدة الدرس' : 'يرجى التسجيل'}
+                                  </Button>
+                                  {isEnrolled && canAccessLesson(lesson) && (
+                                    <Button
+                                      size="sm"
+                                      variant={isLessonCompleted(lesson.id) ? 'secondary' : 'outline'}
+                                      onClick={() => toggleLessonComplete(lesson)}
+                                    >
+                                      <CheckCircle className="w-4 h-4 ml-2" />
+                                      {isLessonCompleted(lesson.id) ? 'تم الإكمال' : 'تحديد كمكتمل'}
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </motion.div>
                           )}
