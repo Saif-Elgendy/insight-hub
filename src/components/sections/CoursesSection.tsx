@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Clock, Users, Star, Play, BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { PageLoader } from '@/components/ui/page-loader';
+import { CourseSkeletonGrid } from '@/components/ui/card-skeletons';
 
 interface Course {
   id: string;
@@ -83,7 +83,7 @@ export const CoursesSection = () => {
 
         {/* Courses Grid */}
         {loading ? (
-          <PageLoader label="جارٍ تحميل الكورسات..." />
+          <CourseSkeletonGrid count={3} className="lg:grid-cols-3 gap-8" />
         ) : (
           <motion.div
             variants={containerVariants}

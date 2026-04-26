@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { PageLoader } from '@/components/ui/page-loader';
+import { SpecialistSkeletonGrid } from '@/components/ui/card-skeletons';
 
 interface Specialist {
   id: string;
@@ -58,7 +58,7 @@ export const SpecialistsSection = () => {
     return (
       <section className="py-24 bg-background">
         <div className="container mx-auto px-4">
-          <PageLoader label="جارٍ تحميل المختصين..." />
+          <SpecialistSkeletonGrid count={4} />
         </div>
       </section>
     );
