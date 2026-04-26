@@ -445,12 +445,29 @@ const CourseDetails = () => {
                     {progress && (
                       <>
                         <div className="flex items-center justify-between text-primary-foreground text-sm">
-                          <span>تقدمك في الكورس</span>
+                          <span>
+                            تقدمك في الكورس ({progress.completed_lessons || 0} / {progress.total_lessons || lessons.length})
+                          </span>
                           <span>{Math.round(progressPercentage)}%</span>
                         </div>
                         <Progress value={progressPercentage} className="h-3 bg-primary-foreground/20" />
                       </>
                     )}
+                    {progress?.last_lesson_id && (() => {
+                      const last = lessons.find(l => l.id === progress.last_lesson_id);
+                      if (!last) return null;
+                      return (
+                        <Button
+                          size="sm"
+                          variant="hero-outline"
+                          onClick={() => selectLesson(last)}
+                          className="w-fit"
+                        >
+                          <Play className="w-4 h-4 ml-2" />
+                          متابعة من: {last.title}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 )}
               </motion.div>
