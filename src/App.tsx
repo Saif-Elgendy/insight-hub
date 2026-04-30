@@ -20,6 +20,7 @@ import ResourceLibrary from "./pages/ResourceLibrary";
 import ConsultationChat from "./pages/ConsultationChat";
 import ConsultantDashboard from "./pages/ConsultantDashboard";
 import NotFound from "./pages/NotFound";
+import { SiteAssistant } from "./components/assistant/SiteAssistant";
 
 const queryClient = new QueryClient();
 
