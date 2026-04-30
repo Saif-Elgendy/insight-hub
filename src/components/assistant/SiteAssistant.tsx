@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Link } from 'react-router-dom';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -152,13 +155,56 @@ export const SiteAssistant = () => {
                     className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}
                   >
                     <div
-                      className={`max-w-[85%] px-4 py-2 rounded-2xl whitespace-pre-wrap text-sm ${
+                      className={`max-w-[85%] px-4 py-2 rounded-2xl text-sm ${
                         m.role === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-bl-sm'
+                          ? 'bg-primary text-primary-foreground rounded-bl-sm whitespace-pre-wrap'
                           : 'bg-muted text-foreground rounded-br-sm'
                       }`}
                     >
-                      {m.content}
+                      {m.role === 'user' ? (
+                        m.content
+                      ) : (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                            ul: ({ children }) => <ul className="list-disc pr-5 space-y-1 mb-2">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal pr-5 space-y-1 mb-2">{children}</ol>,
+                            li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                            strong: ({ children }) => <strong className="font-bold text-primary">{children}</strong>,
+                            em: ({ children }) => <em className="italic">{children}</em>,
+                            code: ({ children }) => (
+                              <code className="bg-background/60 px-1.5 py-0.5 rounded text-xs">{children}</code>
+                            ),
+                            a: ({ href, children }) => {
+                              const isInternal = href?.startsWith('/');
+                              if (isInternal) {
+                                return (
+                                  <Link
+                                    to={href!}
+                                    onClick={() => setOpen(false)}
+                                    className="text-primary underline underline-offset-2 hover:text-primary/80 font-medium"
+                                  >
+                                    {children}
+                                  </Link>
+                                );
+                              }
+                              return (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary underline underline-offset-2 hover:text-primary/80 font-medium"
+                                >
+                                  {children}
+                                </a>
+                              );
+                            },
+                          }}
+                        >
+                          {m.content}
+                        </ReactMarkdown>
+                      )}
                     </div>
                   </div>
                 ))}
