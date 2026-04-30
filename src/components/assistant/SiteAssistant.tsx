@@ -174,6 +174,22 @@ export const SiteAssistant = () => {
                     </div>
                   </div>
                 )}
+                {!loading && !messages.some(m => m.role === 'user') && (
+                  <div className="pt-2 space-y-2">
+                    <p className="text-xs text-muted-foreground">أسئلة مقترحة:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {SUGGESTIONS.map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => send(s)}
+                          className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </ScrollArea>
 
@@ -187,7 +203,7 @@ export const SiteAssistant = () => {
                 disabled={loading}
                 className="flex-1"
               />
-              <Button onClick={send} disabled={loading || !input.trim()} size="icon">
+              <Button onClick={() => send()} disabled={loading || !input.trim()} size="icon">
                 <Send className="w-4 h-4" />
               </Button>
             </div>
