@@ -15,6 +15,14 @@ const WELCOME: Msg = {
   content: 'أهلاً بك في موقع نفسي 👋\nأنا مساعدك الذكي. اسألني عن أي شيء يخص استخدام الموقع: الكورسات، حجز الاستشارات، التسجيل، أو الأقسام المختلفة.',
 };
 
+const SUGGESTIONS = [
+  'كيف أحجز استشارة مع مختص؟',
+  'كيف أسجّل في كورس؟',
+  'ما سياسة إلغاء الجلسات؟',
+  'كيف أصبح مدرّباً أو استشارياً؟',
+  'أين أجد المكتبة والمواد التعليمية؟',
+];
+
 export const SiteAssistant = () => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -27,9 +35,10 @@ export const SiteAssistant = () => {
   }, [messages, loading]);
 
   const send = async () => {
-    const text = input.trim();
+  const send = async (override?: string) => {
+    const text = (override ?? input).trim();
     if (!text || loading) return;
-    setInput('');
+    if (!override) setInput('');
     const userMsg: Msg = { role: 'user', content: text };
     const next = [...messages, userMsg];
     setMessages(next);
