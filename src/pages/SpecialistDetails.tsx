@@ -303,13 +303,15 @@ const SpecialistDetails = () => {
 
               <CardContent className="p-6 space-y-4">
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="text-center p-3 bg-muted rounded-xl">
                     <div className="flex items-center justify-center gap-1 text-lg font-bold text-primary">
                       <Star className="w-5 h-5 text-primary fill-primary" />
                       {specialist.rating || 5}
                     </div>
-                    <span className="text-xs text-muted-foreground">التقييم</span>
+                    <span className="text-xs text-muted-foreground">
+                      التقييم ({specialist.reviews_count || 0} مراجعة)
+                    </span>
                   </div>
                   <div className="text-center p-3 bg-muted rounded-xl">
                     <div className="text-lg font-bold text-primary">
@@ -317,7 +319,25 @@ const SpecialistDetails = () => {
                     </div>
                     <span className="text-xs text-muted-foreground">سنوات خبرة</span>
                   </div>
+                  <div className="text-center p-3 bg-muted rounded-xl col-span-2">
+                    <div className="text-lg font-bold text-primary">
+                      {specialist.completed_consultations_count || 0}
+                    </div>
+                    <span className="text-xs text-muted-foreground">حالة مكتملة على المنصة</span>
+                  </div>
                 </div>
+
+                {/* Languages */}
+                {specialist.languages && specialist.languages.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">اللغات</p>
+                    <div className="flex flex-wrap gap-1">
+                      {specialist.languages.map((l, i) => (
+                        <Badge key={i} variant="secondary" className="text-[11px]">{l}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Availability Status */}
 
