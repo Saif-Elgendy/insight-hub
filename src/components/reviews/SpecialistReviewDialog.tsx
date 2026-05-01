@@ -160,6 +160,28 @@ export const SpecialistReviewDialog = ({
             </p>
           </div>
 
+          {/* Detailed reason for low rating */}
+          {isLowRating && (
+            <div className="space-y-2 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+              <label htmlFor="reason-details" className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                ⚠️ سبب التقييم الضعيف بالتفصيل * (إجباري)
+              </label>
+              <Textarea
+                id="reason-details"
+                placeholder="اشرح بالتفصيل ما الذي حدث... (لن يتم اتخاذ أي إجراء قبل التحقق من المعلومات)"
+                value={reasonDetails}
+                onChange={(e) => setReasonDetails(e.target.value)}
+                rows={4}
+                minLength={20}
+                maxLength={1000}
+                className="resize-none bg-background"
+              />
+              <p className="text-xs text-muted-foreground">
+                {reasonDetails.length}/1000 — الحد الأدنى 20 حرف. سيتم مراجعة بلاغك من قبل الإدارة.
+              </p>
+            </div>
+          )}
+
           {/* Submit Button */}
           <Button
             onClick={handleSubmit}
