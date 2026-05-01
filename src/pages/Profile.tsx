@@ -211,6 +211,10 @@ const ProfilePage = () => {
     }
     setSavingConsultant(true);
     try {
+      const langs = consultantFormData.languages
+        .split(',')
+        .map(l => l.trim())
+        .filter(Boolean);
       const { error } = await supabase
         .from('consultant_requests')
         .update({
@@ -218,6 +222,7 @@ const ProfilePage = () => {
           bio: consultantFormData.bio.trim() || null,
           consultation_price: parseInt(consultantFormData.consultation_price) || 0,
           years_experience: parseInt(consultantFormData.years_experience) || 0,
+          languages: langs,
         })
         .eq('id', consultantRequest.id);
 
