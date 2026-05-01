@@ -58,8 +58,13 @@ interface ConsultantRequest {
   photo_url: string | null;
   video_url: string | null;
   certificates_urls: string[] | null;
+  id_card_url: string | null;
+  license_url: string | null;
+  languages: string[] | null;
   status: string;
   rejection_reason: string | null;
+  admin_reviewed_at: string | null;
+  super_admin_approved_at: string | null;
   created_at: string;
 }
 
