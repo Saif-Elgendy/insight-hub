@@ -368,6 +368,28 @@ const ConsultationChat = () => {
              consultationInfo?.status === 'pending' ? 'قيد الانتظار' : 'ملغي'}
           </p>
         </div>
+        {consultationInfo && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                <FileHeart className="w-4 h-4" />
+                <span className="hidden sm:inline">{consultationInfo.is_specialist ? 'السجل الطبي' : 'سجلي الطبي'}</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-full sm:max-w-lg overflow-y-auto" dir="rtl">
+              <SheetHeader>
+                <SheetTitle>{consultationInfo.is_specialist ? `السجل الطبي - ${consultationInfo.patient_name}` : 'سجلي الطبي'}</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <MedicalRecordsPanel
+                  patientId={consultationInfo.patient_user_id}
+                  consultationId={consultationInfo.id}
+                  patientView={!consultationInfo.is_specialist}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
         <Link to="/">
           <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
             <Brain className="w-4 h-4 text-primary-foreground" />
