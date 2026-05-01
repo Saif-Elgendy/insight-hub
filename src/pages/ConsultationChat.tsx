@@ -143,6 +143,7 @@ const ConsultationChat = () => {
         status: consultation.status,
         specialist_name: specialist?.full_name || 'المختص',
         patient_name: patientProfile?.full_name || 'المريض',
+        patient_user_id: consultation.user_id,
         other_party_name: isSpecialist 
           ? (patientProfile?.full_name || 'المريض')
           : (specialist?.full_name || 'المختص'),
