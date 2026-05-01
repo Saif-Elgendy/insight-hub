@@ -96,51 +96,75 @@ export type Database = {
       }
       consultant_requests: {
         Row: {
+          admin_review_notes: string | null
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
           bio: string | null
           certificates_urls: string[] | null
           consultation_price: number | null
           created_at: string
           id: string
+          id_card_url: string | null
+          languages: string[] | null
+          license_url: string | null
           photo_url: string | null
           rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           specialty: string
           status: string
+          super_admin_approved_at: string | null
+          super_admin_approved_by: string | null
           updated_at: string
           user_id: string
           video_url: string | null
           years_experience: number | null
         }
         Insert: {
+          admin_review_notes?: string | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
           bio?: string | null
           certificates_urls?: string[] | null
           consultation_price?: number | null
           created_at?: string
           id?: string
+          id_card_url?: string | null
+          languages?: string[] | null
+          license_url?: string | null
           photo_url?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           specialty: string
           status?: string
+          super_admin_approved_at?: string | null
+          super_admin_approved_by?: string | null
           updated_at?: string
           user_id: string
           video_url?: string | null
           years_experience?: number | null
         }
         Update: {
+          admin_review_notes?: string | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
           bio?: string | null
           certificates_urls?: string[] | null
           consultation_price?: number | null
           created_at?: string
           id?: string
+          id_card_url?: string | null
+          languages?: string[] | null
+          license_url?: string | null
           photo_url?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           specialty?: string
           status?: string
+          super_admin_approved_at?: string | null
+          super_admin_approved_by?: string | null
           updated_at?: string
           user_id?: string
           video_url?: string | null
@@ -538,6 +562,45 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_medical_records: {
+        Row: {
+          consultation_id: string | null
+          created_at: string
+          diagnosis: string
+          id: string
+          notes: string | null
+          patient_id: string
+          recommendations: string | null
+          specialist_id: string
+          updated_at: string
+          visible_to_patient: boolean
+        }
+        Insert: {
+          consultation_id?: string | null
+          created_at?: string
+          diagnosis: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          recommendations?: string | null
+          specialist_id: string
+          updated_at?: string
+          visible_to_patient?: boolean
+        }
+        Update: {
+          consultation_id?: string | null
+          created_at?: string
+          diagnosis?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          recommendations?: string | null
+          specialist_id?: string
+          updated_at?: string
+          visible_to_patient?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -649,7 +712,12 @@ export type Database = {
           consultation_id: string
           created_at: string
           id: string
+          investigated_at: string | null
+          investigated_by: string | null
+          investigation_result: string | null
+          is_under_investigation: boolean
           rating: number
+          reason_details: string | null
           specialist_id: string
           user_id: string
         }
@@ -658,7 +726,12 @@ export type Database = {
           consultation_id: string
           created_at?: string
           id?: string
+          investigated_at?: string | null
+          investigated_by?: string | null
+          investigation_result?: string | null
+          is_under_investigation?: boolean
           rating: number
+          reason_details?: string | null
           specialist_id: string
           user_id: string
         }
@@ -667,7 +740,12 @@ export type Database = {
           consultation_id?: string
           created_at?: string
           id?: string
+          investigated_at?: string | null
+          investigated_by?: string | null
+          investigation_result?: string | null
+          is_under_investigation?: boolean
           rating?: number
+          reason_details?: string | null
           specialist_id?: string
           user_id?: string
         }
@@ -691,39 +769,54 @@ export type Database = {
       specialists: {
         Row: {
           bio: string | null
+          completed_consultations_count: number
           created_at: string
           full_name: string
           id: string
           image_url: string | null
           is_available: boolean | null
+          is_permanently_banned: boolean
+          languages: string[] | null
           rating: number | null
+          reviews_count: number
           specialty: string
+          suspended_until: string | null
           title: string
           user_id: string | null
           years_experience: number | null
         }
         Insert: {
           bio?: string | null
+          completed_consultations_count?: number
           created_at?: string
           full_name: string
           id?: string
           image_url?: string | null
           is_available?: boolean | null
+          is_permanently_banned?: boolean
+          languages?: string[] | null
           rating?: number | null
+          reviews_count?: number
           specialty: string
+          suspended_until?: string | null
           title: string
           user_id?: string | null
           years_experience?: number | null
         }
         Update: {
           bio?: string | null
+          completed_consultations_count?: number
           created_at?: string
           full_name?: string
           id?: string
           image_url?: string | null
           is_available?: boolean | null
+          is_permanently_banned?: boolean
+          languages?: string[] | null
           rating?: number | null
+          reviews_count?: number
           specialty?: string
+          suspended_until?: string | null
           title?: string
           user_id?: string | null
           years_experience?: number | null
@@ -791,21 +884,33 @@ export type Database = {
           consultation_id: string | null
           created_at: string
           id: string
+          issued_by: string | null
           reason: string
+          related_review_id: string | null
+          severity: string
+          suspension_days: number | null
           user_id: string
         }
         Insert: {
           consultation_id?: string | null
           created_at?: string
           id?: string
+          issued_by?: string | null
           reason: string
+          related_review_id?: string | null
+          severity?: string
+          suspension_days?: number | null
           user_id: string
         }
         Update: {
           consultation_id?: string | null
           created_at?: string
           id?: string
+          issued_by?: string | null
           reason?: string
+          related_review_id?: string | null
+          severity?: string
+          suspension_days?: number | null
           user_id?: string
         }
         Relationships: [
