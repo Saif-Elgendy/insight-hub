@@ -239,11 +239,16 @@ const ProfilePage = () => {
 
   const handleConsultantFileUpload = async (
     file: File,
-    type: 'photo' | 'video' | 'certificate'
+    type: 'photo' | 'video' | 'certificate' | 'id_card' | 'license'
   ) => {
     if (!user || !consultantRequest) return;
 
-    const setUploading = type === 'photo' ? setUploadingPhoto : type === 'video' ? setUploadingVideo : setUploadingCert;
+    const setUploading =
+      type === 'photo' ? setUploadingPhoto :
+      type === 'video' ? setUploadingVideo :
+      type === 'id_card' ? setUploadingIdCard :
+      type === 'license' ? setUploadingLicense :
+      setUploadingCert;
     setUploading(true);
 
     try {
@@ -264,12 +269,16 @@ const ProfilePage = () => {
         await supabase.from('consultant_requests').update({ photo_url: publicUrl }).eq('id', consultantRequest.id);
       } else if (type === 'video') {
         await supabase.from('consultant_requests').update({ video_url: publicUrl }).eq('id', consultantRequest.id);
+      } else if (type === 'id_card') {
+        await supabase.from('consultant_requests').update({ id_card_url: publicUrl }).eq('id', consultantRequest.id);
+      } else if (type === 'license') {
+        await supabase.from('consultant_requests').update({ license_url: publicUrl }).eq('id', consultantRequest.id);
       } else {
         const currentCerts = consultantRequest.certificates_urls || [];
         await supabase.from('consultant_requests').update({ certificates_urls: [...currentCerts, publicUrl] }).eq('id', consultantRequest.id);
       }
 
-      toast.success(type === 'photo' ? 'تم رفع الصورة' : type === 'video' ? 'تم رفع الفيديو' : 'تم رفع الشهادة');
+      toast.success('تم رفع الملف بنجاح');
       fetchConsultantRequest();
     } catch (error) {
       console.error('Error uploading file:', error);
