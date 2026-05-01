@@ -31,6 +31,7 @@ interface ConsultationInfo {
   status: string;
   specialist_name: string;
   patient_name: string;
+  patient_user_id: string;
   other_party_name: string;
   is_specialist: boolean;
 }
