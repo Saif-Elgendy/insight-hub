@@ -195,6 +195,7 @@ const ProfilePage = () => {
           bio: data.bio || '',
           consultation_price: data.consultation_price?.toString() || '',
           years_experience: data.years_experience?.toString() || '',
+          languages: (data.languages || []).join(', '),
         });
       }
     } catch (error) {
