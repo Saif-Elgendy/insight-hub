@@ -38,6 +38,9 @@ interface Specialist {
   years_experience: number | null;
   rating: number | null;
   is_available: boolean | null;
+  languages: string[] | null;
+  completed_consultations_count: number | null;
+  reviews_count: number | null;
 }
 
 interface TimeSlot {
