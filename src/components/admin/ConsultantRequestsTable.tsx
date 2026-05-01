@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Eye, Loader2, FileText, ExternalLink } from 'lucide-react';
+import { Check, X, Eye, Loader2, FileText, ExternalLink, ShieldCheck, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+
+const SUPER_ADMIN_ID = '9a48cfb7-03ed-4df4-afc9-67a06d014d77';
 
 interface ConsultantRequest {
   id: string;
@@ -33,13 +36,20 @@ interface ConsultantRequest {
   photo_url: string | null;
   video_url: string | null;
   certificates_urls: string[] | null;
+  id_card_url: string | null;
+  license_url: string | null;
+  languages: string[] | null;
   rejection_reason: string | null;
+  admin_reviewed_at: string | null;
+  admin_reviewed_by: string | null;
+  super_admin_approved_at: string | null;
   created_at: string;
   profile_name?: string | null;
-  profile_email?: string | null;
 }
 
 export const ConsultantRequestsTable = () => {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.id === SUPER_ADMIN_ID;
   const [requests, setRequests] = useState<ConsultantRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -69,14 +79,10 @@ export const ConsultantRequestsTable = () => {
           .eq('user_id', req.user_id)
           .maybeSingle();
 
-        return {
-          ...req,
-          profile_name: profile?.full_name || null,
-          profile_email: null,
-        };
+        return { ...req, profile_name: profile?.full_name || null };
       }));
 
-      setRequests(enriched);
+      setRequests(enriched as ConsultantRequest[]);
     } catch (error) {
       console.error('Error fetching consultant requests:', error);
       toast.error('حدث خطأ أثناء تحميل طلبات الاستشاريين');
@@ -85,10 +91,56 @@ export const ConsultantRequestsTable = () => {
     }
   };
 
-  const handleApprove = async (request: ConsultantRequest) => {
+  const validateDocuments = (req: ConsultantRequest): string | null => {
+    if (!req.photo_url) return 'الصورة الشخصية مفقودة';
+    if (!req.id_card_url) return 'بطاقة الهوية مفقودة';
+    if (!req.license_url) return 'ترخيص مزاولة المهنة مفقود';
+    if (!req.certificates_urls || req.certificates_urls.length === 0) return 'الشهادات العلمية مفقودة';
+    return null;
+  };
+
+  // Stage 1: admin marks as admin_reviewed
+  const handleAdminReview = async (request: ConsultantRequest) => {
+    const missing = validateDocuments(request);
+    if (missing) {
+      toast.error('لا يمكن المراجعة: ' + missing);
+      return;
+    }
     setProcessing(request.id);
     try {
-      // 1. Update consultant request status
+      const { error } = await supabase
+        .from('consultant_requests')
+        .update({ status: 'admin_reviewed', reviewed_at: new Date().toISOString() })
+        .eq('id', request.id);
+
+      if (error) throw error;
+
+      await supabase.from('notifications').insert({
+        user_id: request.user_id,
+        title: 'تم مراجعة طلبك من قبل الإدارة',
+        message: 'تم اعتماد طلبك من قبل أحد المسؤولين، بانتظار التأكيد النهائي من السوبر آدمن.',
+        type: 'consultant',
+      });
+
+      toast.success('تمت المراجعة - بانتظار تأكيد السوبر آدمن');
+      fetchRequests();
+    } catch (error) {
+      console.error('Error reviewing:', error);
+      toast.error('حدث خطأ أثناء المراجعة');
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  // Stage 2: super admin final approval
+  const handleFinalApprove = async (request: ConsultantRequest) => {
+    if (!isSuperAdmin) {
+      toast.error('الموافقة النهائية للسوبر آدمن فقط');
+      return;
+    }
+    setProcessing(request.id);
+    try {
+      // Update consultant_requests; trigger sync_specialist_on_approval will create/update specialists
       const { error: updateError } = await supabase
         .from('consultant_requests')
         .update({ status: 'approved', reviewed_at: new Date().toISOString() })
@@ -96,7 +148,7 @@ export const ConsultantRequestsTable = () => {
 
       if (updateError) throw updateError;
 
-      // 2. Update user role to consultant
+      // Update role
       const { error: roleError } = await supabase
         .from('user_roles')
         .update({ role: 'consultant' })
@@ -104,35 +156,26 @@ export const ConsultantRequestsTable = () => {
 
       if (roleError) throw roleError;
 
-      // 3. Create specialist entry
-      const { error: specialistError } = await supabase
-        .from('specialists')
-        .insert({
-          user_id: request.user_id,
-          full_name: request.profile_name || 'استشاري',
-          title: 'استشاري',
-          specialty: request.specialty,
-          bio: request.bio,
-          years_experience: request.years_experience || 0,
-          image_url: request.photo_url,
-          is_available: true,
-        });
+      // Sync languages on the specialist record
+      if (request.languages && request.languages.length > 0) {
+        await supabase
+          .from('specialists')
+          .update({ languages: request.languages })
+          .eq('user_id', request.user_id);
+      }
 
-      if (specialistError) throw specialistError;
-
-      // 4. Send notification
       await supabase.from('notifications').insert({
         user_id: request.user_id,
         title: 'تم قبول طلبك كاستشاري! 🎉',
-        message: 'تهانينا! تم قبول طلبك كاستشاري. يمكنك الآن استقبال الاستشارات من المرضى.',
+        message: 'تهانينا! تم قبول طلبك بشكل نهائي ويمكنك الآن استقبال الاستشارات وتشخيص المرضى.',
         type: 'consultant',
       });
 
-      toast.success('تم قبول الاستشاري بنجاح');
+      toast.success('تم القبول النهائي بنجاح');
       fetchRequests();
-    } catch (error) {
-      console.error('Error approving consultant:', error);
-      toast.error('حدث خطأ أثناء قبول الطلب');
+    } catch (error: any) {
+      console.error('Error final approving:', error);
+      toast.error(error?.message || 'حدث خطأ أثناء القبول');
     } finally {
       setProcessing(null);
     }
@@ -183,6 +226,7 @@ export const ConsultantRequestsTable = () => {
   const statusBadge = (status: string) => {
     switch (status) {
       case 'pending': return <Badge className="bg-yellow-500/10 text-yellow-600">قيد المراجعة</Badge>;
+      case 'admin_reviewed': return <Badge className="bg-blue-500/10 text-blue-600">بانتظار السوبر آدمن</Badge>;
       case 'approved': return <Badge className="bg-green-500/10 text-green-600">مقبول</Badge>;
       case 'rejected': return <Badge className="bg-red-500/10 text-red-600">مرفوض</Badge>;
       default: return <Badge>{status}</Badge>;
@@ -204,6 +248,12 @@ export const ConsultantRequestsTable = () => {
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
             طلبات الاستشاريين ({requests.length})
+            {isSuperAdmin && (
+              <Badge className="bg-primary/10 text-primary mr-2">
+                <ShieldCheck className="w-3 h-3 ml-1" />
+                سوبر آدمن
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -215,56 +265,87 @@ export const ConsultantRequestsTable = () => {
                 <TableRow>
                   <TableHead className="text-right">الاسم</TableHead>
                   <TableHead className="text-right">التخصص</TableHead>
-                  <TableHead className="text-right">سنوات الخبرة</TableHead>
-                  <TableHead className="text-right">سعر الاستشارة</TableHead>
+                  <TableHead className="text-right">الخبرة</TableHead>
+                  <TableHead className="text-right">السعر</TableHead>
                   <TableHead className="text-right">الحالة</TableHead>
                   <TableHead className="text-right">التاريخ</TableHead>
                   <TableHead className="text-right">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.map((req) => (
-                  <TableRow key={req.id}>
-                    <TableCell className="font-medium">{req.profile_name || 'غير محدد'}</TableCell>
-                    <TableCell>{req.specialty}</TableCell>
-                    <TableCell>{req.years_experience || 0} سنة</TableCell>
-                    <TableCell>{req.consultation_price || 0} ج.م</TableCell>
-                    <TableCell>{statusBadge(req.status)}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(req.created_at).toLocaleDateString('ar-EG')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => { setSelectedRequest(req); setDetailsOpen(true); }}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        {req.status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(req)}
-                              disabled={processing === req.id}
-                            >
-                              {processing === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => { setRejectingId(req.id); setRejectDialogOpen(true); }}
-                              disabled={processing === req.id}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {requests.map((req) => {
+                  const docsMissing = validateDocuments(req);
+                  return (
+                    <TableRow key={req.id}>
+                      <TableCell className="font-medium">{req.profile_name || 'غير محدد'}</TableCell>
+                      <TableCell>{req.specialty}</TableCell>
+                      <TableCell>{req.years_experience || 0} سنة</TableCell>
+                      <TableCell>{req.consultation_price || 0} ج.م</TableCell>
+                      <TableCell>{statusBadge(req.status)}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(req.created_at).toLocaleDateString('ar-EG')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { setSelectedRequest(req); setDetailsOpen(true); }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+
+                          {req.status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleAdminReview(req)}
+                                disabled={processing === req.id || !!docsMissing}
+                                title={docsMissing || 'مراجعة الطلب'}
+                              >
+                                {processing === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                <span className="text-xs mr-1">مراجعة</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => { setRejectingId(req.id); setRejectDialogOpen(true); }}
+                                disabled={processing === req.id}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+
+                          {req.status === 'admin_reviewed' && isSuperAdmin && (
+                            <>
+                              <Button
+                                size="sm"
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                                onClick={() => handleFinalApprove(req)}
+                                disabled={processing === req.id}
+                              >
+                                {processing === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                                <span className="text-xs mr-1">قبول نهائي</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => { setRejectingId(req.id); setRejectDialogOpen(true); }}
+                                disabled={processing === req.id}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                          {req.status === 'admin_reviewed' && !isSuperAdmin && (
+                            <span className="text-xs text-muted-foreground">بانتظار تأكيد السوبر آدمن</span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
@@ -298,6 +379,19 @@ export const ConsultantRequestsTable = () => {
                 </div>
               </div>
 
+              {selectedRequest.languages && selectedRequest.languages.length > 0 && (
+                <div>
+                  <Label className="text-muted-foreground flex items-center gap-1">
+                    <Globe className="w-4 h-4" /> اللغات
+                  </Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedRequest.languages.map((l, i) => (
+                      <Badge key={i} variant="secondary">{l}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {selectedRequest.bio && (
                 <div>
                   <Label className="text-muted-foreground">نبذة شخصية</Label>
@@ -311,6 +405,25 @@ export const ConsultantRequestsTable = () => {
                   <img src={selectedRequest.photo_url} alt="صورة الاستشاري" className="w-32 h-32 rounded-xl object-cover mt-2" />
                 </div>
               )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">بطاقة الهوية</Label>
+                  {selectedRequest.id_card_url ? (
+                    <a href={selectedRequest.id_card_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline mt-1">
+                      <ExternalLink className="w-4 h-4" /> عرض البطاقة
+                    </a>
+                  ) : <p className="text-destructive text-sm mt-1">غير مرفوعة</p>}
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">ترخيص مزاولة المهنة</Label>
+                  {selectedRequest.license_url ? (
+                    <a href={selectedRequest.license_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline mt-1">
+                      <ExternalLink className="w-4 h-4" /> عرض الترخيص
+                    </a>
+                  ) : <p className="text-destructive text-sm mt-1">غير مرفوع</p>}
+                </div>
+              </div>
 
               {selectedRequest.video_url && (
                 <div>
@@ -335,6 +448,17 @@ export const ConsultantRequestsTable = () => {
                       </a>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {selectedRequest.admin_reviewed_at && (
+                <div className="bg-blue-500/10 p-3 rounded-xl text-sm">
+                  ✅ تمت مراجعة الآدمن في {new Date(selectedRequest.admin_reviewed_at).toLocaleString('ar-EG')}
+                </div>
+              )}
+              {selectedRequest.super_admin_approved_at && (
+                <div className="bg-emerald-500/10 p-3 rounded-xl text-sm">
+                  ✅ تم القبول النهائي من السوبر آدمن في {new Date(selectedRequest.super_admin_approved_at).toLocaleString('ar-EG')}
                 </div>
               )}
 
