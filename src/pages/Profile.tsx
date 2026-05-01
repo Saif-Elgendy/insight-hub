@@ -111,14 +111,19 @@ const ProfilePage = () => {
     bio: '',
     consultation_price: '',
     years_experience: '',
+    languages: '',
   });
   const [savingConsultant, setSavingConsultant] = useState(false);
   const [uploadingCert, setUploadingCert] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingIdCard, setUploadingIdCard] = useState(false);
+  const [uploadingLicense, setUploadingLicense] = useState(false);
   const certInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const idCardInputRef = useRef<HTMLInputElement>(null);
+  const licenseInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
