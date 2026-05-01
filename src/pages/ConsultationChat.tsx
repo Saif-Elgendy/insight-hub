@@ -3,15 +3,17 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, Send, Paperclip, Check, CheckCheck, 
-  Loader2, Image, FileText, X, Download, Brain
+  Loader2, Image, FileText, X, Download, Brain, FileHeart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { MedicalRecordsPanel } from '@/components/medical/MedicalRecordsPanel';
 
 interface ChatMessage {
   id: string;
