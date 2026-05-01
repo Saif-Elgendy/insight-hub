@@ -34,7 +34,10 @@ export const SpecialistReviewDialog = ({
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [reasonDetails, setReasonDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const isLowRating = rating > 0 && rating <= 2;
 
   const handleSubmit = async () => {
     if (!user) {
@@ -47,6 +50,11 @@ export const SpecialistReviewDialog = ({
       return;
     }
 
+    if (isLowRating && reasonDetails.trim().length < 20) {
+      toast.error('يجب توضيح سبب التقييم بالتفصيل (20 حرف على الأقل)');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -56,6 +64,7 @@ export const SpecialistReviewDialog = ({
         consultation_id: consultationId,
         rating,
         comment: comment.trim() || null,
+        reason_details: isLowRating ? reasonDetails.trim() : null,
       });
 
       if (error) {
@@ -65,12 +74,16 @@ export const SpecialistReviewDialog = ({
           throw error;
         }
       } else {
-        toast.success('شكراً لتقييمك!');
+        if (isLowRating) {
+          toast.success('تم استلام تقييمك وسيتم التحقق من المعلومات قبل اتخاذ أي إجراء');
+        } else {
+          toast.success('شكراً لتقييمك!');
+        }
         onOpenChange(false);
         onReviewSubmitted?.();
-        // Reset form
         setRating(0);
         setComment('');
+        setReasonDetails('');
       }
     } catch (error) {
       console.error('Error submitting review:', error);
