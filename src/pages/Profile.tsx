@@ -909,6 +909,12 @@ const ProfilePage = () => {
                           قيد المراجعة
                         </Badge>
                       )}
+                      {consultantRequest.status === 'admin_reviewed' && (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20">
+                          <CheckCircle2 className="w-3 h-3 ml-1" />
+                          تمت مراجعة الآدمن - بانتظار التأكيد النهائي
+                        </Badge>
+                      )}
                       {consultantRequest.status === 'approved' && (
                         <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
                           <CheckCircle2 className="w-3 h-3 ml-1" />
