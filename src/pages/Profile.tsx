@@ -58,8 +58,13 @@ interface ConsultantRequest {
   photo_url: string | null;
   video_url: string | null;
   certificates_urls: string[] | null;
+  id_card_url: string | null;
+  license_url: string | null;
+  languages: string[] | null;
   status: string;
   rejection_reason: string | null;
+  admin_reviewed_at: string | null;
+  super_admin_approved_at: string | null;
   created_at: string;
 }
 
@@ -106,14 +111,19 @@ const ProfilePage = () => {
     bio: '',
     consultation_price: '',
     years_experience: '',
+    languages: '',
   });
   const [savingConsultant, setSavingConsultant] = useState(false);
   const [uploadingCert, setUploadingCert] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingIdCard, setUploadingIdCard] = useState(false);
+  const [uploadingLicense, setUploadingLicense] = useState(false);
   const certInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const idCardInputRef = useRef<HTMLInputElement>(null);
+  const licenseInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -185,6 +195,7 @@ const ProfilePage = () => {
           bio: data.bio || '',
           consultation_price: data.consultation_price?.toString() || '',
           years_experience: data.years_experience?.toString() || '',
+          languages: (data.languages || []).join(', '),
         });
       }
     } catch (error) {
@@ -200,6 +211,10 @@ const ProfilePage = () => {
     }
     setSavingConsultant(true);
     try {
+      const langs = consultantFormData.languages
+        .split(',')
+        .map(l => l.trim())
+        .filter(Boolean);
       const { error } = await supabase
         .from('consultant_requests')
         .update({
@@ -207,6 +222,7 @@ const ProfilePage = () => {
           bio: consultantFormData.bio.trim() || null,
           consultation_price: parseInt(consultantFormData.consultation_price) || 0,
           years_experience: parseInt(consultantFormData.years_experience) || 0,
+          languages: langs,
         })
         .eq('id', consultantRequest.id);
 
@@ -223,11 +239,16 @@ const ProfilePage = () => {
 
   const handleConsultantFileUpload = async (
     file: File,
-    type: 'photo' | 'video' | 'certificate'
+    type: 'photo' | 'video' | 'certificate' | 'id_card' | 'license'
   ) => {
     if (!user || !consultantRequest) return;
 
-    const setUploading = type === 'photo' ? setUploadingPhoto : type === 'video' ? setUploadingVideo : setUploadingCert;
+    const setUploading =
+      type === 'photo' ? setUploadingPhoto :
+      type === 'video' ? setUploadingVideo :
+      type === 'id_card' ? setUploadingIdCard :
+      type === 'license' ? setUploadingLicense :
+      setUploadingCert;
     setUploading(true);
 
     try {
@@ -248,12 +269,16 @@ const ProfilePage = () => {
         await supabase.from('consultant_requests').update({ photo_url: publicUrl }).eq('id', consultantRequest.id);
       } else if (type === 'video') {
         await supabase.from('consultant_requests').update({ video_url: publicUrl }).eq('id', consultantRequest.id);
+      } else if (type === 'id_card') {
+        await supabase.from('consultant_requests').update({ id_card_url: publicUrl }).eq('id', consultantRequest.id);
+      } else if (type === 'license') {
+        await supabase.from('consultant_requests').update({ license_url: publicUrl }).eq('id', consultantRequest.id);
       } else {
         const currentCerts = consultantRequest.certificates_urls || [];
         await supabase.from('consultant_requests').update({ certificates_urls: [...currentCerts, publicUrl] }).eq('id', consultantRequest.id);
       }
 
-      toast.success(type === 'photo' ? 'تم رفع الصورة' : type === 'video' ? 'تم رفع الفيديو' : 'تم رفع الشهادة');
+      toast.success('تم رفع الملف بنجاح');
       fetchConsultantRequest();
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -884,6 +909,12 @@ const ProfilePage = () => {
                           قيد المراجعة
                         </Badge>
                       )}
+                      {consultantRequest.status === 'admin_reviewed' && (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20">
+                          <CheckCircle2 className="w-3 h-3 ml-1" />
+                          تمت مراجعة الآدمن - بانتظار التأكيد النهائي
+                        </Badge>
+                      )}
                       {consultantRequest.status === 'approved' && (
                         <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
                           <CheckCircle2 className="w-3 h-3 ml-1" />
@@ -953,6 +984,20 @@ const ProfilePage = () => {
                         </div>
                       </div>
 
+                      {/* Languages */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <Globe className="w-3 h-3" />
+                          اللغات (افصل بينها بفاصلة)
+                        </Label>
+                        <Input
+                          value={consultantFormData.languages}
+                          onChange={(e) => setConsultantFormData({ ...consultantFormData, languages: e.target.value })}
+                          placeholder="العربية, English, Français"
+                        />
+                        <p className="text-xs text-muted-foreground">اللغات التي يمكنك التشخيص بها</p>
+                      </div>
+
                       {/* Save Button */}
                       <Button
                         onClick={handleSaveConsultantData}
@@ -962,6 +1007,96 @@ const ProfilePage = () => {
                         {savingConsultant ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {savingConsultant ? 'جاري الحفظ...' : 'حفظ البيانات'}
                       </Button>
+
+                      {/* Required documents notice */}
+                      <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm">
+                        <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">📋 المستندات الإجبارية للقبول:</p>
+                        <ul className="list-disc pr-4 space-y-0.5 text-amber-700 dark:text-amber-300 text-xs">
+                          <li>صورة شخصية احترافية</li>
+                          <li>الشهادات العلمية</li>
+                          <li>ترخيص مزاولة المهنة</li>
+                          <li>بطاقة الهوية</li>
+                          <li>فيديو تعريفي قصير</li>
+                        </ul>
+                      </div>
+
+                      {/* ID Card Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <FileText className="w-3 h-3" />
+                          بطاقة الهوية * (إجباري)
+                        </Label>
+                        {consultantRequest.id_card_url && (
+                          <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <a href={consultantRequest.id_card_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                              عرض بطاقة الهوية
+                            </a>
+                          </div>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => idCardInputRef.current?.click()}
+                          disabled={uploadingIdCard}
+                          className="gap-2"
+                        >
+                          {uploadingIdCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {consultantRequest.id_card_url ? 'تغيير البطاقة' : 'رفع بطاقة الهوية'}
+                        </Button>
+                        <input
+                          ref={idCardInputRef}
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 10 * 1024 * 1024) { toast.error('الحد الأقصى 10 ميجابايت'); return; }
+                              handleConsultantFileUpload(file, 'id_card');
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* License Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <FileText className="w-3 h-3" />
+                          ترخيص مزاولة المهنة * (إجباري)
+                        </Label>
+                        {consultantRequest.license_url && (
+                          <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <a href={consultantRequest.license_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                              عرض الترخيص
+                            </a>
+                          </div>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => licenseInputRef.current?.click()}
+                          disabled={uploadingLicense}
+                          className="gap-2"
+                        >
+                          {uploadingLicense ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {consultantRequest.license_url ? 'تغيير الترخيص' : 'رفع الترخيص'}
+                        </Button>
+                        <input
+                          ref={licenseInputRef}
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 10 * 1024 * 1024) { toast.error('الحد الأقصى 10 ميجابايت'); return; }
+                              handleConsultantFileUpload(file, 'license');
+                            }
+                          }}
+                        />
+                      </div>
 
                       {/* Photo Upload */}
                       <div className="space-y-2">
