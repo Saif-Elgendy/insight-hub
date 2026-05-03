@@ -209,6 +209,22 @@ const ProfilePage = () => {
       toast.error('يرجى إدخال التخصص');
       return;
     }
+    if (!consultantRequest.photo_url) {
+      toast.error('يرجى رفع الصورة الشخصية قبل الحفظ');
+      return;
+    }
+    if (!consultantRequest.id_card_url) {
+      toast.error('يرجى رفع بطاقة الهوية قبل الحفظ');
+      return;
+    }
+    if (!consultantRequest.license_url) {
+      toast.error('يرجى رفع ترخيص مزاولة المهنة قبل الحفظ');
+      return;
+    }
+    if (!consultantRequest.certificates_urls || consultantRequest.certificates_urls.length === 0) {
+      toast.error('يرجى رفع شهادة واحدة على الأقل قبل الحفظ');
+      return;
+    }
     setSavingConsultant(true);
     try {
       const langs = consultantFormData.languages
