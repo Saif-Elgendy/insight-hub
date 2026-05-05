@@ -215,6 +215,30 @@ const ProfilePage = () => {
     }
   };
 
+  const getRequiredDocsStatus = () => {
+    const r = consultantRequest;
+    return [
+      { key: 'photo', label: 'الصورة الشخصية', ok: !!r?.photo_url },
+      { key: 'id_card', label: 'بطاقة الهوية', ok: !!r?.id_card_url },
+      { key: 'license', label: 'ترخيص مزاولة المهنة', ok: !!r?.license_url },
+      { key: 'certificates', label: 'الشهادات العلمية', ok: !!(r?.certificates_urls && r.certificates_urls.length > 0) },
+    ];
+  };
+
+  const handleAttemptSaveConsultant = () => {
+    if (!user || !consultantRequest) return;
+    if (!consultantFormData.specialty.trim()) {
+      toast.error('يرجى إدخال التخصص');
+      return;
+    }
+    const missing = getRequiredDocsStatus().filter(d => !d.ok);
+    if (missing.length > 0) {
+      toast.error(`المستندات الناقصة: ${missing.map(m => m.label).join('، ')}`);
+      return;
+    }
+    setConfirmSubmitOpen(true);
+  };
+
   const handleSaveConsultantData = async () => {
     if (!user || !consultantRequest) return;
     if (!consultantFormData.specialty.trim()) {
