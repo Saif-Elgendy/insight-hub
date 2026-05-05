@@ -299,6 +299,7 @@ const ProfilePage = () => {
       }
     } finally {
       setSavingConsultant(false);
+      setConfirmSubmitOpen(false);
     }
   };
 
