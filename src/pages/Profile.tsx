@@ -245,9 +245,22 @@ const ProfilePage = () => {
       if (error) throw error;
       toast.success('تم حفظ البيانات بنجاح');
       fetchConsultantRequest();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving consultant data:', error);
-      toast.error('حدث خطأ أثناء حفظ البيانات');
+      const msg: string = error?.message || '';
+      if (msg.includes('الصورة الشخصية')) {
+        toast.error('لا يمكن حفظ الطلب: يجب رفع الصورة الشخصية أولاً');
+      } else if (msg.includes('بطاقة الهوية')) {
+        toast.error('لا يمكن حفظ الطلب: يجب رفع بطاقة الهوية أولاً');
+      } else if (msg.includes('ترخيص')) {
+        toast.error('لا يمكن حفظ الطلب: يجب رفع ترخيص مزاولة المهنة أولاً');
+      } else if (msg.includes('الشهادات')) {
+        toast.error('لا يمكن حفظ الطلب: يجب رفع الشهادات العلمية أولاً');
+      } else if (msg.includes('المستندات الإجبارية')) {
+        toast.error('لا يمكن حفظ الطلب: جميع المستندات الإجبارية مطلوبة (الصورة، الشهادات، الترخيص، بطاقة الهوية)');
+      } else {
+        toast.error('حدث خطأ أثناء حفظ البيانات');
+      }
     } finally {
       setSavingConsultant(false);
     }
