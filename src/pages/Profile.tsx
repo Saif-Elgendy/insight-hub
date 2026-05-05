@@ -76,6 +76,8 @@ interface ConsultantRequest {
   rejection_reason: string | null;
   admin_reviewed_at: string | null;
   super_admin_approved_at: string | null;
+  last_save_error: string | null;
+  last_save_error_at: string | null;
   created_at: string;
 }
 
