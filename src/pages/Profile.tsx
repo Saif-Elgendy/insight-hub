@@ -1066,13 +1066,51 @@ const ProfilePage = () => {
 
                       {/* Save Button */}
                       <Button
-                        onClick={handleSaveConsultantData}
+                        onClick={handleAttemptSaveConsultant}
                         disabled={savingConsultant}
                         className="w-full gap-2"
                       >
                         {savingConsultant ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {savingConsultant ? 'جاري الحفظ...' : 'حفظ البيانات'}
                       </Button>
+
+                      <AlertDialog open={confirmSubmitOpen} onOpenChange={setConfirmSubmitOpen}>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>تأكيد إرسال الطلب</AlertDialogTitle>
+                            <AlertDialogDescription asChild>
+                              <div className="space-y-3 text-right">
+                                <p>يرجى مراجعة المستندات المطلوبة قبل الإرسال:</p>
+                                <ul className="space-y-2">
+                                  {getRequiredDocsStatus().map(d => (
+                                    <li key={d.key} className="flex items-center gap-2 text-sm">
+                                      {d.ok ? (
+                                        <Check className="w-4 h-4 text-green-600" />
+                                      ) : (
+                                        <X className="w-4 h-4 text-destructive" />
+                                      )}
+                                      <span className={d.ok ? '' : 'text-destructive'}>{d.label}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                <p className="text-xs text-muted-foreground">
+                                  بعد الإرسال سيقوم الآدمن بمراجعة طلبك ثم يتم اعتماده نهائياً من السوبر آدمن.
+                                </p>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={savingConsultant}>إلغاء</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={(e) => { e.preventDefault(); handleSaveConsultantData(); }}
+                              disabled={savingConsultant || getRequiredDocsStatus().some(d => !d.ok)}
+                            >
+                              {savingConsultant ? 'جاري الحفظ...' : 'تأكيد وإرسال'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
 
                       {/* Required documents notice */}
                       <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm">
