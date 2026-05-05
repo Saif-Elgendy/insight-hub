@@ -17,6 +17,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Check } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -114,6 +125,7 @@ const ProfilePage = () => {
     languages: '',
   });
   const [savingConsultant, setSavingConsultant] = useState(false);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
   const [uploadingCert, setUploadingCert] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -203,6 +215,30 @@ const ProfilePage = () => {
     }
   };
 
+  const getRequiredDocsStatus = () => {
+    const r = consultantRequest;
+    return [
+      { key: 'photo', label: 'الصورة الشخصية', ok: !!r?.photo_url },
+      { key: 'id_card', label: 'بطاقة الهوية', ok: !!r?.id_card_url },
+      { key: 'license', label: 'ترخيص مزاولة المهنة', ok: !!r?.license_url },
+      { key: 'certificates', label: 'الشهادات العلمية', ok: !!(r?.certificates_urls && r.certificates_urls.length > 0) },
+    ];
+  };
+
+  const handleAttemptSaveConsultant = () => {
+    if (!user || !consultantRequest) return;
+    if (!consultantFormData.specialty.trim()) {
+      toast.error('يرجى إدخال التخصص');
+      return;
+    }
+    const missing = getRequiredDocsStatus().filter(d => !d.ok);
+    if (missing.length > 0) {
+      toast.error(`المستندات الناقصة: ${missing.map(m => m.label).join('، ')}`);
+      return;
+    }
+    setConfirmSubmitOpen(true);
+  };
+
   const handleSaveConsultantData = async () => {
     if (!user || !consultantRequest) return;
     if (!consultantFormData.specialty.trim()) {
@@ -263,6 +299,7 @@ const ProfilePage = () => {
       }
     } finally {
       setSavingConsultant(false);
+      setConfirmSubmitOpen(false);
     }
   };
 
@@ -1029,13 +1066,51 @@ const ProfilePage = () => {
 
                       {/* Save Button */}
                       <Button
-                        onClick={handleSaveConsultantData}
+                        onClick={handleAttemptSaveConsultant}
                         disabled={savingConsultant}
                         className="w-full gap-2"
                       >
                         {savingConsultant ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {savingConsultant ? 'جاري الحفظ...' : 'حفظ البيانات'}
                       </Button>
+
+                      <AlertDialog open={confirmSubmitOpen} onOpenChange={setConfirmSubmitOpen}>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>تأكيد إرسال الطلب</AlertDialogTitle>
+                            <AlertDialogDescription asChild>
+                              <div className="space-y-3 text-right">
+                                <p>يرجى مراجعة المستندات المطلوبة قبل الإرسال:</p>
+                                <ul className="space-y-2">
+                                  {getRequiredDocsStatus().map(d => (
+                                    <li key={d.key} className="flex items-center gap-2 text-sm">
+                                      {d.ok ? (
+                                        <Check className="w-4 h-4 text-green-600" />
+                                      ) : (
+                                        <X className="w-4 h-4 text-destructive" />
+                                      )}
+                                      <span className={d.ok ? '' : 'text-destructive'}>{d.label}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                <p className="text-xs text-muted-foreground">
+                                  بعد الإرسال سيقوم الآدمن بمراجعة طلبك ثم يتم اعتماده نهائياً من السوبر آدمن.
+                                </p>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={savingConsultant}>إلغاء</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={(e) => { e.preventDefault(); handleSaveConsultantData(); }}
+                              disabled={savingConsultant || getRequiredDocsStatus().some(d => !d.ok)}
+                            >
+                              {savingConsultant ? 'جاري الحفظ...' : 'تأكيد وإرسال'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
 
                       {/* Required documents notice */}
                       <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm">
