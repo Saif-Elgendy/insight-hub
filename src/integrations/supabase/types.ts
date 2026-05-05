@@ -106,6 +106,8 @@ export type Database = {
           id: string
           id_card_url: string | null
           languages: string[] | null
+          last_save_error: string | null
+          last_save_error_at: string | null
           license_url: string | null
           photo_url: string | null
           rejection_reason: string | null
@@ -131,6 +133,8 @@ export type Database = {
           id?: string
           id_card_url?: string | null
           languages?: string[] | null
+          last_save_error?: string | null
+          last_save_error_at?: string | null
           license_url?: string | null
           photo_url?: string | null
           rejection_reason?: string | null
@@ -156,6 +160,8 @@ export type Database = {
           id?: string
           id_card_url?: string | null
           languages?: string[] | null
+          last_save_error?: string | null
+          last_save_error_at?: string | null
           license_url?: string | null
           photo_url?: string | null
           rejection_reason?: string | null

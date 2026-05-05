@@ -76,6 +76,8 @@ interface ConsultantRequest {
   rejection_reason: string | null;
   admin_reviewed_at: string | null;
   super_admin_approved_at: string | null;
+  last_save_error: string | null;
+  last_save_error_at: string | null;
   created_at: string;
 }
 
@@ -1064,7 +1066,20 @@ const ProfilePage = () => {
                         <p className="text-xs text-muted-foreground">اللغات التي يمكنك التشخيص بها</p>
                       </div>
 
-                      {/* Save Button */}
+                      {consultantRequest?.last_save_error && (
+                        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 text-sm">
+                          <p className="font-semibold text-destructive mb-1 flex items-center gap-2">
+                            <X className="w-4 h-4" /> سبب رفض آخر محاولة حفظ
+                          </p>
+                          <p className="text-destructive/90 text-xs">{consultantRequest.last_save_error}</p>
+                          {consultantRequest.last_save_error_at && (
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              {new Date(consultantRequest.last_save_error_at).toLocaleString('ar-EG')}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <Button
                         onClick={handleAttemptSaveConsultant}
                         disabled={savingConsultant}
