@@ -125,6 +125,7 @@ const ProfilePage = () => {
     languages: '',
   });
   const [savingConsultant, setSavingConsultant] = useState(false);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
   const [uploadingCert, setUploadingCert] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
