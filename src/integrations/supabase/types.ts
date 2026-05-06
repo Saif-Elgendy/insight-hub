@@ -1005,6 +1005,7 @@ export type Database = {
         Args: { _consultation_id: string; _user_id: string }
         Returns: boolean
       }
+      resubmit_consultant_request: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "instructor" | "student" | "consultant"
