@@ -283,6 +283,7 @@ const ProfilePage = () => {
       if (error) throw error;
       toast.success('تم حفظ البيانات بنجاح');
       fetchConsultantRequest();
+      navigate('/consultant-request-status');
     } catch (error: any) {
       console.error('Error saving consultant data:', error);
       const msg: string = error?.message || '';
