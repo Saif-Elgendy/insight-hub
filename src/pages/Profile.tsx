@@ -1000,6 +1000,16 @@ const ProfilePage = () => {
                           )}
                         </div>
                       )}
+                      <div className="mt-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate('/consultant-request-status')}
+                        >
+                          عرض حالة الطلب بالتفصيل
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-4">
