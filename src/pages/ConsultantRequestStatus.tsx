@@ -173,6 +173,66 @@ const ConsultantRequestStatus = () => {
                   </Alert>
                 )}
 
+                {/* Documents status section */}
+                <div className="border border-border rounded-lg p-4 space-y-3">
+                  <h3 className="font-semibold">حالة المستندات</h3>
+                  {(() => {
+                    const isRejected = request.status === "rejected";
+                    const certs = request.certificates_urls || [];
+                    const docs: { label: string; url: string | null; required: boolean; count?: number }[] = [
+                      { label: "الصورة الشخصية", url: request.photo_url, required: true },
+                      { label: "بطاقة الهوية", url: request.id_card_url, required: true },
+                      { label: "ترخيص مزاولة المهنة", url: request.license_url, required: true },
+                      { label: "الشهادات العلمية", url: certs.length > 0 ? "ok" : null, required: true, count: certs.length },
+                      { label: "فيديو تعريفي", url: request.video_url, required: false },
+                    ];
+                    return (
+                      <ul className="divide-y divide-border">
+                        {docs.map((d) => {
+                          let statusBadge;
+                          if (d.url) {
+                            statusBadge = isRejected ? (
+                              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                                <XCircle className="w-3 h-3 ml-1" /> مرفوض
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
+                                <CheckCircle2 className="w-3 h-3 ml-1" /> مستلم
+                              </Badge>
+                            );
+                          } else if (d.required) {
+                            statusBadge = (
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/20">
+                                <AlertTriangle className="w-3 h-3 ml-1" /> ناقص
+                              </Badge>
+                            );
+                          } else {
+                            statusBadge = (
+                              <Badge variant="outline" className="text-muted-foreground">اختياري</Badge>
+                            );
+                          }
+                          return (
+                            <li key={d.label} className="flex items-center justify-between py-2 gap-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <span>{d.label}</span>
+                                {d.count !== undefined && d.count > 0 && (
+                                  <span className="text-xs text-muted-foreground">({d.count})</span>
+                                )}
+                              </div>
+                              {statusBadge}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    );
+                  })()}
+                  {request.status === "rejected" && (
+                    <p className="text-xs text-muted-foreground">
+                      تم رفض الطلب — قد تحتاج إلى استبدال أو تحديث المستندات أعلاه ثم إعادة الإرسال.
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex gap-2 flex-wrap">
                   <Button onClick={fetchRequest} variant="outline">تحديث</Button>
                   <Button onClick={() => navigate("/profile")} variant="ghost">تعديل البيانات</Button>
