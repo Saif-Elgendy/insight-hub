@@ -22,6 +22,11 @@ interface ConsultantRequest {
   updated_at: string;
   last_save_error: string | null;
   last_save_error_at: string | null;
+  photo_url: string | null;
+  id_card_url: string | null;
+  license_url: string | null;
+  certificates_urls: string[] | null;
+  video_url: string | null;
 }
 
 const ConsultantRequestStatus = () => {
