@@ -168,9 +168,26 @@ const ConsultantRequestStatus = () => {
                   </Alert>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button onClick={fetchRequest} variant="outline">تحديث</Button>
                   <Button onClick={() => navigate("/profile")} variant="ghost">تعديل البيانات</Button>
+                  {request.status === "rejected" && (
+                    <Button
+                      onClick={async () => {
+                        const { toast } = await import("sonner");
+                        const { error } = await supabase.rpc("resubmit_consultant_request" as any);
+                        if (error) {
+                          toast.error(error.message || "تعذر إعادة الإرسال");
+                          return;
+                        }
+                        toast.success("تم إعادة إرسال الطلب. عدّل بياناتك ثم احفظ.");
+                        await fetchRequest();
+                        navigate("/profile");
+                      }}
+                    >
+                      تحديث البيانات وإعادة الإرسال
+                    </Button>
+                  )}
                 </div>
               </>
             )}
