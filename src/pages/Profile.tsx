@@ -283,6 +283,7 @@ const ProfilePage = () => {
       if (error) throw error;
       toast.success('تم حفظ البيانات بنجاح');
       fetchConsultantRequest();
+      navigate('/consultant-request-status');
     } catch (error: any) {
       console.error('Error saving consultant data:', error);
       const msg: string = error?.message || '';
@@ -1000,6 +1001,16 @@ const ProfilePage = () => {
                           )}
                         </div>
                       )}
+                      <div className="mt-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate('/consultant-request-status')}
+                        >
+                          عرض حالة الطلب بالتفصيل
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-4">

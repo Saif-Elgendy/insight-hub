@@ -19,6 +19,7 @@ import SpecialistDetails from "./pages/SpecialistDetails";
 import ResourceLibrary from "./pages/ResourceLibrary";
 import ConsultationChat from "./pages/ConsultationChat";
 import ConsultantDashboard from "./pages/ConsultantDashboard";
+import ConsultantRequestStatus from "./pages/ConsultantRequestStatus";
 import NotFound from "./pages/NotFound";
 import { SiteAssistant } from "./components/assistant/SiteAssistant";
 
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/resources" element={<ResourceLibrary />} />
             <Route path="/consultant-dashboard" element={<ConsultantDashboard />} />
+            <Route path="/consultant-request-status" element={<ConsultantRequestStatus />} />
             <Route path="/chat/:id" element={<ConsultationChat />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
