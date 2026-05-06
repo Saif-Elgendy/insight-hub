@@ -19,6 +19,7 @@ import SpecialistDetails from "./pages/SpecialistDetails";
 import ResourceLibrary from "./pages/ResourceLibrary";
 import ConsultationChat from "./pages/ConsultationChat";
 import ConsultantDashboard from "./pages/ConsultantDashboard";
+import ConsultantRequestStatus from "./pages/ConsultantRequestStatus";
 import NotFound from "./pages/NotFound";
 import { SiteAssistant } from "./components/assistant/SiteAssistant";
 
