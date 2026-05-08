@@ -179,23 +179,61 @@ const ConsultantRequestStatus = () => {
                   {(() => {
                     const isRejected = request.status === "rejected";
                     const certs = request.certificates_urls || [];
-                    const docs: { label: string; url: string | null; required: boolean; count?: number }[] = [
-                      { label: "الصورة الشخصية", url: request.photo_url, required: true },
-                      { label: "بطاقة الهوية", url: request.id_card_url, required: true },
-                      { label: "ترخيص مزاولة المهنة", url: request.license_url, required: true },
-                      { label: "الشهادات العلمية", url: certs.length > 0 ? "ok" : null, required: true, count: certs.length },
-                      { label: "فيديو تعريفي", url: request.video_url, required: false },
+                    const reasonText = (request.rejection_reason || "").toLowerCase();
+
+                    // Extract per-document reason by matching keywords in the rejection text
+                    const matchReason = (keywords: string[]): string | null => {
+                      if (!isRejected || !reasonText) return null;
+                      // Split rejection text into sentences/lines and find one mentioning a keyword
+                      const parts = (request.rejection_reason || "")
+                        .split(/[\n\.،,;]+/)
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      const found = parts.find((p) =>
+                        keywords.some((k) => p.toLowerCase().includes(k.toLowerCase()))
+                      );
+                      return found || null;
+                    };
+
+                    const docs: {
+                      label: string;
+                      url: string | null;
+                      required: boolean;
+                      count?: number;
+                      keywords: string[];
+                    }[] = [
+                      { label: "الصورة الشخصية", url: request.photo_url, required: true, keywords: ["صورة", "الشخصية", "photo"] },
+                      { label: "بطاقة الهوية", url: request.id_card_url, required: true, keywords: ["هوية", "بطاقة", "id"] },
+                      { label: "ترخيص مزاولة المهنة", url: request.license_url, required: true, keywords: ["ترخيص", "مزاولة", "license"] },
+                      { label: "الشهادات العلمية", url: certs.length > 0 ? "ok" : null, required: true, count: certs.length, keywords: ["شهادة", "شهادات", "certificate"] },
+                      { label: "فيديو تعريفي", url: request.video_url, required: false, keywords: ["فيديو", "video"] },
                     ];
                     return (
                       <ul className="divide-y divide-border">
                         {docs.map((d) => {
+                          const reason = matchReason(d.keywords);
+                          // Determine the issue type
+                          let issueType: "missing" | "mismatch" | null = null;
+                          if (isRejected) {
+                            if (!d.url && d.required) issueType = "missing";
+                            else if (reason) issueType = "mismatch";
+                          }
+
                           let statusBadge;
-                          if (d.url) {
-                            statusBadge = isRejected ? (
-                              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
-                                <XCircle className="w-3 h-3 ml-1" /> مرفوض
+                          if (issueType === "missing") {
+                            statusBadge = (
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/20">
+                                <AlertTriangle className="w-3 h-3 ml-1" /> ناقص
                               </Badge>
-                            ) : (
+                            );
+                          } else if (issueType === "mismatch") {
+                            statusBadge = (
+                              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                                <XCircle className="w-3 h-3 ml-1" /> غير مطابق
+                              </Badge>
+                            );
+                          } else if (d.url) {
+                            statusBadge = (
                               <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
                                 <CheckCircle2 className="w-3 h-3 ml-1" /> مستلم
                               </Badge>
@@ -211,15 +249,25 @@ const ConsultantRequestStatus = () => {
                               <Badge variant="outline" className="text-muted-foreground">اختياري</Badge>
                             );
                           }
+
                           return (
-                            <li key={d.label} className="flex items-center justify-between py-2 gap-2">
-                              <div className="flex items-center gap-2 text-sm">
-                                <span>{d.label}</span>
-                                {d.count !== undefined && d.count > 0 && (
-                                  <span className="text-xs text-muted-foreground">({d.count})</span>
-                                )}
+                            <li key={d.label} className="py-2 gap-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <span>{d.label}</span>
+                                  {d.count !== undefined && d.count > 0 && (
+                                    <span className="text-xs text-muted-foreground">({d.count})</span>
+                                  )}
+                                </div>
+                                {statusBadge}
                               </div>
-                              {statusBadge}
+                              {issueType && (
+                                <p className="text-xs text-destructive mt-1 pr-1">
+                                  {issueType === "missing"
+                                    ? "السبب: المستند مفقود ولم يتم رفعه."
+                                    : `السبب: ${reason}`}
+                                </p>
+                              )}
                             </li>
                           );
                         })}
@@ -227,9 +275,17 @@ const ConsultantRequestStatus = () => {
                     );
                   })()}
                   {request.status === "rejected" && (
-                    <p className="text-xs text-muted-foreground">
-                      تم رفض الطلب — قد تحتاج إلى استبدال أو تحديث المستندات أعلاه ثم إعادة الإرسال.
-                    </p>
+                    <>
+                      {request.rejection_reason && (
+                        <div className="text-xs bg-destructive/5 border border-destructive/20 rounded p-2">
+                          <span className="font-medium text-destructive">سبب الرفض الكامل: </span>
+                          <span className="text-foreground/80">{request.rejection_reason}</span>
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        تم رفض الطلب — قد تحتاج إلى استبدال أو تحديث المستندات أعلاه ثم إعادة الإرسال.
+                      </p>
+                    </>
                   )}
                 </div>
 
