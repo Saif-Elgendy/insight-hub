@@ -179,20 +179,89 @@ const ConsultantRequestStatus = () => {
                   {(() => {
                     const isRejected = request.status === "rejected";
                     const certs = request.certificates_urls || [];
-                    const reasonText = (request.rejection_reason || "").toLowerCase();
+                    const fullReason = request.rejection_reason || "";
 
-                    // Extract per-document reason by matching keywords in the rejection text
-                    const matchReason = (keywords: string[]): string | null => {
-                      if (!isRejected || !reasonText) return null;
-                      // Split rejection text into sentences/lines and find one mentioning a keyword
-                      const parts = (request.rejection_reason || "")
-                        .split(/[\n\.،,;]+/)
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-                      const found = parts.find((p) =>
-                        keywords.some((k) => p.toLowerCase().includes(k.toLowerCase()))
-                      );
-                      return found || null;
+                    // Keyword sets used for issue-type classification
+                    const MISSING_KEYWORDS = [
+                      "ناقص", "ناقصة", "مفقود", "مفقودة", "غير مرفوع", "غير مرفوعة",
+                      "لم يتم رفع", "لم ترفع", "لم يُرفع", "بدون", "missing", "not uploaded", "absent",
+                    ];
+                    const MISMATCH_KEYWORDS = [
+                      "غير مطابق", "غير مطابقة", "غير واضح", "غير واضحة", "غير صالح", "غير صالحة",
+                      "غير مقروء", "غير مقروءة", "منتهي", "منتهية", "مزور", "مزورة", "خاطئ", "خاطئة",
+                      "لا يطابق", "لا تطابق", "رديء", "رديئة", "ضبابي", "ضبابية",
+                      "mismatch", "invalid", "expired", "unclear", "blurry", "wrong",
+                    ];
+
+                    // Pre-split the rejection text once into clean sentences with a normalized form
+                    const sentences = fullReason
+                      .split(/[\n\.،,;:]+/)
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                      .map((s) => ({
+                        raw: s,
+                        norm: s
+                          .toLowerCase()
+                          // remove Arabic diacritics for more robust matching
+                          .replace(/[\u064B-\u0652\u0670]/g, "")
+                          // normalize alef variants
+                          .replace(/[إأآا]/g, "ا")
+                          .replace(/ى/g, "ي")
+                          .replace(/ة/g, "ه"),
+                      }));
+
+                    const normalize = (s: string) =>
+                      s
+                        .toLowerCase()
+                        .replace(/[\u064B-\u0652\u0670]/g, "")
+                        .replace(/[إأآا]/g, "ا")
+                        .replace(/ى/g, "ي")
+                        .replace(/ة/g, "ه");
+
+                    // Score each sentence against keywords (more matches = higher score)
+                    const matchSentence = (
+                      keywords: string[]
+                    ): { raw: string; norm: string; score: number } | null => {
+                      if (!isRejected || sentences.length === 0) return null;
+                      const normKeys = keywords.map(normalize);
+                      let best: { raw: string; norm: string; score: number } | null = null;
+                      for (const s of sentences) {
+                        const score = normKeys.reduce(
+                          (acc, k) => acc + (k && s.norm.includes(k) ? 1 : 0),
+                          0
+                        );
+                        if (score > 0 && (!best || score > best.score)) {
+                          best = { ...s, score };
+                        }
+                      }
+                      return best;
+                    };
+
+                    // Detect explicit "label: reason" prefixed lines, which are highest priority
+                    const prefixedReason = (keywords: string[]): string | null => {
+                      const normKeys = keywords.map(normalize);
+                      for (const s of sentences) {
+                        // match patterns like "<label> - <reason>" or "<label> => <reason>"
+                        const m = s.raw.match(/^(.+?)\s*(?:[-—–]|=>|:)\s*(.+)$/);
+                        if (!m) continue;
+                        const head = normalize(m[1]);
+                        if (normKeys.some((k) => k && head.includes(k))) {
+                          return m[2].trim();
+                        }
+                      }
+                      return null;
+                    };
+
+                    const classifyIssue = (
+                      text: string
+                    ): "missing" | "mismatch" => {
+                      const n = normalize(text);
+                      const missingHit = MISSING_KEYWORDS.some((k) => n.includes(normalize(k)));
+                      const mismatchHit = MISMATCH_KEYWORDS.some((k) => n.includes(normalize(k)));
+                      // Mismatch wins over missing if both appear (more specific)
+                      if (mismatchHit) return "mismatch";
+                      if (missingHit) return "missing";
+                      return "mismatch";
                     };
 
                     const docs: {
@@ -211,12 +280,33 @@ const ConsultantRequestStatus = () => {
                     return (
                       <ul className="divide-y divide-border">
                         {docs.map((d) => {
-                          const reason = matchReason(d.keywords);
-                          // Determine the issue type
+                          // Resolution priority:
+                          // 1. If file is missing AND required -> "missing" (URL truth wins)
+                          // 2. Explicit "label: reason" line in rejection text
+                          // 3. Best-scoring sentence containing the doc keywords
+                          // 4. Issue type derived from keyword classification of that text
                           let issueType: "missing" | "mismatch" | null = null;
+                          let reason: string | null = null;
+
                           if (isRejected) {
-                            if (!d.url && d.required) issueType = "missing";
-                            else if (reason) issueType = "mismatch";
+                            if (!d.url && d.required) {
+                              issueType = "missing";
+                              const prefixed = prefixedReason(d.keywords);
+                              const sentence = matchSentence(d.keywords);
+                              reason = prefixed || sentence?.raw || null;
+                            } else {
+                              const prefixed = prefixedReason(d.keywords);
+                              if (prefixed) {
+                                reason = prefixed;
+                                issueType = classifyIssue(prefixed);
+                              } else {
+                                const sentence = matchSentence(d.keywords);
+                                if (sentence) {
+                                  reason = sentence.raw;
+                                  issueType = classifyIssue(sentence.raw);
+                                }
+                              }
+                            }
                           }
 
                           let statusBadge;
@@ -264,8 +354,10 @@ const ConsultantRequestStatus = () => {
                               {issueType && (
                                 <p className="text-xs text-destructive mt-1 pr-1">
                                   {issueType === "missing"
-                                    ? "السبب: المستند مفقود ولم يتم رفعه."
-                                    : `السبب: ${reason}`}
+                                    ? reason
+                                      ? `السبب (مفقود): ${reason}`
+                                      : "السبب: المستند مفقود ولم يتم رفعه."
+                                    : `السبب (غير مطابق): ${reason}`}
                                 </p>
                               )}
                             </li>
