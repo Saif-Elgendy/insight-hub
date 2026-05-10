@@ -284,59 +284,88 @@ const ConsultantRequestStatus = () => {
                       return "mismatch";
                     };
 
-                    const docs: {
+                    type DocItem = {
+                      key: string;
                       label: string;
                       url: string | null;
                       required: boolean;
                       count?: number;
                       keywords: string[];
-                    }[] = [
-                      { label: "الصورة الشخصية", url: request.photo_url, required: true, keywords: ["صورة", "الشخصية", "photo"] },
-                      { label: "بطاقة الهوية", url: request.id_card_url, required: true, keywords: ["هوية", "بطاقة", "id"] },
-                      { label: "ترخيص مزاولة المهنة", url: request.license_url, required: true, keywords: ["ترخيص", "مزاولة", "license"] },
-                      { label: "الشهادات العلمية", url: certs.length > 0 ? "ok" : null, required: true, count: certs.length, keywords: ["شهادة", "شهادات", "certificate"] },
-                      { label: "فيديو تعريفي", url: request.video_url, required: false, keywords: ["فيديو", "video"] },
+                      snapshotValue: string | number | null;
+                      currentValue: string | number | null;
+                    };
+                    const docs: DocItem[] = [
+                      { key: "photo_url", label: "الصورة الشخصية", url: request.photo_url, required: true, keywords: ["صورة", "الشخصية", "photo"], snapshotValue: snapshot?.photo_url ?? null, currentValue: request.photo_url },
+                      { key: "id_card_url", label: "بطاقة الهوية", url: request.id_card_url, required: true, keywords: ["هوية", "بطاقة", "id"], snapshotValue: snapshot?.id_card_url ?? null, currentValue: request.id_card_url },
+                      { key: "license_url", label: "ترخيص مزاولة المهنة", url: request.license_url, required: true, keywords: ["ترخيص", "مزاولة", "license"], snapshotValue: snapshot?.license_url ?? null, currentValue: request.license_url },
+                      { key: "certificates", label: "الشهادات العلمية", url: certs.length > 0 ? "ok" : null, required: true, count: certs.length, keywords: ["شهادة", "شهادات", "certificate"], snapshotValue: snapshot?.certificates_count ?? 0, currentValue: certs.length },
+                      { key: "video_url", label: "فيديو تعريفي", url: request.video_url, required: false, keywords: ["فيديو", "video"], snapshotValue: snapshot?.video_url ?? null, currentValue: request.video_url },
                     ];
-                    return (
-                      <ul className="divide-y divide-border">
-                        {docs.map((d) => {
-                          // Resolution priority:
-                          // 1. If file is missing AND required -> "missing" (URL truth wins)
-                          // 2. Explicit "label: reason" line in rejection text
-                          // 3. Best-scoring sentence containing the doc keywords
-                          // 4. Issue type derived from keyword classification of that text
-                          let issueType: "missing" | "mismatch" | null = null;
-                          let reason: string | null = null;
 
-                          if (isRejected) {
-                            if (!d.url && d.required) {
-                              issueType = "missing";
-                              const prefixed = prefixedReason(d.keywords);
-                              const sentence = matchSentence(d.keywords);
-                              reason = prefixed || sentence?.raw || null;
-                            } else {
-                              const prefixed = prefixedReason(d.keywords);
-                              if (prefixed) {
-                                reason = prefixed;
-                                issueType = classifyIssue(prefixed);
-                              } else {
-                                const sentence = matchSentence(d.keywords);
-                                if (sentence) {
-                                  reason = sentence.raw;
-                                  issueType = classifyIssue(sentence.raw);
-                                }
-                              }
+                    // Build per-doc analysis: issue + replacement status
+                    const analyzed = docs.map((d) => {
+                      let issueType: "missing" | "mismatch" | null = null;
+                      let reason: string | null = null;
+                      if (isRejected) {
+                        if (!d.url && d.required) {
+                          issueType = "missing";
+                          reason = prefixedReason(d.keywords) || matchSentence(d.keywords)?.raw || null;
+                        } else {
+                          const prefixed = prefixedReason(d.keywords);
+                          if (prefixed) {
+                            reason = prefixed;
+                            issueType = classifyIssue(prefixed);
+                          } else {
+                            const sentence = matchSentence(d.keywords);
+                            if (sentence) {
+                              reason = sentence.raw;
+                              issueType = classifyIssue(sentence.raw);
                             }
                           }
+                        }
+                      }
+                      // Replacement detection (only meaningful if flagged)
+                      let replaced = false;
+                      if (issueType === "missing") {
+                        // Needs to now have a value
+                        replaced = d.key === "certificates"
+                          ? (d.currentValue as number) > (Number(d.snapshotValue) || 0)
+                          : !!d.currentValue;
+                      } else if (issueType === "mismatch") {
+                        // Needs to differ from snapshot
+                        replaced = d.key === "certificates"
+                          ? (d.currentValue as number) !== (Number(d.snapshotValue) || 0)
+                          : !!d.currentValue && d.currentValue !== d.snapshotValue;
+                      }
+                      const actionLabel = issueType === "missing"
+                        ? "ارفع المستند المفقود"
+                        : issueType === "mismatch"
+                        ? "استبدل المستند بآخر مطابق"
+                        : null;
+                      return { ...d, issueType, reason, replaced, actionLabel };
+                    });
 
+                    const pending = analyzed.filter((a) => a.issueType && !a.replaced);
+                    // expose for the resubmit button via dataset attribute on the container
+                    (window as any).__consultantPending = pending.length;
+
+                    return (
+                      <ul className="divide-y divide-border">
+                        {analyzed.map((d) => {
                           let statusBadge;
-                          if (issueType === "missing") {
+                          if (d.issueType && d.replaced) {
+                            statusBadge = (
+                              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
+                                <CheckCircle2 className="w-3 h-3 ml-1" /> تم الاستبدال
+                              </Badge>
+                            );
+                          } else if (d.issueType === "missing") {
                             statusBadge = (
                               <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/20">
                                 <AlertTriangle className="w-3 h-3 ml-1" /> ناقص
                               </Badge>
                             );
-                          } else if (issueType === "mismatch") {
+                          } else if (d.issueType === "mismatch") {
                             statusBadge = (
                               <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
                                 <XCircle className="w-3 h-3 ml-1" /> غير مطابق
@@ -355,13 +384,11 @@ const ConsultantRequestStatus = () => {
                               </Badge>
                             );
                           } else {
-                            statusBadge = (
-                              <Badge variant="outline" className="text-muted-foreground">اختياري</Badge>
-                            );
+                            statusBadge = <Badge variant="outline" className="text-muted-foreground">اختياري</Badge>;
                           }
 
                           return (
-                            <li key={d.label} className="py-2 gap-2">
+                            <li key={d.label} className="py-3 space-y-2">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-sm">
                                   <span>{d.label}</span>
@@ -371,14 +398,26 @@ const ConsultantRequestStatus = () => {
                                 </div>
                                 {statusBadge}
                               </div>
-                              {issueType && (
-                                <p className="text-xs text-destructive mt-1 pr-1">
-                                  {issueType === "missing"
-                                    ? reason
-                                      ? `السبب (مفقود): ${reason}`
-                                      : "السبب: المستند مفقود ولم يتم رفعه."
-                                    : `السبب (غير مطابق): ${reason}`}
+                              {d.issueType && (
+                                <p className="text-xs text-destructive pr-1">
+                                  {d.issueType === "missing"
+                                    ? d.reason ? `السبب (مفقود): ${d.reason}` : "السبب: المستند مفقود ولم يتم رفعه."
+                                    : `السبب (غير مطابق): ${d.reason}`}
                                 </p>
+                              )}
+                              {d.issueType && !d.replaced && d.actionLabel && (
+                                <div className="flex items-center justify-between gap-2 bg-muted/40 border border-border rounded p-2">
+                                  <p className="text-xs">
+                                    <span className="font-medium">الخطوة المطلوبة: </span>
+                                    {d.actionLabel}
+                                  </p>
+                                  <Button size="sm" variant="outline" onClick={() => navigate("/profile")}>
+                                    اذهب للاستبدال
+                                  </Button>
+                                </div>
+                              )}
+                              {d.issueType && d.replaced && (
+                                <p className="text-xs text-emerald-700">تم استبدال هذا المستند ✓</p>
                               )}
                             </li>
                           );
@@ -395,7 +434,7 @@ const ConsultantRequestStatus = () => {
                         </div>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        تم رفض الطلب — قد تحتاج إلى استبدال أو تحديث المستندات أعلاه ثم إعادة الإرسال.
+                        استبدل المستندات المحددة أعلاه. سيتم تفعيل زر إعادة الإرسال تلقائياً عند معالجة جميع المستندات المطلوبة.
                       </p>
                     </>
                   )}
@@ -404,23 +443,33 @@ const ConsultantRequestStatus = () => {
                 <div className="flex gap-2 flex-wrap">
                   <Button onClick={fetchRequest} variant="outline">تحديث</Button>
                   <Button onClick={() => navigate("/profile")} variant="ghost">تعديل البيانات</Button>
-                  {request.status === "rejected" && (
-                    <Button
-                      onClick={async () => {
-                        const { toast } = await import("sonner");
-                        const { error } = await supabase.rpc("resubmit_consultant_request" as any);
-                        if (error) {
-                          toast.error(error.message || "تعذر إعادة الإرسال");
-                          return;
-                        }
-                        toast.success("تم إعادة إرسال الطلب. عدّل بياناتك ثم احفظ.");
-                        await fetchRequest();
-                        navigate("/profile");
-                      }}
-                    >
-                      تحديث البيانات وإعادة الإرسال
-                    </Button>
-                  )}
+                  {request.status === "rejected" && (() => {
+                    const pendingCount = (typeof window !== "undefined" && (window as any).__consultantPending) || 0;
+                    const disabled = pendingCount > 0;
+                    return (
+                      <Button
+                        disabled={disabled}
+                        title={disabled ? `يجب استبدال ${pendingCount} مستند(ات) قبل إعادة الإرسال` : undefined}
+                        onClick={async () => {
+                          const { toast } = await import("sonner");
+                          const { error } = await supabase.rpc("resubmit_consultant_request" as any);
+                          if (error) {
+                            toast.error(error.message || "تعذر إعادة الإرسال");
+                            return;
+                          }
+                          // Clear snapshot so future rejections start fresh
+                          if (request) sessionStorage.removeItem(`consultant_req_snapshot_${request.id}`);
+                          toast.success("تم إعادة إرسال الطلب بنجاح.");
+                          await fetchRequest();
+                          navigate("/profile");
+                        }}
+                      >
+                        {disabled
+                          ? `استبدل ${pendingCount} مستند(ات) أولاً`
+                          : "إعادة الإرسال"}
+                      </Button>
+                    );
+                  })()}
                 </div>
               </>
             )}
