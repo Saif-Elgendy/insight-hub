@@ -180,6 +180,26 @@ const ConsultantRequestStatus = () => {
                     const isRejected = request.status === "rejected";
                     const certs = request.certificates_urls || [];
                     const fullReason = request.rejection_reason || "";
+                    // Snapshot the URLs the admin saw at rejection time, so we can detect
+                    // which specific documents the user has replaced before re-submitting.
+                    const snapshotKey = `consultant_req_snapshot_${request.id}`;
+                    let snapshot: Record<string, string | number | null> | null = null;
+                    if (isRejected && typeof window !== "undefined") {
+                      const raw = sessionStorage.getItem(snapshotKey);
+                      if (raw) {
+                        try { snapshot = JSON.parse(raw); } catch { snapshot = null; }
+                      }
+                      if (!snapshot) {
+                        snapshot = {
+                          photo_url: request.photo_url,
+                          id_card_url: request.id_card_url,
+                          license_url: request.license_url,
+                          certificates_count: certs.length,
+                          video_url: request.video_url,
+                        };
+                        sessionStorage.setItem(snapshotKey, JSON.stringify(snapshot));
+                      }
+                    }
 
                     // Keyword sets used for issue-type classification
                     const MISSING_KEYWORDS = [
