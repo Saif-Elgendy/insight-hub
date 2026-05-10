@@ -354,8 +354,10 @@ const ConsultantRequestStatus = () => {
                               {issueType && (
                                 <p className="text-xs text-destructive mt-1 pr-1">
                                   {issueType === "missing"
-                                    ? "السبب: المستند مفقود ولم يتم رفعه."
-                                    : `السبب: ${reason}`}
+                                    ? reason
+                                      ? `السبب (مفقود): ${reason}`
+                                      : "السبب: المستند مفقود ولم يتم رفعه."
+                                    : `السبب (غير مطابق): ${reason}`}
                                 </p>
                               )}
                             </li>
