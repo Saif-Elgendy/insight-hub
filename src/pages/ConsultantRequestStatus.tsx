@@ -295,11 +295,83 @@ const ConsultantRequestStatus = () => {
                       currentValue: string | number | null;
                     };
                     const docs: DocItem[] = [
-                      { key: "photo_url", label: "الصورة الشخصية", url: request.photo_url, required: true, keywords: ["صورة", "الشخصية", "photo"], snapshotValue: snapshot?.photo_url ?? null, currentValue: request.photo_url },
-                      { key: "id_card_url", label: "بطاقة الهوية", url: request.id_card_url, required: true, keywords: ["هوية", "بطاقة", "id"], snapshotValue: snapshot?.id_card_url ?? null, currentValue: request.id_card_url },
-                      { key: "license_url", label: "ترخيص مزاولة المهنة", url: request.license_url, required: true, keywords: ["ترخيص", "مزاولة", "license"], snapshotValue: snapshot?.license_url ?? null, currentValue: request.license_url },
-                      { key: "certificates", label: "الشهادات العلمية", url: certs.length > 0 ? "ok" : null, required: true, count: certs.length, keywords: ["شهادة", "شهادات", "certificate"], snapshotValue: snapshot?.certificates_count ?? 0, currentValue: certs.length },
-                      { key: "video_url", label: "فيديو تعريفي", url: request.video_url, required: false, keywords: ["فيديو", "video"], snapshotValue: snapshot?.video_url ?? null, currentValue: request.video_url },
+                      {
+                        key: "photo_url",
+                        label: "الصورة الشخصية",
+                        url: request.photo_url,
+                        required: true,
+                        keywords: [
+                          "الصورة الشخصية", "صوره شخصيه", "صورة شخصية", "الصوره الشخصيه",
+                          "صورة", "صوره", "الصورة", "الصوره",
+                          "بروفايل", "البروفايل", "الافاتار", "افاتار",
+                          "photo", "picture", "profile picture", "profile photo", "headshot", "selfie", "avatar", "portrait",
+                        ],
+                        snapshotValue: snapshot?.photo_url ?? null,
+                        currentValue: request.photo_url,
+                      },
+                      {
+                        key: "id_card_url",
+                        label: "بطاقة الهوية",
+                        url: request.id_card_url,
+                        required: true,
+                        keywords: [
+                          "بطاقة الهوية", "بطاقه الهويه", "البطاقة الشخصية", "البطاقه الشخصيه",
+                          "بطاقة شخصية", "بطاقه شخصيه", "صورة البطاقة", "صوره البطاقه",
+                          "الرقم القومي", "الرقم القومى", "الرقم الوطني", "الرقم الوطنى",
+                          "هوية", "هويه", "الهوية", "الهويه", "بطاقة", "بطاقه",
+                          "جواز", "جواز السفر", "باسبور", "الباسبور",
+                          "id", "id card", "identity", "identity card", "national id", "nid", "passport",
+                        ],
+                        snapshotValue: snapshot?.id_card_url ?? null,
+                        currentValue: request.id_card_url,
+                      },
+                      {
+                        key: "license_url",
+                        label: "ترخيص مزاولة المهنة",
+                        url: request.license_url,
+                        required: true,
+                        keywords: [
+                          "ترخيص مزاولة المهنة", "ترخيص مزاوله المهنه", "تصريح مزاولة المهنة",
+                          "رخصة المهنة", "رخصه المهنه", "رخصة مزاولة", "رخصه مزاوله",
+                          "كرنيه النقابة", "كارنيه النقابه", "كارنيه نقابة", "كرنيه نقابة",
+                          "النقابة", "النقابه", "نقابة", "نقابه",
+                          "ترخيص", "تصريح", "رخصة", "رخصه", "مزاولة", "مزاوله",
+                          "license", "permit", "practice license", "professional license", "syndicate", "syndicate card",
+                        ],
+                        snapshotValue: snapshot?.license_url ?? null,
+                        currentValue: request.license_url,
+                      },
+                      {
+                        key: "certificates",
+                        label: "الشهادات العلمية",
+                        url: certs.length > 0 ? "ok" : null,
+                        required: true,
+                        count: certs.length,
+                        keywords: [
+                          "الشهادات العلمية", "الشهادات العلميه", "شهادات علمية", "شهادات علميه",
+                          "المؤهل العلمي", "المؤهل العلمى", "المؤهلات العلمية", "المؤهلات العلميه",
+                          "شهادة التخرج", "شهاده التخرج", "شهادة البكالوريوس", "شهاده البكالوريوس",
+                          "شهادة الماجستير", "شهادة الدكتوراه", "شهادة الدبلوم",
+                          "شهادة", "شهاده", "الشهادة", "الشهاده", "شهادات", "الشهادات",
+                          "مؤهل", "المؤهل", "مؤهلات", "المؤهلات", "تخرج", "التخرج",
+                          "certificate", "certificates", "certification", "diploma", "degree", "qualification", "credential", "transcript",
+                        ],
+                        snapshotValue: snapshot?.certificates_count ?? 0,
+                        currentValue: certs.length,
+                      },
+                      {
+                        key: "video_url",
+                        label: "فيديو تعريفي",
+                        url: request.video_url,
+                        required: false,
+                        keywords: [
+                          "فيديو تعريفي", "الفيديو التعريفي", "فيديو التعريف", "فيديو تقديمي",
+                          "فيديو", "الفيديو", "مقطع فيديو", "تسجيل مرئي", "مقطع مرئي",
+                          "video", "intro video", "introduction video", "introductory video", "presentation video", "clip",
+                        ],
+                        snapshotValue: snapshot?.video_url ?? null,
+                        currentValue: request.video_url,
+                      },
                     ];
 
                     // Build per-doc analysis: issue + replacement status
