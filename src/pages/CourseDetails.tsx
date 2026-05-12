@@ -28,6 +28,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSignedUrl, getSignedUrl } from '@/lib/storage';
 import { useEnrollment } from '@/hooks/useEnrollment';
 import { useUserRole } from '@/hooks/useUserRole';
 import { MaterialUploadDialog } from '@/components/materials/MaterialUploadDialog';
@@ -480,15 +481,7 @@ const CourseDetails = () => {
                 className="relative"
               >
                 {activeLesson && canAccessLesson(activeLesson) ? (
-                  <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10">
-                    <iframe
-                      src={activeLesson.video_url || ''}
-                      title={activeLesson.title}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
+                  <LessonPlayer videoUrl={activeLesson.video_url} title={activeLesson.title} />
                 ) : (
                   <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10 flex items-center justify-center">
                     <div className="text-center text-primary-foreground/60">
