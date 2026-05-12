@@ -28,10 +28,49 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSignedUrl, getSignedUrl } from '@/lib/storage';
 import { useEnrollment } from '@/hooks/useEnrollment';
 import { useUserRole } from '@/hooks/useUserRole';
 import { MaterialUploadDialog } from '@/components/materials/MaterialUploadDialog';
 import { toast } from 'sonner';
+
+function LessonPlayer({ videoUrl, title }: { videoUrl: string | null; title: string }) {
+  const isYoutube = !!videoUrl && /youtu\.?be/.test(videoUrl);
+  const { signedUrl, loading } = useSignedUrl(
+    'lesson-videos',
+    !videoUrl || isYoutube ? null : videoUrl
+  );
+  const src = isYoutube ? videoUrl : signedUrl;
+
+  return (
+    <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10">
+      {src ? (
+        <iframe
+          src={src}
+          title={title}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-primary-foreground/60">
+          {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Lock className="w-8 h-8" />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+async function openMaterial(url: string) {
+  const isYoutube = /youtu\.?be/.test(url);
+  if (isYoutube || !url.includes('/course-materials/')) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  const signed = await getSignedUrl('course-materials', url);
+  if (signed) window.open(signed, '_blank', 'noopener,noreferrer');
+  else toast.error('تعذر فتح الملف. تأكد من تسجيلك في الكورس.');
+}
 
 interface Course {
   id: string;
@@ -480,15 +519,7 @@ const CourseDetails = () => {
                 className="relative"
               >
                 {activeLesson && canAccessLesson(activeLesson) ? (
-                  <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10">
-                    <iframe
-                      src={activeLesson.video_url || ''}
-                      title={activeLesson.title}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
+                  <LessonPlayer videoUrl={activeLesson.video_url} title={activeLesson.title} />
                 ) : (
                   <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10 flex items-center justify-center">
                     <div className="text-center text-primary-foreground/60">
@@ -727,11 +758,14 @@ const CourseDetails = () => {
                             </a>
                           </Button>
                         ) : (
-                          <Button variant="outline" size="sm" className="flex-1 gap-2" asChild>
-                            <a href={material.file_url} target="_blank" rel="noopener noreferrer" download>
-                              <Download className="w-3 h-3" />
-                              تحميل
-                            </a>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 gap-2"
+                            onClick={() => openMaterial(material.file_url)}
+                          >
+                            <Download className="w-3 h-3" />
+                            تحميل
                           </Button>
                         )}
                         {canManageCourses && (
