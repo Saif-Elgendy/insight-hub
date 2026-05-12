@@ -12,6 +12,26 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { MaterialUploadDialog } from '@/components/materials/MaterialUploadDialog';
 import { toast } from 'sonner';
+import { getSignedUrl, useSignedUrl } from '@/lib/storage';
+
+function ResourceImage({ url, alt }: { url: string; alt: string }) {
+  const { signedUrl } = useSignedUrl('course-materials', url);
+  return signedUrl ? (
+    <img src={signedUrl} alt={alt} className="w-full h-full object-cover" />
+  ) : (
+    <div className="w-full h-full bg-muted" />
+  );
+}
+
+async function downloadResource(url: string) {
+  if (!url.includes('/course-materials/')) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  const signed = await getSignedUrl('course-materials', url);
+  if (signed) window.open(signed, '_blank', 'noopener,noreferrer');
+  else toast.error('تعذر فتح الملف.');
+}
 
 interface Resource {
   id: string;
@@ -212,7 +232,7 @@ const ResourceLibrary = () => {
                         {/* Preview for images */}
                         {resource.file_type === 'image' && (
                           <div className="aspect-video overflow-hidden">
-                            <img src={resource.file_url} alt={resource.title} className="w-full h-full object-cover" />
+                            <ResourceImage url={resource.file_url} alt={resource.title} />
                           </div>
                         )}
 
@@ -248,12 +268,10 @@ const ResourceLibrary = () => {
                                 variant="outline"
                                 size="sm"
                                 className="flex-1 gap-2"
-                                asChild
+                                onClick={() => downloadResource(resource.file_url)}
                               >
-                                <a href={resource.file_url} target="_blank" rel="noopener noreferrer" download>
-                                  <Download className="w-4 h-4" />
-                                  تحميل
-                                </a>
+                                <Download className="w-4 h-4" />
+                                تحميل
                               </Button>
                             ) : (
                               <Button
