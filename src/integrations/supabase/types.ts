@@ -931,7 +931,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      specialist_reviews_public: {
+        Row: {
+          comment: string | null
+          consultation_id: string | null
+          created_at: string | null
+          id: string | null
+          rating: number | null
+          specialist_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          consultation_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          rating?: number | null
+          specialist_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          consultation_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          rating?: number | null
+          specialist_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "specialist_reviews_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: true
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "specialist_reviews_specialist_id_fkey"
+            columns: ["specialist_id"]
+            isOneToOne: false
+            referencedRelation: "specialists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auto_expire_consultations: { Args: never; Returns: undefined }
