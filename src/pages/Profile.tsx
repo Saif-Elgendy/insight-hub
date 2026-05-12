@@ -330,9 +330,11 @@ const ProfilePage = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData, error: signedErr } = await supabase.storage
         .from('consultant-documents')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365);
+      if (signedErr || !signedData?.signedUrl) throw signedErr || new Error('فشل توليد رابط الملف');
+      const publicUrl = signedData.signedUrl;
 
       if (type === 'photo') {
         await supabase.from('consultant_requests').update({ photo_url: publicUrl }).eq('id', consultantRequest.id);
