@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,11 +40,60 @@ const SYSTEM_PROMPT = `أنت "مساعد نفسي" — مساعد ذكي ودو
 6. استخدم تنسيق Markdown: قوائم مرقمة (1. 2. 3.) للخطوات، وقوائم نقطية (-) للعناصر، و**خط عريض** للتأكيد.
 7. عند الإشارة لأي صفحة، استخدم رابط Markdown داخلي مثل: [الكورسات](/courses)، [المختصين](/specialists)، [استشاراتي](/my-consultations)، [المكتبة](/resources)، [حسابي](/profile)، [تسجيل الدخول](/auth).`;
 
+const MAX_MESSAGES = 20;
+const MAX_MSG_CHARS = 2000;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages } = await req.json();
+    // 1. Require an authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Validate input
+    const body = await req.json().catch(() => ({}));
+    const rawMessages = Array.isArray(body?.messages) ? body.messages : null;
+    if (!rawMessages || rawMessages.length === 0) {
+      return new Response(JSON.stringify({ error: "messages array is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const sliced = rawMessages.slice(-MAX_MESSAGES);
+    const messages = [];
+    for (const m of sliced) {
+      if (!m || typeof m !== "object") continue;
+      const role = m.role === "assistant" ? "assistant" : m.role === "user" ? "user" : null;
+      const content = typeof m.content === "string" ? m.content.slice(0, MAX_MSG_CHARS) : null;
+      if (!role || !content) continue;
+      messages.push({ role, content });
+    }
+    if (messages.length === 0) {
+      return new Response(JSON.stringify({ error: "no valid messages" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -90,7 +140,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("site-assistant error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "خطأ غير معروف" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

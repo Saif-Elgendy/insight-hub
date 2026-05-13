@@ -7,7 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -27,6 +28,7 @@ const SUGGESTIONS = [
 ];
 
 export const SiteAssistant = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Msg[]>([WELCOME]);
@@ -40,6 +42,16 @@ export const SiteAssistant = () => {
   const send = async (override?: string) => {
     const text = (override ?? input).trim();
     if (!text || loading) return;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) {
+      toast.error('يرجى تسجيل الدخول لاستخدام المساعد.');
+      setOpen(false);
+      navigate('/auth');
+      return;
+    }
+
     if (!override) setInput('');
     const userMsg: Msg = { role: 'user', content: text };
     const next = [...messages, userMsg];
@@ -51,7 +63,8 @@ export const SiteAssistant = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           messages: next.filter(m => m !== WELCOME).map(m => ({ role: m.role, content: m.content })),
