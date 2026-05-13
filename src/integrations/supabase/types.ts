@@ -1016,7 +1016,6 @@ export type Database = {
             }
             Returns: string
           }
-      can_manage_courses: { Args: { _user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
           _action_type: string
@@ -1027,28 +1026,6 @@ export type Database = {
         Returns: boolean
       }
       cleanup_rate_limits: { Args: never; Returns: undefined }
-      get_user_role: {
-        Args: { _user_id: string }
-        Returns: Database["public"]["Enums"]["app_role"]
-      }
-      has_any_role: {
-        Args: {
-          _roles: Database["public"]["Enums"]["app_role"][]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_consultation_participant: {
-        Args: { _consultation_id: string; _user_id: string }
-        Returns: boolean
-      }
       resubmit_consultant_request: { Args: never; Returns: string }
     }
     Enums: {
