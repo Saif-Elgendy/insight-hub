@@ -23,6 +23,7 @@ import ConsultantDashboard from "./pages/ConsultantDashboard";
 import ConsultantRequestStatus from "./pages/ConsultantRequestStatus";
 import NotFound from "./pages/NotFound";
 import { SiteAssistant } from "./components/assistant/SiteAssistant";
+import { DiagnosticsActorBinder } from "./components/diagnostics/DiagnosticsActorBinder";
 
 const queryClient = new QueryClient();
 
