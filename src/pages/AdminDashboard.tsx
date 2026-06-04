@@ -242,14 +242,18 @@ const AdminDashboard = () => {
             className="space-y-8"
           >
             {/* Header */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
               <div className="w-14 h-14 rounded-xl bg-gradient-hero flex items-center justify-center">
                 <Shield className="w-7 h-7 text-primary-foreground" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-3xl font-bold text-foreground">لوحة تحكم المسؤول</h1>
                 <p className="text-muted-foreground">إدارة المستخدمين والصلاحيات</p>
               </div>
+              <Button variant="outline" onClick={() => navigate('/admin/diagnostics')}>
+                <Activity className="w-4 h-4 ml-2" />
+                تشخيصات الموقع
+              </Button>
             </div>
 
             {/* Stats Cards */}
