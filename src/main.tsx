@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { installDiagnosticsRecorder } from "./lib/diagnosticsRecorder";
+
+installDiagnosticsRecorder();
 
 // Apply saved theme before render to avoid flash
 const savedTheme = localStorage.getItem("theme");
