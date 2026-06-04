@@ -135,6 +135,7 @@ export const installDiagnosticsRecorder = () => {
       source: "window.onerror",
       stack: event.error?.stack,
       url: window.location.href,
+      ...stamp(),
     });
   });
 
@@ -149,6 +150,7 @@ export const installDiagnosticsRecorder = () => {
       source: "unhandledrejection",
       stack: reason instanceof Error ? reason.stack : undefined,
       url: window.location.href,
+      ...stamp(),
     });
   });
 
