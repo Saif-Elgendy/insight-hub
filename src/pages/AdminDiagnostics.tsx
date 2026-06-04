@@ -98,6 +98,7 @@ const ConsolePanel = () => {
                   <TableHead className="text-right">الوقت</TableHead>
                   <TableHead className="text-right">المستوى</TableHead>
                   <TableHead className="text-right">المصدر</TableHead>
+                  <TableHead className="text-right">المستخدم</TableHead>
                   <TableHead className="text-right">الرسالة</TableHead>
                   <TableHead className="text-right">الصفحة</TableHead>
                 </TableRow>
@@ -112,6 +113,17 @@ const ConsolePanel = () => {
                       <Badge variant={levelVariant(e.level)}>{e.level}</Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{e.source}</TableCell>
+                    <TableCell className="text-xs">
+                      {e.userId ? (
+                        <div className="space-y-1">
+                          {e.email && <div className="font-medium">{e.email}</div>}
+                          {e.role && <Badge variant="outline">{e.role}</Badge>}
+                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{e.userId}</div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">زائر</span>
+                      )}
+                    </TableCell>
                     <TableCell className="max-w-md">
                       <div className="text-sm whitespace-pre-wrap break-words">{e.message}</div>
                       {e.stack && (
@@ -205,6 +217,7 @@ const ApiPanel = () => {
                   <TableHead className="text-right">الطريقة</TableHead>
                   <TableHead className="text-right">الحالة</TableHead>
                   <TableHead className="text-right">المدة</TableHead>
+                  <TableHead className="text-right">المستخدم</TableHead>
                   <TableHead className="text-right">الرابط</TableHead>
                 </TableRow>
               </TableHeader>
@@ -224,6 +237,17 @@ const ApiPanel = () => {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {e.durationMs}ms
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {e.userId ? (
+                        <div className="space-y-1">
+                          {e.email && <div className="font-medium">{e.email}</div>}
+                          {e.role && <Badge variant="outline">{e.role}</Badge>}
+                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{e.userId}</div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">زائر</span>
+                      )}
                     </TableCell>
                     <TableCell className="max-w-md">
                       <div className="text-xs break-all" dir="ltr">{e.url}</div>

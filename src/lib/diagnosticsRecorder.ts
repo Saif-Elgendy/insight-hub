@@ -3,6 +3,12 @@
 // rejections, and fetch API call results into a localStorage ring buffer
 // so admins can inspect recent client activity from /admin/diagnostics.
 
+export type ActorInfo = {
+  userId: string | null;
+  email: string | null;
+  role: string | null;
+};
+
 export type ConsoleEntry = {
   id: string;
   ts: number;
@@ -11,6 +17,9 @@ export type ConsoleEntry = {
   source: "console" | "window.onerror" | "unhandledrejection";
   stack?: string;
   url?: string;
+  userId?: string | null;
+  email?: string | null;
+  role?: string | null;
 };
 
 export type ApiCallEntry = {
@@ -22,11 +31,26 @@ export type ApiCallEntry = {
   ok: boolean;
   durationMs: number;
   error?: string;
+  userId?: string | null;
+  email?: string | null;
+  role?: string | null;
 };
 
 const CONSOLE_KEY = "diagnostics.console.v1";
 const API_KEY = "diagnostics.api.v1";
 const MAX = 200;
+
+let currentActor: ActorInfo = { userId: null, email: null, role: null };
+
+export const setDiagnosticsActor = (actor: Partial<ActorInfo>) => {
+  currentActor = { ...currentActor, ...actor };
+};
+
+const stamp = () => ({
+  userId: currentActor.userId,
+  email: currentActor.email,
+  role: currentActor.role,
+});
 
 const safeStringify = (v: unknown): string => {
   try {
@@ -92,6 +116,7 @@ export const installDiagnosticsRecorder = () => {
           message: args.map(safeStringify).join(" "),
           source: "console",
           url: window.location.href,
+          ...stamp(),
         });
       } catch {
         // ignore
@@ -110,6 +135,7 @@ export const installDiagnosticsRecorder = () => {
       source: "window.onerror",
       stack: event.error?.stack,
       url: window.location.href,
+      ...stamp(),
     });
   });
 
@@ -124,6 +150,7 @@ export const installDiagnosticsRecorder = () => {
       source: "unhandledrejection",
       stack: reason instanceof Error ? reason.stack : undefined,
       url: window.location.href,
+      ...stamp(),
     });
   });
 
@@ -148,6 +175,7 @@ export const installDiagnosticsRecorder = () => {
         status: res.status,
         ok: res.ok,
         durationMs: Math.round(performance.now() - start),
+        ...stamp(),
       });
       return res;
     } catch (err) {
@@ -160,6 +188,7 @@ export const installDiagnosticsRecorder = () => {
         ok: false,
         durationMs: Math.round(performance.now() - start),
         error: err instanceof Error ? err.message : safeStringify(err),
+        ...stamp(),
       });
       throw err;
     }
