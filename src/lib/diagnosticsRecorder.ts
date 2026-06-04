@@ -116,6 +116,7 @@ export const installDiagnosticsRecorder = () => {
           message: args.map(safeStringify).join(" "),
           source: "console",
           url: window.location.href,
+          ...stamp(),
         });
       } catch {
         // ignore
