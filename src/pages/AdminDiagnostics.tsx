@@ -217,6 +217,7 @@ const ApiPanel = () => {
                   <TableHead className="text-right">الطريقة</TableHead>
                   <TableHead className="text-right">الحالة</TableHead>
                   <TableHead className="text-right">المدة</TableHead>
+                  <TableHead className="text-right">المستخدم</TableHead>
                   <TableHead className="text-right">الرابط</TableHead>
                 </TableRow>
               </TableHeader>
@@ -236,6 +237,17 @@ const ApiPanel = () => {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {e.durationMs}ms
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {e.userId ? (
+                        <div className="space-y-1">
+                          {e.email && <div className="font-medium">{e.email}</div>}
+                          {e.role && <Badge variant="outline">{e.role}</Badge>}
+                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{e.userId}</div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">زائر</span>
+                      )}
                     </TableCell>
                     <TableCell className="max-w-md">
                       <div className="text-xs break-all" dir="ltr">{e.url}</div>
