@@ -14,6 +14,7 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorConsultations from "./pages/DoctorConsultations";
 import StudentConsultations from "./pages/StudentConsultations";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminDiagnostics from "./pages/AdminDiagnostics";
 import ResetPassword from "./pages/ResetPassword";
 import SpecialistDetails from "./pages/SpecialistDetails";
 import ResourceLibrary from "./pages/ResourceLibrary";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/doctor-consultations" element={<DoctorConsultations />} />
             <Route path="/my-consultations" element={<StudentConsultations />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/diagnostics" element={<AdminDiagnostics />} />
             <Route path="/resources" element={<ResourceLibrary />} />
             <Route path="/consultant-dashboard" element={<ConsultantDashboard />} />
             <Route path="/consultant-request-status" element={<ConsultantRequestStatus />} />
