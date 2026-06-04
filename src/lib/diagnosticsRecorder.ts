@@ -175,6 +175,7 @@ export const installDiagnosticsRecorder = () => {
         status: res.status,
         ok: res.ok,
         durationMs: Math.round(performance.now() - start),
+        ...stamp(),
       });
       return res;
     } catch (err) {
@@ -187,6 +188,7 @@ export const installDiagnosticsRecorder = () => {
         ok: false,
         durationMs: Math.round(performance.now() - start),
         error: err instanceof Error ? err.message : safeStringify(err),
+        ...stamp(),
       });
       throw err;
     }
