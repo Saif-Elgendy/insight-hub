@@ -279,6 +279,7 @@ const AdminDiagnostics = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
+  const [masked, setMasked] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -304,67 +305,80 @@ const AdminDiagnostics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">تشخيصات الموقع</h1>
-                <p className="text-muted-foreground text-sm mt-1">
-                  متابعة سريعة لأخطاء النظام وملاحظات الـ console واستدعاءات الـ API
-                </p>
+    <MaskingContext.Provider value={{ masked }}>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-24 pb-12">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold">تشخيصات الموقع</h1>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    متابعة سريعة لأخطاء النظام وملاحظات الـ console واستدعاءات الـ API
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={masked ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setMasked((v) => !v)}
+                    title={masked ? "إظهار البيانات الحساسة" : "إخفاء البيانات الحساسة"}
+                  >
+                    {masked ? <EyeOff className="w-4 h-4 ml-2" /> : <Eye className="w-4 h-4 ml-2" />}
+                    {masked ? "مخفي" : "ظاهر"}
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/admin")}>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                    العودة للوحة الأدمن
+                  </Button>
+                </div>
               </div>
-              <Button variant="outline" onClick={() => navigate("/admin")}>
-                <ArrowRight className="w-4 h-4 ml-2" />
-                العودة للوحة الأدمن
-              </Button>
-            </div>
 
-            <Tabs defaultValue="errors" className="space-y-4">
-              <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
-                <TabsTrigger value="errors">
-                  <AlertTriangle className="w-4 h-4 ml-2" />
-                  أخطاء الخادم
-                </TabsTrigger>
-                <TabsTrigger value="console">
-                  <Terminal className="w-4 h-4 ml-2" />
-                  Console
-                </TabsTrigger>
-                <TabsTrigger value="api">
-                  <Globe className="w-4 h-4 ml-2" />
-                  API
-                </TabsTrigger>
-                <TabsTrigger value="activity">
-                  <Activity className="w-4 h-4 ml-2" />
-                  النشاط
-                </TabsTrigger>
-              </TabsList>
+              <Tabs defaultValue="errors" className="space-y-4">
+                <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
+                  <TabsTrigger value="errors">
+                    <AlertTriangle className="w-4 h-4 ml-2" />
+                    أخطاء الخادم
+                  </TabsTrigger>
+                  <TabsTrigger value="console">
+                    <Terminal className="w-4 h-4 ml-2" />
+                    Console
+                  </TabsTrigger>
+                  <TabsTrigger value="api">
+                    <Globe className="w-4 h-4 ml-2" />
+                    API
+                  </TabsTrigger>
+                  <TabsTrigger value="activity">
+                    <Activity className="w-4 h-4 ml-2" />
+                    النشاط
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="errors">
-                <ErrorLogsTable />
-              </TabsContent>
-              <TabsContent value="console">
-                <ConsolePanel />
-              </TabsContent>
-              <TabsContent value="api">
-                <ApiPanel />
-              </TabsContent>
-              <TabsContent value="activity">
-                <ActivityLogsTable />
-              </TabsContent>
-            </Tabs>
-          </motion.div>
-        </div>
-      </main>
-      <Footer />
-    </div>
+                <TabsContent value="errors">
+                  <ErrorLogsTable />
+                </TabsContent>
+                <TabsContent value="console">
+                  <ConsolePanel />
+                </TabsContent>
+                <TabsContent value="api">
+                  <ApiPanel />
+                </TabsContent>
+                <TabsContent value="activity">
+                  <ActivityLogsTable />
+                </TabsContent>
+              </Tabs>
+            </motion.div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </MaskingContext.Provider>
   );
 };
 
