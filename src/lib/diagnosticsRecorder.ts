@@ -203,3 +203,17 @@ export const getApiEntries = (): ApiCallEntry[] =>
 
 export const clearConsoleEntries = () => writeBuffer<ConsoleEntry>(CONSOLE_KEY, []);
 export const clearApiEntries = () => writeBuffer<ApiCallEntry>(API_KEY, []);
+
+export const maskEmail = (email: string | null | undefined): string => {
+  if (!email || !email.includes("@")) return email || "";
+  const [local, domain] = email.split("@");
+  const maskedLocal = local.length <= 2 ? "*" : local.slice(0, 2) + "***";
+  const maskedDomain = domain.length <= 4 ? "****" : domain.slice(0, 2) + "***" + domain.slice(domain.lastIndexOf("."));
+  return `${maskedLocal}@${maskedDomain}`;
+};
+
+export const maskUserId = (id: string | null | undefined): string => {
+  if (!id) return "";
+  if (id.length <= 8) return id;
+  return `${id.slice(0, 4)}...${id.slice(-4)}`;
+};

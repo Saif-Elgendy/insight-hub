@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Activity, AlertTriangle, Globe, Terminal, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowRight, Activity, AlertTriangle, Globe, Terminal, RefreshCw, Trash2, Eye, EyeOff } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,9 +26,15 @@ import {
   getApiEntries,
   clearConsoleEntries,
   clearApiEntries,
+  maskEmail,
+  maskUserId,
   type ConsoleEntry,
   type ApiCallEntry,
 } from "@/lib/diagnosticsRecorder";
+
+const MaskingContext = createContext<{ masked: boolean }>({ masked: true });
+
+const useMasking = () => useContext(MaskingContext);
 
 const levelVariant = (level: ConsoleEntry["level"]) => {
   if (level === "error") return "destructive" as const;
@@ -45,6 +51,7 @@ const statusVariant = (status: number) => {
 
 const ConsolePanel = () => {
   const [entries, setEntries] = useState<ConsoleEntry[]>(getConsoleEntries());
+  const { masked } = useMasking();
   const refresh = () => setEntries(getConsoleEntries());
 
   useEffect(() => {
@@ -116,9 +123,9 @@ const ConsolePanel = () => {
                     <TableCell className="text-xs">
                       {e.userId ? (
                         <div className="space-y-1">
-                          {e.email && <div className="font-medium">{e.email}</div>}
+                          {e.email && <div className="font-medium">{masked ? maskEmail(e.email) : e.email}</div>}
                           {e.role && <Badge variant="outline">{e.role}</Badge>}
-                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{e.userId}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{masked ? maskUserId(e.userId) : e.userId}</div>
                         </div>
                       ) : (
                         <span className="text-muted-foreground">زائر</span>
@@ -154,6 +161,7 @@ const ConsolePanel = () => {
 const ApiPanel = () => {
   const [entries, setEntries] = useState<ApiCallEntry[]>(getApiEntries());
   const [onlyErrors, setOnlyErrors] = useState(false);
+  const { masked } = useMasking();
   const refresh = () => setEntries(getApiEntries());
 
   useEffect(() => {
@@ -241,9 +249,9 @@ const ApiPanel = () => {
                     <TableCell className="text-xs">
                       {e.userId ? (
                         <div className="space-y-1">
-                          {e.email && <div className="font-medium">{e.email}</div>}
+                          {e.email && <div className="font-medium">{masked ? maskEmail(e.email) : e.email}</div>}
                           {e.role && <Badge variant="outline">{e.role}</Badge>}
-                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{e.userId}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{masked ? maskUserId(e.userId) : e.userId}</div>
                         </div>
                       ) : (
                         <span className="text-muted-foreground">زائر</span>
@@ -271,6 +279,7 @@ const AdminDiagnostics = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
+  const [masked, setMasked] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -296,67 +305,80 @@ const AdminDiagnostics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">تشخيصات الموقع</h1>
-                <p className="text-muted-foreground text-sm mt-1">
-                  متابعة سريعة لأخطاء النظام وملاحظات الـ console واستدعاءات الـ API
-                </p>
+    <MaskingContext.Provider value={{ masked }}>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-24 pb-12">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold">تشخيصات الموقع</h1>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    متابعة سريعة لأخطاء النظام وملاحظات الـ console واستدعاءات الـ API
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={masked ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setMasked((v) => !v)}
+                    title={masked ? "إظهار البيانات الحساسة" : "إخفاء البيانات الحساسة"}
+                  >
+                    {masked ? <EyeOff className="w-4 h-4 ml-2" /> : <Eye className="w-4 h-4 ml-2" />}
+                    {masked ? "مخفي" : "ظاهر"}
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/admin")}>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                    العودة للوحة الأدمن
+                  </Button>
+                </div>
               </div>
-              <Button variant="outline" onClick={() => navigate("/admin")}>
-                <ArrowRight className="w-4 h-4 ml-2" />
-                العودة للوحة الأدمن
-              </Button>
-            </div>
 
-            <Tabs defaultValue="errors" className="space-y-4">
-              <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
-                <TabsTrigger value="errors">
-                  <AlertTriangle className="w-4 h-4 ml-2" />
-                  أخطاء الخادم
-                </TabsTrigger>
-                <TabsTrigger value="console">
-                  <Terminal className="w-4 h-4 ml-2" />
-                  Console
-                </TabsTrigger>
-                <TabsTrigger value="api">
-                  <Globe className="w-4 h-4 ml-2" />
-                  API
-                </TabsTrigger>
-                <TabsTrigger value="activity">
-                  <Activity className="w-4 h-4 ml-2" />
-                  النشاط
-                </TabsTrigger>
-              </TabsList>
+              <Tabs defaultValue="errors" className="space-y-4">
+                <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
+                  <TabsTrigger value="errors">
+                    <AlertTriangle className="w-4 h-4 ml-2" />
+                    أخطاء الخادم
+                  </TabsTrigger>
+                  <TabsTrigger value="console">
+                    <Terminal className="w-4 h-4 ml-2" />
+                    Console
+                  </TabsTrigger>
+                  <TabsTrigger value="api">
+                    <Globe className="w-4 h-4 ml-2" />
+                    API
+                  </TabsTrigger>
+                  <TabsTrigger value="activity">
+                    <Activity className="w-4 h-4 ml-2" />
+                    النشاط
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="errors">
-                <ErrorLogsTable />
-              </TabsContent>
-              <TabsContent value="console">
-                <ConsolePanel />
-              </TabsContent>
-              <TabsContent value="api">
-                <ApiPanel />
-              </TabsContent>
-              <TabsContent value="activity">
-                <ActivityLogsTable />
-              </TabsContent>
-            </Tabs>
-          </motion.div>
-        </div>
-      </main>
-      <Footer />
-    </div>
+                <TabsContent value="errors">
+                  <ErrorLogsTable />
+                </TabsContent>
+                <TabsContent value="console">
+                  <ConsolePanel />
+                </TabsContent>
+                <TabsContent value="api">
+                  <ApiPanel />
+                </TabsContent>
+                <TabsContent value="activity">
+                  <ActivityLogsTable />
+                </TabsContent>
+              </Tabs>
+            </motion.div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </MaskingContext.Provider>
   );
 };
 
