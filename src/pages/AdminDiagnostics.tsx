@@ -51,6 +51,7 @@ const statusVariant = (status: number) => {
 
 const ConsolePanel = () => {
   const [entries, setEntries] = useState<ConsoleEntry[]>(getConsoleEntries());
+  const { masked } = useMasking();
   const refresh = () => setEntries(getConsoleEntries());
 
   useEffect(() => {
@@ -122,9 +123,9 @@ const ConsolePanel = () => {
                     <TableCell className="text-xs">
                       {e.userId ? (
                         <div className="space-y-1">
-                          {e.email && <div className="font-medium">{e.email}</div>}
+                          {e.email && <div className="font-medium">{masked ? maskEmail(e.email) : e.email}</div>}
                           {e.role && <Badge variant="outline">{e.role}</Badge>}
-                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{e.userId}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[140px]" dir="ltr">{masked ? maskUserId(e.userId) : e.userId}</div>
                         </div>
                       ) : (
                         <span className="text-muted-foreground">زائر</span>
