@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Activity, AlertTriangle, Globe, Terminal, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowRight, Activity, AlertTriangle, Globe, Terminal, RefreshCw, Trash2, Eye, EyeOff } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,9 +26,15 @@ import {
   getApiEntries,
   clearConsoleEntries,
   clearApiEntries,
+  maskEmail,
+  maskUserId,
   type ConsoleEntry,
   type ApiCallEntry,
 } from "@/lib/diagnosticsRecorder";
+
+const MaskingContext = createContext<{ masked: boolean }>({ masked: true });
+
+const useMasking = () => useContext(MaskingContext);
 
 const levelVariant = (level: ConsoleEntry["level"]) => {
   if (level === "error") return "destructive" as const;
