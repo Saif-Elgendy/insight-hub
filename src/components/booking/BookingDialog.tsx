@@ -463,7 +463,7 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
                       setCommunicationPlatform('');
                     }}
                     aria-pressed={selectedType?.value === type.value}
-                    aria-label={`اختيار ${type.label} - ${type.duration} - ${type.price} ريال`}
+                    aria-label={`اختيار ${type.label} - ${type.duration} - ${type.price} ج.م`}
                     className={cn(
                       'p-4 rounded-xl border cursor-pointer transition-all text-right w-full',
                       selectedType?.value === type.value

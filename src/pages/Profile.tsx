@@ -751,7 +751,7 @@ const ProfilePage = () => {
                     <Input
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+966 5X XXX XXXX"
+                      placeholder="01XXXXXXXXX"
                       dir="ltr"
                     />
                   ) : (
