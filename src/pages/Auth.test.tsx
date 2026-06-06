@@ -36,6 +36,17 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useNavigate: () => navigateMock };
 });
 
+// Avoid AnimatePresence "wait" mode keeping forms unmounted in jsdom.
+vi.mock("framer-motion", async () => {
+  const React = await import("react");
+  const passthrough = (tag: string) =>
+    React.forwardRef((props: any, ref: any) => React.createElement(tag, { ...props, ref }));
+  return {
+    motion: new Proxy({}, { get: (_t, key: string) => passthrough(key) }),
+    AnimatePresence: ({ children }: any) => children,
+  };
+});
+
 const renderAuth = () =>
   render(
     <MemoryRouter>
