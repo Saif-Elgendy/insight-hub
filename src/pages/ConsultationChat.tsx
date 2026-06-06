@@ -269,11 +269,13 @@ const ConsultationChat = () => {
 
         if (uploadError) throw uploadError;
 
-        const { data: urlData } = supabase.storage
+        // chat-attachments is a private bucket — use a long-lived signed URL
+        const { data: signed, error: signErr } = await supabase.storage
           .from('chat-attachments')
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
-        attachmentUrl = urlData.publicUrl;
+        if (signErr || !signed) throw signErr || new Error('Failed to create signed URL');
+        attachmentUrl = signed.signedUrl;
         attachmentName = selectedFile.name;
         attachmentType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
         setUploading(false);
