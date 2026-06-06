@@ -31,3 +31,12 @@ if (!(globalThis as any).IntersectionObserver) {
     takeRecords() { return []; }
   };
 }
+
+// Disable HTML5 form validation globally in tests so zod-based errors surface
+// without the browser blocking submit on invalid type="email" inputs.
+if (typeof document !== "undefined") {
+  const disable = () =>
+    document.querySelectorAll("form").forEach((f) => (f.noValidate = true));
+  const obs = new MutationObserver(disable);
+  obs.observe(document, { childList: true, subtree: true });
+}
