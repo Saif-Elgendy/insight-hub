@@ -47,12 +47,16 @@ vi.mock("framer-motion", async () => {
   };
 });
 
-const renderAuth = () =>
-  render(
+const renderAuth = () => {
+  const result = render(
     <MemoryRouter>
       <AuthPage />
     </MemoryRouter>,
   );
+  // Disable native HTML5 validation so zod messages are exercised.
+  document.querySelectorAll("form").forEach((f) => (f.noValidate = true));
+  return result;
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
