@@ -250,7 +250,7 @@ describe("Auth - Forgot password flow", () => {
     expect(toastSuccess).toHaveBeenCalled();
   });
 
-  it("shows error toast when reset request fails", async () => {
+  it("shows error toast when reset request fails and still passes correct redirectTo", async () => {
     resetPasswordForEmailMock.mockResolvedValue({
       error: { message: "rate limited" },
     });
@@ -264,9 +264,31 @@ describe("Auth - Forgot password flow", () => {
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith("حدث خطأ أثناء إرسال رابط الاستعادة"),
     );
+    expect(resetPasswordForEmailMock).toHaveBeenCalledWith("me@test.com", {
+      redirectTo: "http://localhost:3000/reset-password",
+    });
   });
 
-  it("handles unexpected exceptions gracefully", async () => {
+  it("shows error toast for 'user not found' and still passes correct redirectTo", async () => {
+    resetPasswordForEmailMock.mockResolvedValue({
+      error: { message: "User not found" },
+    });
+    const user = userEvent.setup();
+    renderAuth();
+    await openForgot(user);
+
+    await user.type(screen.getByLabelText("البريد الإلكتروني"), "unknown@test.com");
+    await user.click(screen.getByRole("button", { name: /إرسال رابط الاستعادة/ }));
+
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith("حدث خطأ أثناء إرسال رابط الاستعادة"),
+    );
+    expect(resetPasswordForEmailMock).toHaveBeenCalledWith("unknown@test.com", {
+      redirectTo: "http://localhost:3000/reset-password",
+    });
+  });
+
+  it("handles unexpected exceptions gracefully and still passes correct redirectTo", async () => {
     resetPasswordForEmailMock.mockRejectedValue(new Error("boom"));
     const user = userEvent.setup();
     renderAuth();
@@ -278,6 +300,9 @@ describe("Auth - Forgot password flow", () => {
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith("حدث خطأ غير متوقع"),
     );
+    expect(resetPasswordForEmailMock).toHaveBeenCalledWith("me@test.com", {
+      redirectTo: "http://localhost:3000/reset-password",
+    });
   });
 });
 
