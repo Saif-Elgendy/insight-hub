@@ -382,14 +382,14 @@ Deno.serve(async (req) => {
           )
         }
 
-        // Verify ownership or admin role
+        // Activation is admin-only — prevents self-activation bypassing payment.
         const { data: userRole } = await supabaseAdmin.rpc('get_user_role', { _user_id: userId })
-        
-        if (enrollment.user_id !== userId && userRole !== 'admin') {
-          logger.warn('Unauthorized activation attempt', { userId, enrollmentId: body.enrollment_id, ownerId: enrollment.user_id })
-          await logActivity(supabaseAdmin, ctx, { status: 'unauthorized' })
+
+        if (userRole !== 'admin') {
+          logger.warn('Unauthorized activation attempt (non-admin)', { userId, enrollmentId: body.enrollment_id, ownerId: enrollment.user_id })
+          await logActivity(supabaseAdmin, ctx, { status: 'unauthorized_non_admin' })
           return new Response(
-            JSON.stringify({ error: 'غير مصرح لك بتعديل هذا التسجيل' }),
+            JSON.stringify({ error: 'تفعيل التسجيل يتطلب تأكيد الإدارة بعد التحقق من الدفع' }),
             { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
