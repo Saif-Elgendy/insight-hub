@@ -280,3 +280,155 @@ describe("Auth - Forgot password flow", () => {
     );
   });
 });
+
+describe("Auth - Email & password validation edge cases (pre-submit)", () => {
+  const switchToSignup = async (user: ReturnType<typeof userEvent.setup>) => {
+    const signupBtn = screen.getAllByRole("button", { name: /إنشاء حساب/ }).pop();
+    await user.click(signupBtn!);
+  };
+
+  it("login: blocks empty fields with both messages and no API call", async () => {
+    const user = userEvent.setup();
+    renderAuth();
+
+    await user.click(screen.getByRole("button", { name: /تسجيل الدخول/ }));
+
+    expect(await screen.findByText("البريد الإلكتروني غير صحيح")).toBeInTheDocument();
+    expect(
+      screen.getByText("كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+    ).toBeInTheDocument();
+    expect(signInMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "plainstring",
+    "missing@dot",
+    "@no-local.com",
+    "spaces in@email.com",
+    "trailing@dot.",
+  ])("login: rejects malformed email '%s' before submit", async (badEmail) => {
+    const user = userEvent.setup();
+    renderAuth();
+
+    await user.type(screen.getByLabelText("البريد الإلكتروني"), badEmail);
+    await user.type(screen.getByLabelText("كلمة المرور"), "password123");
+    await user.click(screen.getByRole("button", { name: /تسجيل الدخول/ }));
+
+    expect(await screen.findByText("البريد الإلكتروني غير صحيح")).toBeInTheDocument();
+    expect(signInMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["", "1", "12345"])(
+    "login: rejects short password '%s' before submit",
+    async (badPwd) => {
+      const user = userEvent.setup();
+      renderAuth();
+
+      await user.type(screen.getByLabelText("البريد الإلكتروني"), "ok@test.com");
+      if (badPwd) await user.type(screen.getByLabelText("كلمة المرور"), badPwd);
+      await user.click(screen.getByRole("button", { name: /تسجيل الدخول/ }));
+
+      expect(
+        await screen.findByText("كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+      ).toBeInTheDocument();
+      expect(signInMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("login: trims surrounding whitespace and accepts valid email", async () => {
+    signInMock.mockResolvedValue({ error: null });
+    const user = userEvent.setup();
+    renderAuth();
+
+    await user.type(screen.getByLabelText("البريد الإلكتروني"), "   ok@test.com   ");
+    await user.type(screen.getByLabelText("كلمة المرور"), "password123");
+    await user.click(screen.getByRole("button", { name: /تسجيل الدخول/ }));
+
+    await waitFor(() => expect(signInMock).toHaveBeenCalledTimes(1));
+    expect(signInMock.mock.calls[0][0]).toBe("ok@test.com");
+  });
+
+  it("signup: validates short full name before calling signUp", async () => {
+    const user = userEvent.setup();
+    renderAuth();
+    await switchToSignup(user);
+
+    await user.type(screen.getByLabelText("الاسم الكامل"), "ا");
+    await user.type(screen.getByLabelText("البريد الإلكتروني"), "ok@test.com");
+    await user.type(screen.getByLabelText("كلمة المرور"), "password123");
+    await user.type(screen.getByLabelText("تأكيد كلمة المرور"), "password123");
+
+    await user.click(
+      screen.getByRole("button", { name: /^إنشاء الحساب|إنشاء حساب$/ }),
+    );
+
+    expect(
+      await screen.findByText("الاسم يجب أن يكون حرفين على الأقل"),
+    ).toBeInTheDocument();
+    expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("signup: rejects invalid email even when password is valid", async () => {
+    const user = userEvent.setup();
+    renderAuth();
+    await switchToSignup(user);
+
+    await user.type(screen.getByLabelText("الاسم الكامل"), "Sara");
+    await user.type(screen.getByLabelText("البريد الإلكتروني"), "not-an-email");
+    await user.type(screen.getByLabelText("كلمة المرور"), "password123");
+    await user.type(screen.getByLabelText("تأكيد كلمة المرور"), "password123");
+
+    await user.click(
+      screen.getByRole("button", { name: /^إنشاء الحساب|إنشاء حساب$/ }),
+    );
+
+    expect(await screen.findByText("البريد الإلكتروني غير صحيح")).toBeInTheDocument();
+    expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("signup: rejects short password even when confirm matches", async () => {
+    const user = userEvent.setup();
+    renderAuth();
+    await switchToSignup(user);
+
+    await user.type(screen.getByLabelText("الاسم الكامل"), "Sara");
+    await user.type(screen.getByLabelText("البريد الإلكتروني"), "sara@test.com");
+    await user.type(screen.getByLabelText("كلمة المرور"), "123");
+    await user.type(screen.getByLabelText("تأكيد كلمة المرور"), "123");
+
+    await user.click(
+      screen.getByRole("button", { name: /^إنشاء الحساب|إنشاء حساب$/ }),
+    );
+
+    expect(
+      await screen.findByText("كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+    ).toBeInTheDocument();
+    expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("forgot password: empty email shows validation and never calls API", async () => {
+    const user = userEvent.setup();
+    renderAuth();
+    await user.click(screen.getByRole("button", { name: /نسيت كلمة المرور؟/ }));
+
+    await user.click(screen.getByRole("button", { name: /إرسال رابط الاستعادة/ }));
+
+    expect(await screen.findByText("البريد الإلكتروني غير صحيح")).toBeInTheDocument();
+    expect(resetPasswordForEmailMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["abc", "abc@", "abc@def", "@def.com"])(
+    "forgot password: rejects malformed '%s' before API call",
+    async (badEmail) => {
+      const user = userEvent.setup();
+      renderAuth();
+      await user.click(screen.getByRole("button", { name: /نسيت كلمة المرور؟/ }));
+
+      await user.type(screen.getByLabelText("البريد الإلكتروني"), badEmail);
+      await user.click(screen.getByRole("button", { name: /إرسال رابط الاستعادة/ }));
+
+      expect(await screen.findByText("البريد الإلكتروني غير صحيح")).toBeInTheDocument();
+      expect(resetPasswordForEmailMock).not.toHaveBeenCalled();
+    },
+  );
+});
