@@ -34,7 +34,6 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { MaterialUploadDialog } from '@/components/materials/MaterialUploadDialog';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { normalizeVideoUrl } from '@/lib/videoUrl';
 import { toast } from 'sonner';
 
 // Lesson player uses the unified VideoPlayer which supports YouTube, Vimeo,
