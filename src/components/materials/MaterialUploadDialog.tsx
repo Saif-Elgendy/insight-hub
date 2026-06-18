@@ -76,15 +76,18 @@ export const MaterialUploadDialog = ({ open, onOpenChange, courseId, lessonId, t
     return 'document';
   };
 
-  const getYoutubeEmbedUrl = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-    ];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return `https://www.youtube.com/embed/${match[1]}`;
-    }
-    return null;
+  // Accept any embeddable video URL (YouTube, Vimeo, Google Drive, Dailymotion, Facebook, direct mp4/webm)
+  const isValidVideoUrl = (url: string): boolean => {
+    const u = url.trim();
+    if (!/^https?:\/\//i.test(u)) return false;
+    return (
+      /youtu\.?be/.test(u) ||
+      /vimeo\.com/.test(u) ||
+      /drive\.google\.com/.test(u) ||
+      /dailymotion\.com/.test(u) ||
+      /facebook\.com\/.*\/videos\//.test(u) ||
+      /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(u)
+    );
   };
 
   const handleUpload = async () => {
@@ -100,16 +103,13 @@ export const MaterialUploadDialog = ({ open, onOpenChange, courseId, lessonId, t
     }
 
     if (activeTab === 'youtube' && !youtubeUrl.trim()) {
-      toast.error('يرجى إدخال رابط يوتيوب');
+      toast.error('يرجى إدخال رابط الفيديو');
       return;
     }
 
-    if (activeTab === 'youtube') {
-      const embedUrl = getYoutubeEmbedUrl(youtubeUrl);
-      if (!embedUrl) {
-        toast.error('رابط يوتيوب غير صالح');
-        return;
-      }
+    if (activeTab === 'youtube' && !isValidVideoUrl(youtubeUrl)) {
+      toast.error('رابط الفيديو غير صالح. مدعوم: YouTube, Vimeo, Google Drive, Dailymotion, Facebook, MP4');
+      return;
     }
 
     setUploading(true);
@@ -137,7 +137,8 @@ export const MaterialUploadDialog = ({ open, onOpenChange, courseId, lessonId, t
 
         fileUrl = publicUrl;
       } else {
-        fileUrl = getYoutubeEmbedUrl(youtubeUrl) || youtubeUrl;
+        fileUrl = youtubeUrl.trim();
+        fileType = 'youtube';
       }
 
       if (target === 'course') {
@@ -198,7 +199,7 @@ export const MaterialUploadDialog = ({ open, onOpenChange, courseId, lessonId, t
             </TabsTrigger>
             <TabsTrigger value="youtube" className="gap-2">
               <Video className="w-4 h-4" />
-              رابط يوتيوب
+              رابط فيديو
             </TabsTrigger>
           </TabsList>
 
@@ -245,17 +246,20 @@ export const MaterialUploadDialog = ({ open, onOpenChange, courseId, lessonId, t
 
           <TabsContent value="youtube" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>رابط يوتيوب</Label>
+              <Label>رابط الفيديو</Label>
               <div className="relative">
                 <LinkIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
+                  placeholder="https://youtube.com/... أو vimeo.com/... أو رابط MP4"
                   className="pr-10"
                   dir="ltr"
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                المنصات المدعومة: YouTube، Vimeo، Google Drive، Dailymotion، Facebook، أو رابط فيديو مباشر (MP4/WebM)
+              </p>
             </div>
           </TabsContent>
         </Tabs>

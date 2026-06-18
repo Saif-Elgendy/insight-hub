@@ -28,38 +28,16 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSignedUrl, getSignedUrl } from '@/lib/storage';
+import { getSignedUrl } from '@/lib/storage';
 import { useEnrollment } from '@/hooks/useEnrollment';
 import { useUserRole } from '@/hooks/useUserRole';
 import { MaterialUploadDialog } from '@/components/materials/MaterialUploadDialog';
+import { VideoPlayer } from '@/components/video/VideoPlayer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
-function LessonPlayer({ videoUrl, title }: { videoUrl: string | null; title: string }) {
-  const isYoutube = !!videoUrl && /youtu\.?be/.test(videoUrl);
-  const { signedUrl, loading } = useSignedUrl(
-    'lesson-videos',
-    !videoUrl || isYoutube ? null : videoUrl
-  );
-  const src = isYoutube ? videoUrl : signedUrl;
-
-  return (
-    <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10">
-      {src ? (
-        <iframe
-          src={src}
-          title={title}
-          className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-primary-foreground/60">
-          {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Lock className="w-8 h-8" />}
-        </div>
-      )}
-    </div>
-  );
-}
+// Lesson player uses the unified VideoPlayer which supports YouTube, Vimeo,
+// Google Drive, Dailymotion, Facebook, direct mp4/webm/ogg and Supabase Storage paths.
 
 async function openMaterial(url: string) {
   const isYoutube = /youtu\.?be/.test(url);
@@ -127,6 +105,7 @@ const CourseDetails = () => {
   const [materials, setMaterials] = useState<CourseMaterial[]>([]);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [deletingMaterialId, setDeletingMaterialId] = useState<string | null>(null);
+  const [previewMaterial, setPreviewMaterial] = useState<CourseMaterial | null>(null);
 
   const { enrollment, isEnrolled, isPending, enroll, activateEnrollment, loading: enrollmentLoading } = useEnrollment(id);
 
@@ -519,7 +498,7 @@ const CourseDetails = () => {
                 className="relative"
               >
                 {activeLesson && canAccessLesson(activeLesson) ? (
-                  <LessonPlayer videoUrl={activeLesson.video_url} title={activeLesson.title} />
+                  <VideoPlayer url={activeLesson.video_url} title={activeLesson.title} />
                 ) : (
                   <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10 flex items-center justify-center">
                     <div className="text-center text-primary-foreground/60">
@@ -750,12 +729,15 @@ const CourseDetails = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
-                        {material.file_type === 'youtube' ? (
-                          <Button variant="outline" size="sm" className="flex-1 gap-2" asChild>
-                            <a href={material.youtube_url || material.file_url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="w-3 h-3" />
-                              مشاهدة
-                            </a>
+                        {material.file_type === 'youtube' || material.file_type === 'video' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 gap-2"
+                            onClick={() => setPreviewMaterial(material)}
+                          >
+                            <Play className="w-3 h-3" />
+                            مشاهدة
                           </Button>
                         ) : (
                           <Button
@@ -800,6 +782,26 @@ const CourseDetails = () => {
         target="course"
         onSuccess={fetchMaterials}
       />
+
+      <Dialog open={!!previewMaterial} onOpenChange={(o) => !o && setPreviewMaterial(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden" dir="rtl">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle>{previewMaterial?.title}</DialogTitle>
+          </DialogHeader>
+          {previewMaterial && (
+            <div className="p-4 pt-0">
+              <VideoPlayer
+                url={previewMaterial.youtube_url || previewMaterial.file_url}
+                title={previewMaterial.title}
+                bucket="course-materials"
+              />
+              {previewMaterial.description && (
+                <p className="text-sm text-muted-foreground mt-3">{previewMaterial.description}</p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
