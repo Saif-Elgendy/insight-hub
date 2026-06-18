@@ -28,38 +28,17 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSignedUrl, getSignedUrl } from '@/lib/storage';
+import { getSignedUrl } from '@/lib/storage';
 import { useEnrollment } from '@/hooks/useEnrollment';
 import { useUserRole } from '@/hooks/useUserRole';
 import { MaterialUploadDialog } from '@/components/materials/MaterialUploadDialog';
+import { VideoPlayer } from '@/components/video/VideoPlayer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { normalizeVideoUrl } from '@/lib/videoUrl';
 import { toast } from 'sonner';
 
-function LessonPlayer({ videoUrl, title }: { videoUrl: string | null; title: string }) {
-  const isYoutube = !!videoUrl && /youtu\.?be/.test(videoUrl);
-  const { signedUrl, loading } = useSignedUrl(
-    'lesson-videos',
-    !videoUrl || isYoutube ? null : videoUrl
-  );
-  const src = isYoutube ? videoUrl : signedUrl;
-
-  return (
-    <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10">
-      {src ? (
-        <iframe
-          src={src}
-          title={title}
-          className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-primary-foreground/60">
-          {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Lock className="w-8 h-8" />}
-        </div>
-      )}
-    </div>
-  );
-}
+// Lesson player uses the unified VideoPlayer which supports YouTube, Vimeo,
+// Google Drive, Dailymotion, Facebook, direct mp4/webm/ogg and Supabase Storage paths.
 
 async function openMaterial(url: string) {
   const isYoutube = /youtu\.?be/.test(url);
