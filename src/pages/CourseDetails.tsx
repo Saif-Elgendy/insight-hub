@@ -498,7 +498,7 @@ const CourseDetails = () => {
                 className="relative"
               >
                 {activeLesson && canAccessLesson(activeLesson) ? (
-                  <LessonPlayer videoUrl={activeLesson.video_url} title={activeLesson.title} />
+                  <VideoPlayer url={activeLesson.video_url} title={activeLesson.title} />
                 ) : (
                   <div className="aspect-video rounded-2xl overflow-hidden shadow-elevated bg-foreground/10 flex items-center justify-center">
                     <div className="text-center text-primary-foreground/60">
