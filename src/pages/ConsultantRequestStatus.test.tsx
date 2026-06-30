@@ -115,9 +115,9 @@ describe("ConsultantRequestStatus — moderation field gating", () => {
     await waitFor(() =>
       expect(screen.getByText("ملاحظات الإدارة")).toBeInTheDocument()
     );
-    expect(screen.getByText(requestRow.admin_review_notes!)).toBeInTheDocument();
+    expect(screen.getByText(/ملاحظة سرية للأدمن فقط/)).toBeInTheDocument();
     expect(screen.getByText("آخر خطأ في الحفظ")).toBeInTheDocument();
-    expect(screen.getByText(requestRow.last_save_error!)).toBeInTheDocument();
+    expect(screen.getByText(/خطأ داخلي في الحفظ/)).toBeInTheDocument();
   });
 
   it("re-hides moderation fields when an admin's role is downgraded and page re-renders", async () => {
