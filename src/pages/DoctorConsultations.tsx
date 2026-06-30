@@ -48,7 +48,7 @@ interface Consultation {
   created_at: string;
   updated_at: string;
   meeting_link: string | null;
-  patient_phone: string | null;
+  patient_phone?: string | null;
   communication_platform: string | null;
   patient_name?: string | null;
   profile_phone?: string | null;
@@ -145,7 +145,7 @@ const DoctorConsultations = () => {
       // Get consultations with separate queries for related data
       const { data: consultationsData, error } = await supabase
         .from('consultations')
-        .select('*')
+        .select('id, user_id, specialist_id, time_slot_id, consultation_type, status, notes, price, created_at, updated_at, meeting_link, communication_platform')
         .eq('specialist_id', specialist.id)
         .order('created_at', { ascending: false });
 
