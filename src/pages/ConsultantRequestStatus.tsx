@@ -32,6 +32,8 @@ interface ConsultantRequest {
 
 const ConsultantRequestStatus = () => {
   const { user, loading: authLoading } = useAuth();
+  const { role } = useUserRole();
+  const isAdmin = role === "admin";
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [request, setRequest] = useState<ConsultantRequest | null>(null);
