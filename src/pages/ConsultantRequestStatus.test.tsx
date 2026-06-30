@@ -26,8 +26,9 @@ const requestRow = {
   video_url: null,
 };
 
+const STABLE_USER = { id: "user-1" };
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ user: { id: "user-1" }, loading: false }),
+  useAuth: () => ({ user: STABLE_USER, loading: false }),
 }));
 
 vi.mock("@/hooks/useUserRole", () => ({
