@@ -117,7 +117,7 @@ describe("ConsultantRequestStatus — moderation field gating", () => {
     );
     // Dump the body HTML so we can inspect what actually rendered.
     // eslint-disable-next-line no-console
-    console.log("BODY:", document.body.innerHTML.length, document.body.textContent?.includes("سرية"));
+    console.log("BODY_TEXT:", document.body.textContent?.slice(0, 800));
     expect(document.body.textContent).toContain("ملاحظة سرية للأدمن فقط");
     expect(document.body.textContent).toContain("خطأ داخلي في الحفظ");
     expect(screen.getByText("آخر خطأ في الحفظ")).toBeInTheDocument();
