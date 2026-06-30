@@ -154,14 +154,14 @@ const ConsultantRequestStatus = () => {
                   </Alert>
                 )}
 
-                {request.admin_review_notes && (
+                {isAdmin && request.admin_review_notes && (
                   <Alert>
                     <AlertTitle>ملاحظات الإدارة</AlertTitle>
                     <AlertDescription>{request.admin_review_notes}</AlertDescription>
                   </Alert>
                 )}
 
-                {request.last_save_error && (
+                {isAdmin && request.last_save_error && (
                   <Alert variant="destructive">
                     <AlertTriangle className="w-4 h-4" />
                     <AlertTitle>آخر خطأ في الحفظ</AlertTitle>
