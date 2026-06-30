@@ -41,7 +41,7 @@ export const SpecialistReviewsList = ({ specialistId }: SpecialistReviewsListPro
     
     // Fetch reviews
     const { data: reviewsData, error } = await supabase
-      .from('specialist_reviews')
+      .from('specialist_reviews_public')
       .select('*')
       .eq('specialist_id', specialistId)
       .order('created_at', { ascending: false });
