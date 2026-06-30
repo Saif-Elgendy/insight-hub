@@ -307,11 +307,27 @@ const DoctorConsultations = () => {
     ? consultations 
     : consultations.filter(c => c.status === statusFilter);
 
-  const openDetails = (consultation: Consultation) => {
+  const openDetails = async (consultation: Consultation) => {
     setSelectedConsultation(consultation);
     setDoctorNotes(consultation.notes || '');
     setMeetingLink(consultation.meeting_link || '');
     setDetailsOpen(true);
+
+    // Patient phone is column-restricted; fetch via RPC (allowed for confirmed/in-progress/completed)
+    if (
+      consultation.status === 'confirmed' ||
+      consultation.status === 'in_progress' ||
+      consultation.status === 'completed'
+    ) {
+      const { data: phone } = await supabase.rpc('get_consultation_patient_phone', {
+        p_consultation_id: consultation.id,
+      });
+      if (phone) {
+        setSelectedConsultation(prev =>
+          prev && prev.id === consultation.id ? { ...prev, patient_phone: phone as string } : prev
+        );
+      }
+    }
   };
 
   const saveMeetingLink = async () => {
