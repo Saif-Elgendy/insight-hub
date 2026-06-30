@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Clock3, CheckCircle2, XCircle, ArrowRight, AlertTriangle } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface ConsultantRequest {
   id: string;
