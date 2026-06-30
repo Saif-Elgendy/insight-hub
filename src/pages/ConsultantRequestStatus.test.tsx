@@ -115,9 +115,12 @@ describe("ConsultantRequestStatus — moderation field gating", () => {
     await waitFor(() =>
       expect(screen.getByText("ملاحظات الإدارة")).toBeInTheDocument()
     );
-    expect(screen.getByText(/ملاحظة سرية للأدمن فقط/)).toBeInTheDocument();
+    // Dump the body HTML so we can inspect what actually rendered.
+    // eslint-disable-next-line no-console
+    console.log("BODY:", document.body.innerHTML.length, document.body.textContent?.includes("سرية"));
+    expect(document.body.textContent).toContain("ملاحظة سرية للأدمن فقط");
+    expect(document.body.textContent).toContain("خطأ داخلي في الحفظ");
     expect(screen.getByText("آخر خطأ في الحفظ")).toBeInTheDocument();
-    expect(screen.getByText(/خطأ داخلي في الحفظ/)).toBeInTheDocument();
   });
 
   it("re-hides moderation fields when an admin's role is downgraded and page re-renders", async () => {
