@@ -48,7 +48,7 @@ interface Consultation {
   created_at: string;
   updated_at: string;
   meeting_link: string | null;
-  patient_phone: string | null;
+  patient_phone?: string | null;
   communication_platform: string | null;
   patient_name?: string | null;
   profile_phone?: string | null;
@@ -145,7 +145,7 @@ const DoctorConsultations = () => {
       // Get consultations with separate queries for related data
       const { data: consultationsData, error } = await supabase
         .from('consultations')
-        .select('*')
+        .select('id, user_id, specialist_id, time_slot_id, consultation_type, status, notes, price, created_at, updated_at, meeting_link, communication_platform')
         .eq('specialist_id', specialist.id)
         .order('created_at', { ascending: false });
 
@@ -307,11 +307,26 @@ const DoctorConsultations = () => {
     ? consultations 
     : consultations.filter(c => c.status === statusFilter);
 
-  const openDetails = (consultation: Consultation) => {
+  const openDetails = async (consultation: Consultation) => {
     setSelectedConsultation(consultation);
     setDoctorNotes(consultation.notes || '');
     setMeetingLink(consultation.meeting_link || '');
     setDetailsOpen(true);
+
+    // Patient phone is column-restricted; fetch via RPC (allowed for confirmed/in-progress/completed)
+    if (
+      consultation.status === 'confirmed' ||
+      consultation.status === 'completed'
+    ) {
+      const { data: phone } = await supabase.rpc('get_consultation_patient_phone', {
+        p_consultation_id: consultation.id,
+      });
+      if (phone) {
+        setSelectedConsultation(prev =>
+          prev && prev.id === consultation.id ? { ...prev, patient_phone: phone as string } : prev
+        );
+      }
+    }
   };
 
   const saveMeetingLink = async () => {

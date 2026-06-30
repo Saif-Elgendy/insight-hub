@@ -39,7 +39,7 @@ interface Consultation {
   time_slot_id: string;
   specialist_id: string;
   meeting_link: string | null;
-  patient_phone: string | null;
+  patient_phone?: string | null;
   communication_platform: string | null;
   time_slot: {
     slot_date: string;
@@ -158,7 +158,7 @@ const StudentConsultations = () => {
           time_slot_id,
           specialist_id,
           meeting_link,
-          patient_phone,
+          
           communication_platform,
           time_slot:time_slots!consultations_time_slot_id_fkey(slot_date, slot_time),
           specialist:specialists!consultations_specialist_id_fkey(id, full_name, specialty, image_url)

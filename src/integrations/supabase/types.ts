@@ -1026,6 +1026,10 @@ export type Database = {
         Returns: boolean
       }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      get_consultation_patient_phone: {
+        Args: { p_consultation_id: string }
+        Returns: string
+      }
       resubmit_consultant_request: { Args: never; Returns: string }
     }
     Enums: {
