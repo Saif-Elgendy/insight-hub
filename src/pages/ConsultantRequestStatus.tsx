@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Clock3, CheckCircle2, XCircle, ArrowRight, AlertTriangle } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface ConsultantRequest {
   id: string;
@@ -31,6 +32,7 @@ interface ConsultantRequest {
 
 const ConsultantRequestStatus = () => {
   const { user, loading: authLoading } = useAuth();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [request, setRequest] = useState<ConsultantRequest | null>(null);
@@ -151,14 +153,14 @@ const ConsultantRequestStatus = () => {
                   </Alert>
                 )}
 
-                {request.admin_review_notes && (
+                {isAdmin && request.admin_review_notes && (
                   <Alert>
                     <AlertTitle>ملاحظات الإدارة</AlertTitle>
                     <AlertDescription>{request.admin_review_notes}</AlertDescription>
                   </Alert>
                 )}
 
-                {request.last_save_error && (
+                {isAdmin && request.last_save_error && (
                   <Alert variant="destructive">
                     <AlertTriangle className="w-4 h-4" />
                     <AlertTitle>آخر خطأ في الحفظ</AlertTitle>

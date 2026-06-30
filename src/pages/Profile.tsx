@@ -1079,7 +1079,7 @@ const ProfilePage = () => {
                         <p className="text-xs text-muted-foreground">اللغات التي يمكنك التشخيص بها</p>
                       </div>
 
-                      {consultantRequest?.last_save_error && (
+                      {isAdmin && consultantRequest?.last_save_error && (
                         <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 text-sm">
                           <p className="font-semibold text-destructive mb-1 flex items-center gap-2">
                             <X className="w-4 h-4" /> سبب رفض آخر محاولة حفظ
