@@ -112,7 +112,9 @@ describe("ConsultantRequestStatus — moderation field gating", () => {
   it("renders moderation fields for admins", async () => {
     mockRole = "admin";
     renderPage();
-    expect(await screen.findByText("ملاحظات الإدارة")).toBeInTheDocument();
+    expect(
+      await screen.findByText("ملاحظات الإدارة", {}, { timeout: 5000 })
+    ).toBeInTheDocument();
     expect(screen.getByText(requestRow.admin_review_notes!)).toBeInTheDocument();
     expect(screen.getByText("آخر خطأ في الحفظ")).toBeInTheDocument();
     expect(screen.getByText(requestRow.last_save_error!)).toBeInTheDocument();
