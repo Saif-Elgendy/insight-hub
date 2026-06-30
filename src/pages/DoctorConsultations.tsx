@@ -316,7 +316,6 @@ const DoctorConsultations = () => {
     // Patient phone is column-restricted; fetch via RPC (allowed for confirmed/in-progress/completed)
     if (
       consultation.status === 'confirmed' ||
-      consultation.status === 'in_progress' ||
       consultation.status === 'completed'
     ) {
       const { data: phone } = await supabase.rpc('get_consultation_patient_phone', {
