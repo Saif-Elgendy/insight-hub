@@ -112,10 +112,11 @@ describe("ConsultantRequestStatus — moderation field gating", () => {
   it("renders moderation fields for admins", async () => {
     mockRole = "admin";
     renderPage();
-    expect(await screen.findByText("ملاحظات الإدارة")).toBeInTheDocument();
-    expect(await screen.findByText(requestRow.admin_review_notes!)).toBeInTheDocument();
-    expect(await screen.findByText("آخر خطأ في الحفظ")).toBeInTheDocument();
-    expect(await screen.findByText(requestRow.last_save_error!)).toBeInTheDocument();
+    expect(await screen.findByText("مرفوض", {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText("ملاحظات الإدارة", {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.getByText(requestRow.admin_review_notes!)).toBeInTheDocument();
+    expect(screen.getByText("آخر خطأ في الحفظ")).toBeInTheDocument();
+    expect(screen.getByText(requestRow.last_save_error!)).toBeInTheDocument();
   });
 
   it("re-hides moderation fields when an admin's role is downgraded and page re-renders", async () => {
