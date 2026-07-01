@@ -56,8 +56,8 @@ vi.mock("@/hooks/useUserRole", () => ({
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-vi.mock("framer-motion", () => {
-  const React = require("react");
+vi.mock("framer-motion", async () => {
+  const React = await import("react");
   const proxy: any = new Proxy(
     {},
     {
