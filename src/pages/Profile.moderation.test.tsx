@@ -125,7 +125,7 @@ describe("Profile — moderation field gating for consultant request", () => {
     mockRole = "consultant";
     renderPage();
     await waitFor(() =>
-      expect(screen.getAllByText("تغذية").length).toBeGreaterThan(0)
+      expect(screen.getByText("مستندات ناقصة")).toBeInTheDocument()
     );
     expect(screen.queryByText("سبب رفض آخر محاولة حفظ")).not.toBeInTheDocument();
     expect(screen.queryByText(consultantRow.last_save_error!)).not.toBeInTheDocument();
@@ -135,7 +135,7 @@ describe("Profile — moderation field gating for consultant request", () => {
     mockRole = "student";
     renderPage();
     await waitFor(() =>
-      expect(screen.getAllByText("تغذية").length).toBeGreaterThan(0)
+      expect(screen.getByText("مستندات ناقصة")).toBeInTheDocument()
     );
     expect(screen.queryByText("سبب رفض آخر محاولة حفظ")).not.toBeInTheDocument();
     expect(screen.queryByText(consultantRow.last_save_error!)).not.toBeInTheDocument();
@@ -145,7 +145,7 @@ describe("Profile — moderation field gating for consultant request", () => {
     mockRole = null;
     renderPage();
     await waitFor(() =>
-      expect(screen.getAllByText("تغذية").length).toBeGreaterThan(0)
+      expect(screen.getByText("مستندات ناقصة")).toBeInTheDocument()
     );
     expect(screen.queryByText("سبب رفض آخر محاولة حفظ")).not.toBeInTheDocument();
     expect(screen.queryByText(consultantRow.last_save_error!)).not.toBeInTheDocument();
@@ -171,7 +171,7 @@ describe("Profile — moderation field gating for consultant request", () => {
     mockRole = "consultant";
     renderPage();
     await waitFor(() =>
-      expect(screen.getAllByText("تغذية").length).toBeGreaterThan(0)
+      expect(screen.getByText("مستندات ناقصة")).toBeInTheDocument()
     );
     expect(screen.queryByText("سبب رفض آخر محاولة حفظ")).not.toBeInTheDocument();
     expect(screen.queryByText(consultantRow.last_save_error!)).not.toBeInTheDocument();
