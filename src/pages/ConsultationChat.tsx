@@ -14,6 +14,57 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { MedicalRecordsPanel } from '@/components/medical/MedicalRecordsPanel';
+import { useSignedUrl } from '@/lib/storage';
+
+// Renders a chat attachment by minting a short-lived signed URL on demand.
+// `attachment_url` in chat_messages is a storage object path (legacy full URLs
+// are handled by extractStoragePath inside useSignedUrl).
+const ChatAttachment = ({
+  path,
+  name,
+  type,
+  isMine,
+}: {
+  path: string;
+  name: string | null;
+  type: string | null;
+  isMine: boolean;
+}) => {
+  const { signedUrl, loading } = useSignedUrl('chat-attachments', path);
+  if (loading || !signedUrl) {
+    return (
+      <div className="mb-2 flex items-center gap-2 text-xs opacity-70">
+        <Loader2 className="w-3 h-3 animate-spin" /> جاري تحميل المرفق...
+      </div>
+    );
+  }
+  return (
+    <div className="mb-2">
+      {type === 'image' ? (
+        <a href={signedUrl} target="_blank" rel="noopener noreferrer">
+          <img
+            src={signedUrl}
+            alt={name || 'صورة'}
+            className="max-w-full rounded-lg max-h-60 object-cover"
+          />
+        </a>
+      ) : (
+        <a
+          href={signedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex items-center gap-2 p-2 rounded-lg ${
+            isMine ? 'bg-primary-foreground/10' : 'bg-background/50'
+          }`}
+        >
+          <FileText className="w-5 h-5 shrink-0" />
+          <span className="text-sm truncate">{name || 'ملف'}</span>
+          <Download className="w-4 h-4 shrink-0" />
+        </a>
+      )}
+    </div>
+  );
+};
 
 interface ChatMessage {
   id: string;
@@ -269,13 +320,9 @@ const ConsultationChat = () => {
 
         if (uploadError) throw uploadError;
 
-        // chat-attachments is a private bucket — use a long-lived signed URL
-        const { data: signed, error: signErr } = await supabase.storage
-          .from('chat-attachments')
-          .createSignedUrl(fileName, 60 * 60 * 24 * 365);
-
-        if (signErr || !signed) throw signErr || new Error('Failed to create signed URL');
-        attachmentUrl = signed.signedUrl;
+        // Store only the storage object path. Signed URLs are minted on demand
+        // per render (short TTL) so a leaked URL cannot grant long-term access.
+        attachmentUrl = fileName;
         attachmentName = selectedFile.name;
         attachmentType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
         setUploading(false);
@@ -428,30 +475,12 @@ const ConsultationChat = () => {
                   >
                     {/* Attachment */}
                     {msg.attachment_url && (
-                      <div className="mb-2">
-                        {msg.attachment_type === 'image' ? (
-                          <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
-                            <img
-                              src={msg.attachment_url}
-                              alt={msg.attachment_name || 'صورة'}
-                              className="max-w-full rounded-lg max-h-60 object-cover"
-                            />
-                          </a>
-                        ) : (
-                          <a
-                            href={msg.attachment_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`flex items-center gap-2 p-2 rounded-lg ${
-                              isMine ? 'bg-primary-foreground/10' : 'bg-background/50'
-                            }`}
-                          >
-                            <FileText className="w-5 h-5 shrink-0" />
-                            <span className="text-sm truncate">{msg.attachment_name || 'ملف'}</span>
-                            <Download className="w-4 h-4 shrink-0" />
-                          </a>
-                        )}
-                      </div>
+                      <ChatAttachment
+                        path={msg.attachment_url}
+                        name={msg.attachment_name}
+                        type={msg.attachment_type}
+                        isMine={isMine}
+                      />
                     )}
 
                     {/* Text */}
