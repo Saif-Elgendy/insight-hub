@@ -14,6 +14,57 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { MedicalRecordsPanel } from '@/components/medical/MedicalRecordsPanel';
+import { useSignedUrl } from '@/lib/storage';
+
+// Renders a chat attachment by minting a short-lived signed URL on demand.
+// `attachment_url` in chat_messages is a storage object path (legacy full URLs
+// are handled by extractStoragePath inside useSignedUrl).
+const ChatAttachment = ({
+  path,
+  name,
+  type,
+  isMine,
+}: {
+  path: string;
+  name: string | null;
+  type: string | null;
+  isMine: boolean;
+}) => {
+  const { signedUrl, loading } = useSignedUrl('chat-attachments', path);
+  if (loading || !signedUrl) {
+    return (
+      <div className="mb-2 flex items-center gap-2 text-xs opacity-70">
+        <Loader2 className="w-3 h-3 animate-spin" /> جاري تحميل المرفق...
+      </div>
+    );
+  }
+  return (
+    <div className="mb-2">
+      {type === 'image' ? (
+        <a href={signedUrl} target="_blank" rel="noopener noreferrer">
+          <img
+            src={signedUrl}
+            alt={name || 'صورة'}
+            className="max-w-full rounded-lg max-h-60 object-cover"
+          />
+        </a>
+      ) : (
+        <a
+          href={signedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex items-center gap-2 p-2 rounded-lg ${
+            isMine ? 'bg-primary-foreground/10' : 'bg-background/50'
+          }`}
+        >
+          <FileText className="w-5 h-5 shrink-0" />
+          <span className="text-sm truncate">{name || 'ملف'}</span>
+          <Download className="w-4 h-4 shrink-0" />
+        </a>
+      )}
+    </div>
+  );
+};
 
 interface ChatMessage {
   id: string;
