@@ -475,30 +475,12 @@ const ConsultationChat = () => {
                   >
                     {/* Attachment */}
                     {msg.attachment_url && (
-                      <div className="mb-2">
-                        {msg.attachment_type === 'image' ? (
-                          <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
-                            <img
-                              src={msg.attachment_url}
-                              alt={msg.attachment_name || 'صورة'}
-                              className="max-w-full rounded-lg max-h-60 object-cover"
-                            />
-                          </a>
-                        ) : (
-                          <a
-                            href={msg.attachment_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`flex items-center gap-2 p-2 rounded-lg ${
-                              isMine ? 'bg-primary-foreground/10' : 'bg-background/50'
-                            }`}
-                          >
-                            <FileText className="w-5 h-5 shrink-0" />
-                            <span className="text-sm truncate">{msg.attachment_name || 'ملف'}</span>
-                            <Download className="w-4 h-4 shrink-0" />
-                          </a>
-                        )}
-                      </div>
+                      <ChatAttachment
+                        path={msg.attachment_url}
+                        name={msg.attachment_name}
+                        type={msg.attachment_type}
+                        isMine={isMine}
+                      />
                     )}
 
                     {/* Text */}
