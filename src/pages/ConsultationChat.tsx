@@ -269,13 +269,9 @@ const ConsultationChat = () => {
 
         if (uploadError) throw uploadError;
 
-        // chat-attachments is a private bucket — use a long-lived signed URL
-        const { data: signed, error: signErr } = await supabase.storage
-          .from('chat-attachments')
-          .createSignedUrl(fileName, 60 * 60 * 24 * 365);
-
-        if (signErr || !signed) throw signErr || new Error('Failed to create signed URL');
-        attachmentUrl = signed.signedUrl;
+        // Store only the storage object path. Signed URLs are minted on demand
+        // per render (short TTL) so a leaked URL cannot grant long-term access.
+        attachmentUrl = fileName;
         attachmentName = selectedFile.name;
         attachmentType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
         setUploading(false);
