@@ -35,6 +35,7 @@ import { MaterialUploadDialog } from '@/components/materials/MaterialUploadDialo
 import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { SEO } from '@/components/SEO';
 
 // Lesson player uses the unified VideoPlayer which supports YouTube, Vimeo,
 // Google Drive, Dailymotion, Facebook, direct mp4/webm/ogg and Supabase Storage paths.
@@ -366,6 +367,27 @@ const CourseDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {course && (
+        <SEO
+          title={`${course.title} - نفسي`}
+          description={(course.description || `تعرّف على كورس ${course.title} على منصة نفسي.`).slice(0, 160)}
+          path={`/course/${course.id}`}
+          image={course.image_url || undefined}
+          type="article"
+          jsonLd={{
+            "@context": "https://schema.org",
+            "@type": "Course",
+            name: course.title,
+            description: course.description || undefined,
+            provider: {
+              "@type": "Organization",
+              name: "نفسي",
+              sameAs: "https://conscious-creations.lovable.app",
+            },
+            image: course.image_url || undefined,
+          }}
+        />
+      )}
       <Navbar />
       
       <main className="pt-20">

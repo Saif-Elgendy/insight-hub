@@ -13,6 +13,7 @@ import { Footer } from '@/components/layout/Footer';
 import { CourseSkeletonGrid } from '@/components/ui/card-skeletons';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { SEO } from '@/components/SEO';
 
 interface Course {
   id: string;
@@ -158,6 +159,11 @@ const Courses = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      <SEO
+        title="جميع الكورسات - نفسي"
+        description="اكتشف مجموعة متنوعة من الكورسات المتخصصة في الصحة النفسية على منصة نفسي."
+        path="/courses"
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">
@@ -166,7 +172,7 @@ const Courses = () => {
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4 mb-6">
               <Link to="/">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" aria-label="العودة للرئيسية">
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
               </Link>
@@ -277,6 +283,7 @@ const Courses = () => {
         {/* Results */}
         <section className="py-8">
           <div className="container mx-auto px-4">
+            <h2 className="sr-only">قائمة الكورسات</h2>
             <div className="flex items-center justify-between mb-6">
               <p className="text-muted-foreground">
                 عرض {filteredCourses.length} من {courses.length} كورس
@@ -288,7 +295,7 @@ const Courses = () => {
             ) : filteredCourses.length === 0 ? (
               <div className="text-center py-16">
                 <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-xl font-medium mb-2">لم يتم العثور على كورسات</h3>
+                <h2 className="text-xl font-medium mb-2">لم يتم العثور على كورسات</h2>
                 <p className="text-muted-foreground mb-4">
                   {hasActiveFilters 
                     ? 'جرب تغيير معايير البحث أو الفلاتر'

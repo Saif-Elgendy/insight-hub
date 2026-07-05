@@ -1,0 +1,16 @@
+# نفسي (Nafsi)
+
+> منصة نفسي هي منصة عربية متخصصة في الصحة النفسية تقدم كورسات مسجلة، جلسات مباشرة، واستشارات فردية مع مختصين معتمدين.
+
+Nafsi is an Arabic mental-health platform offering recorded courses, live sessions, and one-on-one consultations with certified psychologists and therapists.
+
+## Pages
+
+- [الرئيسية](/): نظرة عامة على المنصة وأبرز الخدمات.
+- [الكورسات](/courses): قائمة الكورسات المتخصصة في الصحة النفسية.
+- [المختصون](/specialists): تصفح المعالجين والأطباء النفسيين المتاحين للحجز.
+- [المكتبة](/resources): موارد ومقالات مجانية حول الصحة النفسية.
+
+## Optional
+
+- [تسجيل الدخول](/auth): صفحة إنشاء حساب أو تسجيل الدخول.
