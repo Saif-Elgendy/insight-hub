@@ -283,6 +283,7 @@ const Courses = () => {
         {/* Results */}
         <section className="py-8">
           <div className="container mx-auto px-4">
+            <h2 className="sr-only">قائمة الكورسات</h2>
             <div className="flex items-center justify-between mb-6">
               <p className="text-muted-foreground">
                 عرض {filteredCourses.length} من {courses.length} كورس
@@ -294,7 +295,7 @@ const Courses = () => {
             ) : filteredCourses.length === 0 ? (
               <div className="text-center py-16">
                 <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-xl font-medium mb-2">لم يتم العثور على كورسات</h3>
+                <h2 className="text-xl font-medium mb-2">لم يتم العثور على كورسات</h2>
                 <p className="text-muted-foreground mb-4">
                   {hasActiveFilters 
                     ? 'جرب تغيير معايير البحث أو الفلاتر'
