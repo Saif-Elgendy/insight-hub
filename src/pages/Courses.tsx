@@ -13,6 +13,7 @@ import { Footer } from '@/components/layout/Footer';
 import { CourseSkeletonGrid } from '@/components/ui/card-skeletons';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { SEO } from '@/components/SEO';
 
 interface Course {
   id: string;
@@ -158,6 +159,11 @@ const Courses = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      <SEO
+        title="جميع الكورسات - نفسي"
+        description="اكتشف مجموعة متنوعة من الكورسات المتخصصة في الصحة النفسية على منصة نفسي."
+        path="/courses"
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">
@@ -166,7 +172,7 @@ const Courses = () => {
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4 mb-6">
               <Link to="/">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" aria-label="العودة للرئيسية">
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
               </Link>

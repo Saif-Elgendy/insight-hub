@@ -16,7 +16,7 @@ export const HeroSection = () => {
       <div className="absolute inset-0 z-0">
         <img
           src={heroBg}
-          alt="خلفية"
+          alt=""
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
