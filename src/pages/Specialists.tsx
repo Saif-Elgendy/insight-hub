@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SpecialistSkeletonGrid } from '@/components/ui/card-skeletons';
+import { SEO } from '@/components/SEO';
 
 interface Specialist {
   id: string;
@@ -159,6 +160,7 @@ const Specialists = () => {
                 <button
                   onClick={() => setSearchQuery('')}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="مسح البحث"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -263,7 +265,7 @@ const Specialists = () => {
                 {selectedSpecialty !== 'all' && (
                   <Badge variant="secondary" className="gap-1">
                     {selectedSpecialty}
-                    <button onClick={() => setSelectedSpecialty('all')}>
+                    <button onClick={() => setSelectedSpecialty('all')} aria-label="إزالة فلتر التخصص">
                       <X className="w-3 h-3" />
                     </button>
                   </Badge>
@@ -272,7 +274,7 @@ const Specialists = () => {
                   <Badge variant="secondary" className="gap-1">
                     <Star className="w-3 h-3" />
                     {minRating}+
-                    <button onClick={() => setMinRating(0)}>
+                    <button onClick={() => setMinRating(0)} aria-label="إزالة فلتر التقييم">
                       <X className="w-3 h-3" />
                     </button>
                   </Badge>
