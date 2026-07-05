@@ -27,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { SpecialistReviewsList } from '@/components/reviews/SpecialistReviewsList';
+import { SEO } from '@/components/SEO';
 
 interface Specialist {
   id: string;
@@ -252,6 +253,24 @@ const SpecialistDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {specialist && (
+        <SEO
+          title={`${specialist.full_name} - ${specialist.specialty} - نفسي`}
+          description={(specialist.bio || `${specialist.full_name}، ${specialist.title} متخصص في ${specialist.specialty}. احجز جلستك عبر منصة نفسي.`).slice(0, 160)}
+          path={`/specialist/${specialist.id}`}
+          image={specialist.image_url || undefined}
+          type="profile"
+          jsonLd={{
+            "@context": "https://schema.org",
+            "@type": "Physician",
+            name: specialist.full_name,
+            jobTitle: specialist.title,
+            medicalSpecialty: specialist.specialty,
+            description: specialist.bio || undefined,
+            image: specialist.image_url || undefined,
+          }}
+        />
+      )}
       {/* Header */}
       <header className="bg-gradient-hero text-primary-foreground py-6">
         <div className="container mx-auto px-4">
