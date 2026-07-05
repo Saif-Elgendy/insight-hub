@@ -110,6 +110,11 @@ const Specialists = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="المختصون النفسيون - نفسي"
+        description="تصفح نخبة من الأطباء والمعالجين النفسيين المعتمدين على منصة نفسي واحجز جلستك مع المختص المناسب لك."
+        path="/specialists"
+      />
       {/* Header */}
       <header className="bg-gradient-hero text-primary-foreground py-8">
         <div className="container mx-auto px-4">
