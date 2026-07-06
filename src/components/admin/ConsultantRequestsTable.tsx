@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { ConsultantDocumentLink, ConsultantDocumentImage } from '@/components/consultant/ConsultantDocumentLink';
 
 const SUPER_ADMIN_ID = '9a48cfb7-03ed-4df4-afc9-67a06d014d77';
 
