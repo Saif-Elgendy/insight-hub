@@ -330,23 +330,21 @@ const ProfilePage = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: signedData, error: signedErr } = await supabase.storage
-        .from('consultant-documents')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 365);
-      if (signedErr || !signedData?.signedUrl) throw signedErr || new Error('فشل توليد رابط الملف');
-      const publicUrl = signedData.signedUrl;
+      // Store the storage object path only. Signed URLs are minted on demand
+      // when rendering, with a short TTL (see useSignedUrl in @/lib/storage).
+      const storedValue = fileName;
 
       if (type === 'photo') {
-        await supabase.from('consultant_requests').update({ photo_url: publicUrl }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ photo_url: storedValue }).eq('id', consultantRequest.id);
       } else if (type === 'video') {
-        await supabase.from('consultant_requests').update({ video_url: publicUrl }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ video_url: storedValue }).eq('id', consultantRequest.id);
       } else if (type === 'id_card') {
-        await supabase.from('consultant_requests').update({ id_card_url: publicUrl }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ id_card_url: storedValue }).eq('id', consultantRequest.id);
       } else if (type === 'license') {
-        await supabase.from('consultant_requests').update({ license_url: publicUrl }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ license_url: storedValue }).eq('id', consultantRequest.id);
       } else {
         const currentCerts = consultantRequest.certificates_urls || [];
-        await supabase.from('consultant_requests').update({ certificates_urls: [...currentCerts, publicUrl] }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ certificates_urls: [...currentCerts, storedValue] }).eq('id', consultantRequest.id);
       }
 
       toast.success('تم رفع الملف بنجاح');
