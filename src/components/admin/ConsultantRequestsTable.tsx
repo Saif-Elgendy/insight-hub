@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { ConsultantDocumentLink, ConsultantDocumentImage } from '@/components/consultant/ConsultantDocumentLink';
 
 const SUPER_ADMIN_ID = '9a48cfb7-03ed-4df4-afc9-67a06d014d77';
 
@@ -402,7 +403,7 @@ export const ConsultantRequestsTable = () => {
               {selectedRequest.photo_url && (
                 <div>
                   <Label className="text-muted-foreground">الصورة الشخصية</Label>
-                  <img src={selectedRequest.photo_url} alt="صورة الاستشاري" className="w-32 h-32 rounded-xl object-cover mt-2" />
+                  <ConsultantDocumentImage path={selectedRequest.photo_url} alt="صورة الاستشاري" className="w-32 h-32 rounded-xl object-cover mt-2" />
                 </div>
               )}
 
@@ -410,17 +411,17 @@ export const ConsultantRequestsTable = () => {
                 <div>
                   <Label className="text-muted-foreground">بطاقة الهوية</Label>
                   {selectedRequest.id_card_url ? (
-                    <a href={selectedRequest.id_card_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline mt-1">
+                    <ConsultantDocumentLink path={selectedRequest.id_card_url} className="flex items-center gap-1 text-primary hover:underline mt-1">
                       <ExternalLink className="w-4 h-4" /> عرض البطاقة
-                    </a>
+                    </ConsultantDocumentLink>
                   ) : <p className="text-destructive text-sm mt-1">غير مرفوعة</p>}
                 </div>
                 <div>
                   <Label className="text-muted-foreground">ترخيص مزاولة المهنة</Label>
                   {selectedRequest.license_url ? (
-                    <a href={selectedRequest.license_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline mt-1">
+                    <ConsultantDocumentLink path={selectedRequest.license_url} className="flex items-center gap-1 text-primary hover:underline mt-1">
                       <ExternalLink className="w-4 h-4" /> عرض الترخيص
-                    </a>
+                    </ConsultantDocumentLink>
                   ) : <p className="text-destructive text-sm mt-1">غير مرفوع</p>}
                 </div>
               </div>
@@ -429,10 +430,10 @@ export const ConsultantRequestsTable = () => {
                 <div>
                   <Label className="text-muted-foreground">فيديو تعريفي</Label>
                   <div className="mt-2">
-                    <a href={selectedRequest.video_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+                    <ConsultantDocumentLink path={selectedRequest.video_url} className="flex items-center gap-2 text-primary hover:underline">
                       <ExternalLink className="w-4 h-4" />
                       مشاهدة الفيديو
-                    </a>
+                    </ConsultantDocumentLink>
                   </div>
                 </div>
               )}
@@ -442,10 +443,10 @@ export const ConsultantRequestsTable = () => {
                   <Label className="text-muted-foreground">الشهادات ({selectedRequest.certificates_urls.length})</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {selectedRequest.certificates_urls.map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline text-sm">
+                      <ConsultantDocumentLink key={i} path={url} className="flex items-center gap-1 text-primary hover:underline text-sm">
                         <FileText className="w-4 h-4" />
                         شهادة {i + 1}
-                      </a>
+                      </ConsultantDocumentLink>
                     ))}
                   </div>
                 </div>

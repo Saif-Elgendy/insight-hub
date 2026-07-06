@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Check } from 'lucide-react';
+import { ConsultantDocumentLink, ConsultantDocumentImage, ConsultantDocumentVideo } from '@/components/consultant/ConsultantDocumentLink';
 
 interface Profile {
   id: string;
@@ -330,23 +331,21 @@ const ProfilePage = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: signedData, error: signedErr } = await supabase.storage
-        .from('consultant-documents')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 365);
-      if (signedErr || !signedData?.signedUrl) throw signedErr || new Error('فشل توليد رابط الملف');
-      const publicUrl = signedData.signedUrl;
+      // Store the storage object path only. Signed URLs are minted on demand
+      // when rendering, with a short TTL (see useSignedUrl in @/lib/storage).
+      const storedValue = fileName;
 
       if (type === 'photo') {
-        await supabase.from('consultant_requests').update({ photo_url: publicUrl }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ photo_url: storedValue }).eq('id', consultantRequest.id);
       } else if (type === 'video') {
-        await supabase.from('consultant_requests').update({ video_url: publicUrl }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ video_url: storedValue }).eq('id', consultantRequest.id);
       } else if (type === 'id_card') {
-        await supabase.from('consultant_requests').update({ id_card_url: publicUrl }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ id_card_url: storedValue }).eq('id', consultantRequest.id);
       } else if (type === 'license') {
-        await supabase.from('consultant_requests').update({ license_url: publicUrl }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ license_url: storedValue }).eq('id', consultantRequest.id);
       } else {
         const currentCerts = consultantRequest.certificates_urls || [];
-        await supabase.from('consultant_requests').update({ certificates_urls: [...currentCerts, publicUrl] }).eq('id', consultantRequest.id);
+        await supabase.from('consultant_requests').update({ certificates_urls: [...currentCerts, storedValue] }).eq('id', consultantRequest.id);
       }
 
       toast.success('تم رفع الملف بنجاح');
@@ -1161,9 +1160,9 @@ const ProfilePage = () => {
                         {consultantRequest.id_card_url && (
                           <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <a href={consultantRequest.id_card_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                            <ConsultantDocumentLink path={consultantRequest.id_card_url} className="text-sm text-primary hover:underline">
                               عرض بطاقة الهوية
-                            </a>
+                            </ConsultantDocumentLink>
                           </div>
                         )}
                         <Button
@@ -1200,9 +1199,9 @@ const ProfilePage = () => {
                         {consultantRequest.license_url && (
                           <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <a href={consultantRequest.license_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                            <ConsultantDocumentLink path={consultantRequest.license_url} className="text-sm text-primary hover:underline">
                               عرض الترخيص
-                            </a>
+                            </ConsultantDocumentLink>
                           </div>
                         )}
                         <Button
@@ -1238,7 +1237,7 @@ const ProfilePage = () => {
                         </Label>
                         {consultantRequest.photo_url ? (
                           <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-border">
-                            <img src={consultantRequest.photo_url} alt="صورة" className="w-full h-full object-cover" />
+                            <ConsultantDocumentImage path={consultantRequest.photo_url} alt="صورة" className="w-full h-full object-cover" />
                           </div>
                         ) : null}
                         <Button
@@ -1273,7 +1272,7 @@ const ProfilePage = () => {
                           فيديو تعريفي
                         </Label>
                         {consultantRequest.video_url ? (
-                          <video src={consultantRequest.video_url} controls className="w-full rounded-xl max-h-48" />
+                          <ConsultantDocumentVideo path={consultantRequest.video_url} className="w-full rounded-xl max-h-48" />
                         ) : null}
                         <Button
                           variant="outline"
@@ -1311,9 +1310,9 @@ const ProfilePage = () => {
                             {(consultantRequest.certificates_urls || []).map((url, idx) => (
                               <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
                                 <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate flex-1">
+                                <ConsultantDocumentLink path={url} className="text-sm text-primary hover:underline truncate flex-1">
                                   شهادة {idx + 1}
-                                </a>
+                                </ConsultantDocumentLink>
                                 <button onClick={() => handleRemoveCertificate(url)} className="text-destructive hover:text-destructive/80">
                                   <X className="w-4 h-4" />
                                 </button>
