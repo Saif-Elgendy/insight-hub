@@ -157,6 +157,16 @@ const AuthPage = () => {
             toast.error(`حدث خطأ أثناء إنشاء الحساب: ${error.message}`);
           }
         } else {
+          // Auto sign-in right after signup so the user lands logged-in
+          const { error: signInErr } = await signIn(formData.email, formData.password);
+          if (signInErr) {
+            toast.success('تم إنشاء حسابك بنجاح! 🎉', {
+              description: 'يرجى تسجيل الدخول الآن.',
+            });
+            setAuthMode('login');
+            setLoading(false);
+            return;
+          }
           if (selectedRole === 'instructor') {
             toast.success('تم إنشاء حسابك بنجاح! 🎉', {
               description: 'تم تسجيلك كطالب مؤقتاً. سيتم مراجعة طلب المدرب من قبل المسؤول وترقيتك عند الموافقة.',
@@ -168,10 +178,7 @@ const AuthPage = () => {
               duration: 8000,
             });
           } else {
-            toast.success('تم إنشاء حسابك بنجاح! 🎉', {
-              description: `تم إرسال رسالة تأكيد إلى ${formData.email}. يرجى التحقق من بريدك الإلكتروني.`,
-              duration: 6000,
-            });
+            toast.success('تم إنشاء حسابك بنجاح! 🎉');
           }
           navigate('/profile');
         }
