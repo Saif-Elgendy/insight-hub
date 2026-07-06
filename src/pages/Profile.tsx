@@ -1237,7 +1237,7 @@ const ProfilePage = () => {
                         </Label>
                         {consultantRequest.photo_url ? (
                           <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-border">
-                            <img src={consultantRequest.photo_url} alt="صورة" className="w-full h-full object-cover" />
+                            <ConsultantDocumentImage path={consultantRequest.photo_url} alt="صورة" className="w-full h-full object-cover" />
                           </div>
                         ) : null}
                         <Button
