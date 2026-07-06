@@ -6,6 +6,7 @@ import { SpecialistsSection } from '@/components/sections/SpecialistsSection';
 import { TestimonialsSection } from '@/components/sections/TestimonialsSection';
 import { CTASection } from '@/components/sections/CTASection';
 import { Footer } from '@/components/layout/Footer';
+import { QuickLogoutButton } from '@/components/layout/QuickLogoutButton';
 import { SEO } from '@/components/SEO';
 
 const Index = () => {
@@ -26,6 +27,7 @@ const Index = () => {
         <CTASection />
       </main>
       <Footer />
+      <QuickLogoutButton />
     </div>
   );
 };
