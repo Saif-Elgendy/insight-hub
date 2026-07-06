@@ -130,10 +130,31 @@ const AuthPage = () => {
 
         const { error } = await signUp(formData.email, formData.password, formData.fullName, selectedRole);
         if (error) {
-          if (error.message.includes('User already registered')) {
-            toast.error('هذا البريد الإلكتروني مسجل مسبقاً');
+          const msg = (error.message || '').toLowerCase();
+          if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('user already')) {
+            setErrors({ email: 'هذا البريد الإلكتروني مسجل مسبقاً' });
+            toast.error('خطأ في البريد الإلكتروني: مسجل مسبقاً');
+          } else if (msg.includes('invalid') && msg.includes('email')) {
+            setErrors({ email: 'صيغة البريد الإلكتروني غير صحيحة' });
+            toast.error('خطأ في البريد الإلكتروني: صيغة غير صحيحة');
+          } else if (msg.includes('email')) {
+            setErrors({ email: `خطأ في البريد الإلكتروني: ${error.message}` });
+            toast.error(`خطأ في البريد الإلكتروني: ${error.message}`);
+          } else if (msg.includes('password') && (msg.includes('weak') || msg.includes('pwned') || msg.includes('leaked') || msg.includes('compromised'))) {
+            setErrors({ password: 'كلمة المرور ضعيفة أو مسربة، استخدم كلمة مرور أقوى' });
+            toast.error('خطأ في كلمة المرور: ضعيفة أو مسربة');
+          } else if (msg.includes('password') && msg.includes('short')) {
+            setErrors({ password: 'كلمة المرور قصيرة جداً' });
+            toast.error('خطأ في كلمة المرور: قصيرة جداً');
+          } else if (msg.includes('password')) {
+            setErrors({ password: `خطأ في كلمة المرور: ${error.message}` });
+            toast.error(`خطأ في كلمة المرور: ${error.message}`);
+          } else if (msg.includes('rate') || msg.includes('too many')) {
+            toast.error('محاولات كثيرة، حاول مرة أخرى بعد قليل');
+          } else if (msg.includes('signup') && msg.includes('disabled')) {
+            toast.error('التسجيل معطّل حالياً، تواصل مع الدعم');
           } else {
-            toast.error('حدث خطأ أثناء إنشاء الحساب');
+            toast.error(`حدث خطأ أثناء إنشاء الحساب: ${error.message}`);
           }
         } else {
           if (selectedRole === 'instructor') {
