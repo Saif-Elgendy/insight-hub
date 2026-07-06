@@ -1310,9 +1310,9 @@ const ProfilePage = () => {
                             {(consultantRequest.certificates_urls || []).map((url, idx) => (
                               <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
                                 <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate flex-1">
+                                <ConsultantDocumentLink path={url} className="text-sm text-primary hover:underline truncate flex-1">
                                   شهادة {idx + 1}
-                                </a>
+                                </ConsultantDocumentLink>
                                 <button onClick={() => handleRemoveCertificate(url)} className="text-destructive hover:text-destructive/80">
                                   <X className="w-4 h-4" />
                                 </button>
