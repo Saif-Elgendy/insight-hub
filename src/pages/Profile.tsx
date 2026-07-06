@@ -1272,7 +1272,7 @@ const ProfilePage = () => {
                           فيديو تعريفي
                         </Label>
                         {consultantRequest.video_url ? (
-                          <video src={consultantRequest.video_url} controls className="w-full rounded-xl max-h-48" />
+                          <ConsultantDocumentVideo path={consultantRequest.video_url} className="w-full rounded-xl max-h-48" />
                         ) : null}
                         <Button
                           variant="outline"
