@@ -1199,9 +1199,9 @@ const ProfilePage = () => {
                         {consultantRequest.license_url && (
                           <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <a href={consultantRequest.license_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                            <ConsultantDocumentLink path={consultantRequest.license_url} className="text-sm text-primary hover:underline">
                               عرض الترخيص
-                            </a>
+                            </ConsultantDocumentLink>
                           </div>
                         )}
                         <Button
