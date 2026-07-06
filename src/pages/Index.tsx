@@ -27,6 +27,7 @@ const Index = () => {
         <CTASection />
       </main>
       <Footer />
+      <QuickLogoutButton />
     </div>
   );
 };
