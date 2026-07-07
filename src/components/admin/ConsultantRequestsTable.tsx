@@ -133,14 +133,28 @@ export const ConsultantRequestsTable = () => {
     }
   };
 
-  // Stage 2: super admin final approval
+  // Super admin final approval (works from 'pending' or 'admin_reviewed')
   const handleFinalApprove = async (request: ConsultantRequest) => {
     if (!isSuperAdmin) {
       toast.error('الموافقة النهائية للسوبر آدمن فقط');
       return;
     }
+    const missing = validateDocuments(request);
+    if (missing) {
+      toast.error('لا يمكن الاعتماد: ' + missing);
+      return;
+    }
     setProcessing(request.id);
     try {
+      // If still pending, set admin_reviewed_at first to satisfy the DB trigger
+      if (request.status === 'pending') {
+        const { error: preErr } = await supabase
+          .from('consultant_requests')
+          .update({ status: 'admin_reviewed', reviewed_at: new Date().toISOString() })
+          .eq('id', request.id);
+        if (preErr) throw preErr;
+      }
+
       // Update consultant_requests; trigger sync_specialist_on_approval will create/update specialists
       const { error: updateError } = await supabase
         .from('consultant_requests')
@@ -167,12 +181,12 @@ export const ConsultantRequestsTable = () => {
 
       await supabase.from('notifications').insert({
         user_id: request.user_id,
-        title: 'تم قبول طلبك كاستشاري! 🎉',
-        message: 'تهانينا! تم قبول طلبك بشكل نهائي ويمكنك الآن استقبال الاستشارات وتشخيص المرضى.',
+        title: 'تم اعتمادك نهائياً كاستشاري! 🎉',
+        message: 'تهانينا! تم اعتماد طلبك بشكل نهائي ويمكنك الآن استقبال الاستشارات وتشخيص المرضى.',
         type: 'consultant',
       });
 
-      toast.success('تم القبول النهائي بنجاح');
+      toast.success('تم الاعتماد النهائي بنجاح');
       fetchRequests();
     } catch (error: any) {
       console.error('Error final approving:', error);
@@ -226,9 +240,9 @@ export const ConsultantRequestsTable = () => {
 
   const statusBadge = (status: string) => {
     switch (status) {
-      case 'pending': return <Badge className="bg-yellow-500/10 text-yellow-600">قيد المراجعة</Badge>;
+      case 'pending': return <Badge className="bg-yellow-500/10 text-yellow-600">قبول مبدئي - بانتظار المستندات</Badge>;
       case 'admin_reviewed': return <Badge className="bg-blue-500/10 text-blue-600">بانتظار السوبر آدمن</Badge>;
-      case 'approved': return <Badge className="bg-green-500/10 text-green-600">مقبول</Badge>;
+      case 'approved': return <Badge className="bg-green-500/10 text-green-600">معتمد نهائياً</Badge>;
       case 'rejected': return <Badge className="bg-red-500/10 text-red-600">مرفوض</Badge>;
       default: return <Badge>{status}</Badge>;
     }
@@ -298,15 +312,24 @@ export const ConsultantRequestsTable = () => {
 
                           {req.status === 'pending' && (
                             <>
-                              <Button
-                                size="sm"
-                                onClick={() => handleAdminReview(req)}
-                                disabled={processing === req.id || !!docsMissing}
-                                title={docsMissing || 'مراجعة الطلب'}
-                              >
-                                {processing === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                                <span className="text-xs mr-1">مراجعة</span>
-                              </Button>
+                              {isSuperAdmin && !docsMissing && (
+                                <Button
+                                  size="sm"
+                                  className="bg-emerald-600 hover:bg-emerald-700"
+                                  onClick={() => handleFinalApprove(req)}
+                                  disabled={processing === req.id}
+                                  title="اعتماد نهائي مباشر"
+                                >
+                                  {processing === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                                  <span className="text-xs mr-1">اعتماد نهائي</span>
+                                </Button>
+                              )}
+                              {isSuperAdmin && docsMissing && (
+                                <span className="text-xs text-muted-foreground">{docsMissing}</span>
+                              )}
+                              {!isSuperAdmin && (
+                                <span className="text-xs text-muted-foreground">بانتظار المستندات والاعتماد من المسؤول الأعلى</span>
+                              )}
                               <Button
                                 size="sm"
                                 variant="destructive"
@@ -327,7 +350,7 @@ export const ConsultantRequestsTable = () => {
                                 disabled={processing === req.id}
                               >
                                 {processing === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                                <span className="text-xs mr-1">قبول نهائي</span>
+                                <span className="text-xs mr-1">اعتماد نهائي</span>
                               </Button>
                               <Button
                                 size="sm"
@@ -340,7 +363,7 @@ export const ConsultantRequestsTable = () => {
                             </>
                           )}
                           {req.status === 'admin_reviewed' && !isSuperAdmin && (
-                            <span className="text-xs text-muted-foreground">بانتظار تأكيد السوبر آدمن</span>
+                            <span className="text-xs text-muted-foreground">بانتظار تأكيد المسؤول الأعلى</span>
                           )}
                         </div>
                       </TableCell>
