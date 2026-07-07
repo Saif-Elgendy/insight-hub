@@ -173,8 +173,8 @@ const AuthPage = () => {
               duration: 8000,
             });
           } else if (selectedRole === 'consultant') {
-            toast.success('تم إنشاء حسابك بنجاح! 🎉', {
-              description: 'تم تسجيلك كطالب مؤقتاً. يرجى إكمال بياناتك وشهاداتك من صفحة الملف الشخصي ليتم مراجعة طلبك كاستشاري.',
+            toast.success('تم إنشاء حسابك بنجاح! 🎉 قبول مبدئي كاستشاري', {
+              description: 'أكمل بياناتك ورفع مستنداتك من صفحة الملف الشخصي، ثم يتم اعتمادك نهائياً من المسؤول الأعلى بعد المراجعة.',
               duration: 8000,
             });
           } else {
@@ -324,8 +324,8 @@ const AuthPage = () => {
                           }`}
                         >
                           <GraduationCap className="w-6 h-6" />
-                          <span className="font-medium text-sm">طالب</span>
-                          <span className="text-[10px] text-muted-foreground">تصفح وتعلم</span>
+                          <span className="font-medium text-sm">طالب / مريض</span>
+                          <span className="text-[10px] text-muted-foreground">تصفح، تعلم واستشر</span>
                         </button>
                         <button
                           type="button"

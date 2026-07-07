@@ -83,6 +83,7 @@ const AdminDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [pendingRoleRequests, setPendingRoleRequests] = useState<Record<string, 'instructor' | 'consultant'>>({});
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -129,6 +130,21 @@ const AdminDashboard = () => {
 
     if (isAdmin) {
       fetchUsers();
+      // fetch pending role change requests (instructor + consultant)
+      (async () => {
+        const map: Record<string, 'instructor' | 'consultant'> = {};
+        const { data: inst } = await supabase
+          .from('instructor_requests')
+          .select('user_id, status')
+          .in('status', ['pending']);
+        (inst || []).forEach((r: any) => { map[r.user_id] = 'instructor'; });
+        const { data: cons } = await supabase
+          .from('consultant_requests')
+          .select('user_id, status')
+          .in('status', ['pending', 'admin_reviewed']);
+        (cons || []).forEach((r: any) => { map[r.user_id] = 'consultant'; });
+        setPendingRoleRequests(map);
+      })();
     }
   }, [isAdmin, toast]);
 
@@ -383,6 +399,11 @@ const AdminDashboard = () => {
                                       {u.user_id === user?.id && u.user_id !== SUPER_ADMIN_ID && (
                                         <Badge variant="outline" className="mr-2 text-xs">
                                           أنت
+                                        </Badge>
+                                      )}
+                                      {pendingRoleRequests[u.user_id] && (
+                                        <Badge className="mr-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                                          🔔 يطلب صلاحية: {roleLabels[pendingRoleRequests[u.user_id]]}
                                         </Badge>
                                       )}
                                     </span>
