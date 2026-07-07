@@ -8,6 +8,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 import { MessagesBadge } from '@/components/layout/MessagesBadge';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { QuickLogoutButton } from '@/components/layout/QuickLogoutButton';
 
 const navLinks = [
   { label: 'الرئيسية', href: '/', isRoute: true },
