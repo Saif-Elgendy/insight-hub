@@ -134,7 +134,7 @@ export const SiteAssistant = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setOpen(o => !o)}
-        className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-gradient-hero text-primary-foreground shadow-2xl flex items-center justify-center"
+        className="fixed bottom-24 left-6 z-50 w-14 h-14 rounded-full bg-gradient-hero text-primary-foreground shadow-2xl flex items-center justify-center"
         aria-label="مساعد الموقع"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
