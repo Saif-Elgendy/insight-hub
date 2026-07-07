@@ -282,9 +282,8 @@ const ProfilePage = () => {
         .eq('id', consultantRequest.id);
 
       if (error) throw error;
-      toast.success('تم حفظ البيانات بنجاح');
+      toast.success('تم حفظ البيانات بنجاح - بانتظار المراجعة النهائية من المسؤول الأعلى');
       fetchConsultantRequest();
-      navigate('/consultant-request-status');
     } catch (error: any) {
       console.error('Error saving consultant data:', error);
       const msg: string = error?.message || '';
@@ -1121,7 +1120,7 @@ const ProfilePage = () => {
                                   ))}
                                 </ul>
                                 <p className="text-xs text-muted-foreground">
-                                  بعد الإرسال سيقوم الآدمن بمراجعة طلبك ثم يتم اعتماده نهائياً من السوبر آدمن.
+                                  حسابك مقبول مبدئياً. بعد الإرسال سيقوم المسؤول الأعلى بمراجعة مستنداتك واعتماد طلبك نهائياً.
                                 </p>
                               </div>
                             </AlertDialogDescription>
