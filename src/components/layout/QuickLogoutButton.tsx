@@ -1,30 +1,71 @@
+import { useState } from 'react';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-export const QuickLogoutButton = () => {
+interface QuickLogoutButtonProps {
+  variant?: 'icon' | 'full';
+  className?: string;
+}
+
+export const QuickLogoutButton = ({ variant = 'icon', className }: QuickLogoutButtonProps) => {
   const { user, signOut } = useAuth();
+  const [open, setOpen] = useState(false);
 
   if (!user) return null;
 
-  const handleClick = async () => {
+  const handleConfirm = async () => {
+    setOpen(false);
     toast.success('جاري تسجيل الخروج...');
     await signOut();
   };
 
   return (
-    <div className="fixed bottom-6 left-6 z-40">
-      <Button
-        variant="destructive"
-        size="lg"
-        onClick={handleClick}
-        className="shadow-lg gap-2 rounded-full"
-        aria-label="تسجيل الخروج"
-      >
-        <LogOut className="w-5 h-5" />
-        تسجيل الخروج
-      </Button>
-    </div>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        {variant === 'icon' ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={className}
+            aria-label="تسجيل الخروج"
+            title="تسجيل الخروج"
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className={className}>
+            <LogOut className="w-4 h-4 ml-2" />
+            تسجيل الخروج
+          </Button>
+        )}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>تأكيد تسجيل الخروج</AlertDialogTitle>
+          <AlertDialogDescription>
+            هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm}>
+            تسجيل الخروج
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
