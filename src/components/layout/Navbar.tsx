@@ -114,10 +114,7 @@ export const Navbar = () => {
                     حسابي
                   </Link>
                 </Button>
-                <Button variant="outline" onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4 ml-2" />
-                  خروج
-                </Button>
+                <QuickLogoutButton variant="icon" />
               </>
             ) : (
               <>
