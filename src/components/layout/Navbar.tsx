@@ -8,6 +8,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 import { MessagesBadge } from '@/components/layout/MessagesBadge';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { QuickLogoutButton } from '@/components/layout/QuickLogoutButton';
 
 const navLinks = [
   { label: 'الرئيسية', href: '/', isRoute: true },
@@ -113,10 +114,7 @@ export const Navbar = () => {
                     حسابي
                   </Link>
                 </Button>
-                <Button variant="outline" onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4 ml-2" />
-                  خروج
-                </Button>
+                <QuickLogoutButton variant="icon" />
               </>
             ) : (
               <>
@@ -214,10 +212,7 @@ export const Navbar = () => {
                         حسابي
                       </Link>
                     </Button>
-                    <Button variant="outline" className="w-full" onClick={handleSignOut}>
-                      <LogOut className="w-4 h-4 ml-2" />
-                      تسجيل الخروج
-                    </Button>
+                    <QuickLogoutButton variant="full" className="w-full" />
                   </>
                 ) : (
                   <>

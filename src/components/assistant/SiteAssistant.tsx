@@ -134,7 +134,7 @@ export const SiteAssistant = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setOpen(o => !o)}
-        className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-gradient-hero text-primary-foreground shadow-2xl flex items-center justify-center"
+        className="fixed bottom-24 left-6 z-50 w-14 h-14 rounded-full bg-gradient-hero text-primary-foreground shadow-2xl flex items-center justify-center"
         aria-label="مساعد الموقع"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
@@ -146,7 +146,7 @@ export const SiteAssistant = () => {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 left-6 z-50 w-[calc(100vw-3rem)] sm:w-96 h-[500px] max-h-[80vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            className="fixed bottom-44 left-6 z-50 w-[calc(100vw-3rem)] sm:w-96 h-[500px] max-h-[80vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 bg-gradient-hero text-primary-foreground flex items-center gap-3">
