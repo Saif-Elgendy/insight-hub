@@ -15,9 +15,7 @@ const navLinks = [
   { label: 'الكورسات', href: '/courses', isRoute: true },
   { label: 'المختصين', href: '/specialists', isRoute: true },
   { label: 'المكتبة', href: '/resources', isRoute: true },
-  { label: 'الجلسات المباشرة', href: '#live-sessions', isRoute: false },
   { label: 'الاستشارات', href: '#consultations', isRoute: false },
-  { label: 'الشهادات', href: '#certificates', isRoute: false },
 ];
 
 export const Navbar = () => {
