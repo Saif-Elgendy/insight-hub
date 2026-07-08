@@ -370,8 +370,8 @@ export const ConsultantRequestsTable = () => {
       )}
 
 
-    <>
       <Card>
+
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
