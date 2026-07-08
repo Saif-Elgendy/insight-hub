@@ -256,7 +256,120 @@ export const ConsultantRequestsTable = () => {
     );
   }
 
+  const pendingRequests = requests.filter(r => r.status === 'pending' || r.status === 'admin_reviewed');
+  const rejectedRequests = requests.filter(r => r.status === 'rejected');
+
+  const renderActions = (req: ConsultantRequest) => {
+    const docsMissing = validateDocuments(req);
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button size="sm" variant="outline" onClick={() => { setSelectedRequest(req); setDetailsOpen(true); }}>
+          <Eye className="w-4 h-4 ml-1" /> عرض التفاصيل
+        </Button>
+        {(req.status === 'pending' || req.status === 'admin_reviewed') && isSuperAdmin && (
+          <>
+            {!docsMissing ? (
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => handleFinalApprove(req)}
+                disabled={processing === req.id}
+              >
+                {processing === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 ml-1" />}
+                اعتماد نهائي
+              </Button>
+            ) : (
+              <span className="text-xs text-destructive">⚠️ {docsMissing}</span>
+            )}
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => { setRejectingId(req.id); setRejectDialogOpen(true); }}
+              disabled={processing === req.id}
+            >
+              <X className="w-4 h-4 ml-1" /> رفض
+            </Button>
+          </>
+        )}
+        {(req.status === 'pending' || req.status === 'admin_reviewed') && !isSuperAdmin && (
+          <span className="text-xs text-muted-foreground">بانتظار المسؤول الأعلى</span>
+        )}
+      </div>
+    );
+  };
+
   return (
+    <>
+      {/* Highlighted Pending Requests Panel for Super Admin */}
+      {isSuperAdmin && pendingRequests.length > 0 && (
+        <Card className="mb-6 border-amber-500/40 bg-amber-500/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+              🔔 طلبات بانتظار قرارك ({pendingRequests.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {pendingRequests.map(req => {
+              const missing = validateDocuments(req);
+              return (
+                <div key={req.id} className="bg-card rounded-xl border p-4 space-y-3">
+                  <div className="flex items-start justify-between flex-wrap gap-3">
+                    <div className="flex-1 min-w-[200px]">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-lg">{req.profile_name || 'غير محدد'}</span>
+                        {statusBadge(req.status)}
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2 text-sm">
+                        <div><span className="text-muted-foreground">التخصص:</span> <b>{req.specialty}</b></div>
+                        <div><span className="text-muted-foreground">الخبرة:</span> <b>{req.years_experience || 0} سنة</b></div>
+                        <div><span className="text-muted-foreground">السعر:</span> <b>{req.consultation_price || 0} ج.م</b></div>
+                        <div><span className="text-muted-foreground">التاريخ:</span> <b>{new Date(req.created_at).toLocaleDateString('ar-EG')}</b></div>
+                      </div>
+                      {req.bio && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{req.bio}</p>}
+                      {missing ? (
+                        <p className="text-xs text-destructive mt-2">⚠️ {missing}</p>
+                      ) : (
+                        <p className="text-xs text-emerald-600 mt-2">✅ جميع المستندات مرفوعة</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t">{renderActions(req)}</div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Rejected Requests with Reasons */}
+      {rejectedRequests.length > 0 && (
+        <Card className="mb-6 border-destructive/30 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive text-base">
+              <X className="w-4 h-4" /> الطلبات المرفوضة ({rejectedRequests.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {rejectedRequests.map(req => (
+              <div key={req.id} className="bg-card rounded-lg border p-3 text-sm flex items-start justify-between gap-3 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
+                  <div className="font-medium">{req.profile_name || 'غير محدد'} — <span className="text-muted-foreground">{req.specialty}</span></div>
+                  {req.rejection_reason && (
+                    <div className="text-destructive mt-1">
+                      <b>سبب الرفض:</b> {req.rejection_reason}
+                    </div>
+                  )}
+                </div>
+                <Button size="sm" variant="outline" onClick={() => { setSelectedRequest(req); setDetailsOpen(true); }}>
+                  <Eye className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+
     <>
       <Card>
         <CardHeader>
