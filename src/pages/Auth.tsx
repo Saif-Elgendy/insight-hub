@@ -173,6 +173,29 @@ const AuthPage = () => {
               duration: 8000,
             });
           } else if (selectedRole === 'consultant') {
+            // Fallback safety net: ensure a consultant_request row exists
+            // so the super admin sees the pending application, even if the
+            // DB trigger didn't create one.
+            try {
+              const { data: authUser } = await supabase.auth.getUser();
+              const uid = authUser?.user?.id;
+              if (uid) {
+                const { data: existing } = await supabase
+                  .from('consultant_requests')
+                  .select('id')
+                  .eq('user_id', uid)
+                  .maybeSingle();
+                if (!existing) {
+                  await supabase.from('consultant_requests').insert({
+                    user_id: uid,
+                    status: 'pending',
+                    specialty: 'غير محدد',
+                  });
+                }
+              }
+            } catch (e) {
+              console.error('Ensure consultant_request failed:', e);
+            }
             toast.success('تم إنشاء حسابك بنجاح! 🎉 قبول مبدئي كاستشاري', {
               description: 'أكمل بياناتك ورفع مستنداتك من صفحة الملف الشخصي، ثم يتم اعتمادك نهائياً من المسؤول الأعلى بعد المراجعة.',
               duration: 8000,
