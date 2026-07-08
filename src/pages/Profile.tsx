@@ -194,7 +194,7 @@ const ProfilePage = () => {
   const fetchConsultantRequest = async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('consultant_requests')
         .select('*')
         .eq('user_id', user.id)
@@ -203,6 +203,30 @@ const ProfilePage = () => {
         .maybeSingle();
 
       if (error) throw error;
+
+      // Fallback: if the user chose 'consultant' at signup (or already is one)
+      // but no request row exists (trigger didn't fire), create one now.
+      const requestedConsultant =
+        (user.user_metadata as any)?.role === 'consultant';
+      if (!data && (requestedConsultant || isConsultant)) {
+        const specialtyFromMeta =
+          (user.user_metadata as any)?.specialty || 'غير محدد';
+        const { data: inserted, error: insErr } = await supabase
+          .from('consultant_requests')
+          .insert({
+            user_id: user.id,
+            status: 'pending',
+            specialty: specialtyFromMeta,
+          })
+          .select('*')
+          .maybeSingle();
+        if (insErr) {
+          console.error('Auto-create consultant request failed:', insErr);
+        } else {
+          data = inserted;
+        }
+      }
+
       if (data) {
         setConsultantRequest(data as ConsultantRequest);
         setConsultantFormData({
