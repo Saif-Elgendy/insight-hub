@@ -153,7 +153,7 @@ const ProfilePage = () => {
       fetchInstructorRequest();
       fetchConsultantRequest();
     }
-  }, [user]);
+  }, [user, isConsultant]);
 
   const fetchInstructorRequest = async () => {
     try {
