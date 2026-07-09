@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck, Trash2 } from 'lucide-react';
+import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck, Trash2, FileSearch, CheckCircle2, XCircle } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +42,8 @@ import { ErrorLogsTable } from '@/components/admin/ErrorLogsTable';
 import { ActivityLogsTable } from '@/components/admin/ActivityLogsTable';
 import { InstructorRequestsTable } from '@/components/admin/InstructorRequestsTable';
 import { ConsultantRequestsTable } from '@/components/admin/ConsultantRequestsTable';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ConsultantDocumentLink, ConsultantDocumentImage, ConsultantDocumentVideo } from '@/components/consultant/ConsultantDocumentLink';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -84,6 +86,9 @@ const AdminDashboard = () => {
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [pendingRoleRequests, setPendingRoleRequests] = useState<Record<string, 'instructor' | 'consultant'>>({});
+  const [docsDialogUserId, setDocsDialogUserId] = useState<string | null>(null);
+  const [docsDialogData, setDocsDialogData] = useState<any | null>(null);
+  const [docsDialogLoading, setDocsDialogLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -179,11 +184,11 @@ const AdminDashboard = () => {
         title: 'تم التحديث',
         description: `تم تغيير صلاحية المستخدم إلى ${roleLabels[newRole]}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating role:', error);
       toast({
         title: 'خطأ',
-        description: 'حدث خطأ أثناء تحديث الصلاحية',
+        description: error?.message || 'حدث خطأ أثناء تحديث الصلاحية',
         variant: 'destructive',
       });
     } finally {
@@ -219,6 +224,41 @@ const AdminDashboard = () => {
       setDeletingUserId(null);
     }
   };
+
+  const openDocsDialog = async (userId: string, kind: 'instructor' | 'consultant') => {
+    setDocsDialogUserId(userId);
+    setDocsDialogData(null);
+    setDocsDialogLoading(true);
+    try {
+      if (kind === 'consultant') {
+        const { data, error } = await supabase
+          .from('consultant_requests')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        setDocsDialogData({ kind, data });
+      } else {
+        const { data, error } = await supabase
+          .from('instructor_requests')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        setDocsDialogData({ kind, data });
+      }
+    } catch (e: any) {
+      toast({ title: 'خطأ', description: e?.message || 'تعذر تحميل المستندات', variant: 'destructive' });
+      setDocsDialogUserId(null);
+    } finally {
+      setDocsDialogLoading(false);
+    }
+  };
+
 
   const filteredUsers = users.filter((user) =>
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -402,9 +442,20 @@ const AdminDashboard = () => {
                                         </Badge>
                                       )}
                                       {pendingRoleRequests[u.user_id] && (
-                                        <Badge className="mr-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                                          🔔 يطلب صلاحية: {roleLabels[pendingRoleRequests[u.user_id]]}
-                                        </Badge>
+                                        <>
+                                          <Badge className="mr-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                                            🔔 يطلب صلاحية: {roleLabels[pendingRoleRequests[u.user_id]]}
+                                          </Badge>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="mr-2 h-7 px-2 gap-1 text-xs"
+                                            onClick={() => openDocsDialog(u.user_id, pendingRoleRequests[u.user_id])}
+                                          >
+                                            <FileSearch className="w-3.5 h-3.5" />
+                                            عرض المستندات والتحقق
+                                          </Button>
+                                        </>
                                       )}
                                     </span>
                                   </div>
@@ -541,6 +592,112 @@ const AdminDashboard = () => {
       </main>
 
       <Footer />
+
+      <Dialog open={!!docsDialogUserId} onOpenChange={(v) => { if (!v) { setDocsDialogUserId(null); setDocsDialogData(null); } }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSearch className="w-5 h-5" />
+              مراجعة المستندات والتحقق
+            </DialogTitle>
+            <DialogDescription>
+              راجع المستندات المرفوعة قبل اعتماد تغيير الصلاحية.
+            </DialogDescription>
+          </DialogHeader>
+
+          {docsDialogLoading && (
+            <div className="py-8 text-center text-muted-foreground">جارٍ التحميل...</div>
+          )}
+
+          {!docsDialogLoading && docsDialogData?.kind === 'instructor' && (
+            <div className="space-y-3">
+              {!docsDialogData.data ? (
+                <p className="text-muted-foreground">لا يوجد طلب حالي.</p>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">حالة الطلب</Badge>
+                    <span className="text-sm">{docsDialogData.data.status}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">طلب مدرب لا يتطلب مستندات إضافية. يمكنك تغيير الصلاحية مباشرة إلى مدرب من قائمة الصلاحيات.</p>
+                </>
+              )}
+            </div>
+          )}
+
+          {!docsDialogLoading && docsDialogData?.kind === 'consultant' && (
+            <div className="space-y-4">
+              {!docsDialogData.data ? (
+                <p className="text-muted-foreground">لا يوجد طلب استشاري.</p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div><span className="text-muted-foreground">التخصص: </span>{docsDialogData.data.specialty || '—'}</div>
+                    <div><span className="text-muted-foreground">سنوات الخبرة: </span>{docsDialogData.data.years_experience ?? '—'}</div>
+                    <div><span className="text-muted-foreground">سعر الاستشارة: </span>{docsDialogData.data.consultation_price ?? '—'} ج.م</div>
+                    <div><span className="text-muted-foreground">الحالة: </span>{docsDialogData.data.status}</div>
+                  </div>
+                  {docsDialogData.data.bio && (
+                    <div className="text-sm bg-muted/50 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground mb-1">النبذة</p>
+                      <p>{docsDialogData.data.bio}</p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold">المستندات الإجبارية</p>
+                    {[
+                      { key: 'photo_url', label: 'الصورة الشخصية' },
+                      { key: 'id_card_url', label: 'بطاقة الهوية' },
+                      { key: 'license_url', label: 'ترخيص مزاولة المهنة' },
+                    ].map((d) => {
+                      const val = docsDialogData.data[d.key];
+                      return (
+                        <div key={d.key} className="flex items-center justify-between gap-2 p-2 rounded-lg border">
+                          <div className="flex items-center gap-2">
+                            {val ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <XCircle className="w-4 h-4 text-destructive" />}
+                            <span className="text-sm">{d.label}</span>
+                          </div>
+                          {val ? (
+                            <ConsultantDocumentLink path={val} className="text-sm text-primary hover:underline">
+                              عرض
+                            </ConsultantDocumentLink>
+                          ) : (
+                            <span className="text-xs text-destructive">غير مرفوع</span>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    <div className="p-2 rounded-lg border space-y-2">
+                      <div className="flex items-center gap-2">
+                        {docsDialogData.data.certificates_urls?.length ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <XCircle className="w-4 h-4 text-destructive" />}
+                        <span className="text-sm">الشهادات العلمية ({docsDialogData.data.certificates_urls?.length || 0})</span>
+                      </div>
+                      {(docsDialogData.data.certificates_urls || []).map((c: string, i: number) => (
+                        <ConsultantDocumentLink key={i} path={c} className="block text-sm text-primary hover:underline">
+                          عرض الشهادة {i + 1}
+                        </ConsultantDocumentLink>
+                      ))}
+                    </div>
+
+                    {docsDialogData.data.video_url && (
+                      <div className="p-2 rounded-lg border">
+                        <p className="text-sm mb-2">الفيديو التعريفي</p>
+                        <ConsultantDocumentVideo path={docsDialogData.data.video_url} className="w-full rounded-lg max-h-56" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
+                    بعد التحقق من المستندات، استخدم قائمة "تغيير الصلاحية" لاعتماد الاستشاري. الاعتماد النهائي متاح للمسؤول الأعلى فقط ويشترط اكتمال المستندات.
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
