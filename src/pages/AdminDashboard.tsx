@@ -86,6 +86,9 @@ const AdminDashboard = () => {
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [pendingRoleRequests, setPendingRoleRequests] = useState<Record<string, 'instructor' | 'consultant'>>({});
+  const [docsDialogUserId, setDocsDialogUserId] = useState<string | null>(null);
+  const [docsDialogData, setDocsDialogData] = useState<any | null>(null);
+  const [docsDialogLoading, setDocsDialogLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
