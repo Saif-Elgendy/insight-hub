@@ -1125,9 +1125,9 @@ const ProfilePage = () => {
                             <AlertDialogCancel disabled={savingConsultant}>إلغاء</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={(e) => { e.preventDefault(); handleSaveConsultantData(); }}
-                              disabled={savingConsultant || getRequiredDocsStatus().some(d => !d.ok)}
+                              disabled={savingConsultant}
                             >
-                              {savingConsultant ? 'جاري الحفظ...' : 'تأكيد وإرسال'}
+                              {savingConsultant ? 'جاري الحفظ...' : 'تأكيد وحفظ'}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
