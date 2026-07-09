@@ -225,6 +225,41 @@ const AdminDashboard = () => {
     }
   };
 
+  const openDocsDialog = async (userId: string, kind: 'instructor' | 'consultant') => {
+    setDocsDialogUserId(userId);
+    setDocsDialogData(null);
+    setDocsDialogLoading(true);
+    try {
+      if (kind === 'consultant') {
+        const { data, error } = await supabase
+          .from('consultant_requests')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        setDocsDialogData({ kind, data });
+      } else {
+        const { data, error } = await supabase
+          .from('instructor_requests')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        setDocsDialogData({ kind, data });
+      }
+    } catch (e: any) {
+      toast({ title: 'خطأ', description: e?.message || 'تعذر تحميل المستندات', variant: 'destructive' });
+      setDocsDialogUserId(null);
+    } finally {
+      setDocsDialogLoading(false);
+    }
+  };
+
+
   const filteredUsers = users.filter((user) =>
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
