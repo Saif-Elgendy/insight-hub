@@ -179,11 +179,11 @@ const AdminDashboard = () => {
         title: 'تم التحديث',
         description: `تم تغيير صلاحية المستخدم إلى ${roleLabels[newRole]}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating role:', error);
       toast({
         title: 'خطأ',
-        description: 'حدث خطأ أثناء تحديث الصلاحية',
+        description: error?.message || 'حدث خطأ أثناء تحديث الصلاحية',
         variant: 'destructive',
       });
     } finally {
