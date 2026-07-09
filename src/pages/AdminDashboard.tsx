@@ -442,9 +442,20 @@ const AdminDashboard = () => {
                                         </Badge>
                                       )}
                                       {pendingRoleRequests[u.user_id] && (
-                                        <Badge className="mr-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                                          🔔 يطلب صلاحية: {roleLabels[pendingRoleRequests[u.user_id]]}
-                                        </Badge>
+                                        <>
+                                          <Badge className="mr-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                                            🔔 يطلب صلاحية: {roleLabels[pendingRoleRequests[u.user_id]]}
+                                          </Badge>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="mr-2 h-7 px-2 gap-1 text-xs"
+                                            onClick={() => openDocsDialog(u.user_id, pendingRoleRequests[u.user_id])}
+                                          >
+                                            <FileSearch className="w-3.5 h-3.5" />
+                                            عرض المستندات والتحقق
+                                          </Button>
+                                        </>
                                       )}
                                     </span>
                                   </div>
