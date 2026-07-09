@@ -42,6 +42,8 @@ import { ErrorLogsTable } from '@/components/admin/ErrorLogsTable';
 import { ActivityLogsTable } from '@/components/admin/ActivityLogsTable';
 import { InstructorRequestsTable } from '@/components/admin/InstructorRequestsTable';
 import { ConsultantRequestsTable } from '@/components/admin/ConsultantRequestsTable';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ConsultantDocumentLink, ConsultantDocumentImage, ConsultantDocumentVideo } from '@/components/consultant/ConsultantDocumentLink';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
