@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck, Trash2 } from 'lucide-react';
+import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck, Trash2, FileSearch, CheckCircle2, XCircle } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
