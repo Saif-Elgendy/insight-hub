@@ -258,11 +258,7 @@ const ProfilePage = () => {
       toast.error('يرجى إدخال التخصص');
       return;
     }
-    const missing = getRequiredDocsStatus().filter(d => !d.ok);
-    if (missing.length > 0) {
-      toast.error(`المستندات الناقصة: ${missing.map(m => m.label).join('، ')}`);
-      return;
-    }
+    // Always allow saving; the confirmation dialog just reminds about missing docs.
     setConfirmSubmitOpen(true);
   };
 
@@ -270,22 +266,6 @@ const ProfilePage = () => {
     if (!user || !consultantRequest) return;
     if (!consultantFormData.specialty.trim()) {
       toast.error('يرجى إدخال التخصص');
-      return;
-    }
-    if (!consultantRequest.photo_url) {
-      toast.error('يرجى رفع الصورة الشخصية قبل الحفظ');
-      return;
-    }
-    if (!consultantRequest.id_card_url) {
-      toast.error('يرجى رفع بطاقة الهوية قبل الحفظ');
-      return;
-    }
-    if (!consultantRequest.license_url) {
-      toast.error('يرجى رفع ترخيص مزاولة المهنة قبل الحفظ');
-      return;
-    }
-    if (!consultantRequest.certificates_urls || consultantRequest.certificates_urls.length === 0) {
-      toast.error('يرجى رفع شهادة واحدة على الأقل قبل الحفظ');
       return;
     }
     setSavingConsultant(true);
@@ -306,24 +286,16 @@ const ProfilePage = () => {
         .eq('id', consultantRequest.id);
 
       if (error) throw error;
-      toast.success('تم حفظ البيانات بنجاح - بانتظار المراجعة النهائية من المسؤول الأعلى');
+      const missing = getRequiredDocsStatus().filter(d => !d.ok);
+      if (missing.length > 0) {
+        toast.success(`تم حفظ البيانات. المستندات الناقصة: ${missing.map(m => m.label).join('، ')}`);
+      } else {
+        toast.success('تم حفظ البيانات بنجاح - بانتظار المراجعة النهائية من المسؤول الأعلى');
+      }
       fetchConsultantRequest();
     } catch (error: any) {
       console.error('Error saving consultant data:', error);
-      const msg: string = error?.message || '';
-      if (msg.includes('الصورة الشخصية')) {
-        toast.error('لا يمكن حفظ الطلب: يجب رفع الصورة الشخصية أولاً');
-      } else if (msg.includes('بطاقة الهوية')) {
-        toast.error('لا يمكن حفظ الطلب: يجب رفع بطاقة الهوية أولاً');
-      } else if (msg.includes('ترخيص')) {
-        toast.error('لا يمكن حفظ الطلب: يجب رفع ترخيص مزاولة المهنة أولاً');
-      } else if (msg.includes('الشهادات')) {
-        toast.error('لا يمكن حفظ الطلب: يجب رفع الشهادات العلمية أولاً');
-      } else if (msg.includes('المستندات الإجبارية')) {
-        toast.error('لا يمكن حفظ الطلب: جميع المستندات الإجبارية مطلوبة (الصورة، الشهادات، الترخيص، بطاقة الهوية)');
-      } else {
-        toast.error('حدث خطأ أثناء حفظ البيانات');
-      }
+      toast.error(error?.message || 'حدث خطأ أثناء حفظ البيانات');
     } finally {
       setSavingConsultant(false);
       setConfirmSubmitOpen(false);
