@@ -6,41 +6,32 @@ import { BookingDialog } from '@/components/booking/BookingDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { TranslationKey } from '@/i18n/translations';
 
-const consultationTypes = [
-  {
-    icon: Video,
-    title: 'جلسة فيديو',
-    description: 'جلسة تفاعلية وجهاً لوجه عبر الفيديو',
-    duration: '60 دقيقة',
-    price: '200 ج.م',
-  },
-  {
-    icon: Phone,
-    title: 'مكالمة صوتية',
-    description: 'استشارة صوتية خاصة ومريحة',
-    duration: '45 دقيقة',
-    price: '150 ج.م',
-  },
-  {
-    icon: MessageCircle,
-    title: 'دردشة نصية',
-    description: 'تواصل مكتوب مع المختص',
-    duration: '30 دقيقة',
-    price: '100 ج.م',
-  },
+const consultationTypes: {
+  icon: typeof Video;
+  titleKey: TranslationKey;
+  descKey: TranslationKey;
+  minutes: number;
+  price: number;
+}[] = [
+  { icon: Video, titleKey: 'cons.videoTitle', descKey: 'cons.videoDesc', minutes: 60, price: 200 },
+  { icon: Phone, titleKey: 'cons.voiceTitle', descKey: 'cons.voiceDesc', minutes: 45, price: 150 },
+  { icon: MessageCircle, titleKey: 'cons.chatTitle', descKey: 'cons.chatDesc', minutes: 30, price: 100 },
 ];
 
-const features = [
-  'خصوصية تامة وسرية المعلومات',
-  'مختصين معتمدين ومرخصين',
-  'جدولة مرنة تناسب وقتك',
-  'متابعة مستمرة بعد الجلسة',
+const featureKeys: TranslationKey[] = [
+  'cons.feature1',
+  'cons.feature2',
+  'cons.feature3',
+  'cons.feature4',
 ];
 
 export const ConsultationsSection = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [specialists, setSpecialists] = useState<{ full_name: string; image_url: string | null }[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -84,23 +75,22 @@ export const ConsultationsSection = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-              استشارات فردية
+              {t('cons.badge')}
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6">
-              جلسة خاصة مع
-              <span className="text-gradient"> مختص </span>
-              تناسب احتياجاتك
+              {t('cons.title1')}
+              <span className="text-gradient">{t('cons.title2')}</span>
+              {t('cons.title3')}
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              احصل على دعم شخصي من خبراء الصحة النفسية المعتمدين.
-              جلسات خاصة ومخصصة لمساعدتك في التغلب على التحديات.
+              {t('cons.subtitle')}
             </p>
 
             {/* Features List */}
             <div className="space-y-4 mb-8">
-              {features.map((feature, index) => (
+              {featureKeys.map((featureKey, index) => (
                 <motion.div
-                  key={index}
+                  key={featureKey}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -110,7 +100,7 @@ export const ConsultationsSection = () => {
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                     <CheckCircle2 className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-foreground">{feature}</span>
+                  <span className="text-foreground">{t(featureKey)}</span>
                 </motion.div>
               ))}
             </div>
@@ -144,7 +134,7 @@ export const ConsultationsSection = () => {
                   )}
                 </div>
                 <span className="text-muted-foreground text-sm">
-                  {totalCount} مختص جاهز لمساعدتك
+                  {totalCount} {t('cons.readyCount')}
                 </span>
               </div>
             )}
@@ -164,10 +154,10 @@ export const ConsultationsSection = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">
-                      سجّل الآن للوصول للمختصين
+                      {t('cons.guestTitle')}
                     </h4>
                     <p className="text-sm text-muted-foreground mb-3">
-                      أنشئ حساباً مجانياً للتواصل مع المختصين المعتمدين وحجز جلساتك الخاصة.
+                      {t('cons.guestText')}
                     </p>
                     <Button 
                       variant="wellness" 
@@ -175,7 +165,7 @@ export const ConsultationsSection = () => {
                       onClick={() => navigate('/auth')}
                     >
                       <LogIn className="w-4 h-4 ml-2" />
-                      إنشاء حساب مجاني
+                      {t('cons.guestCta')}
                     </Button>
                   </div>
                 </div>
@@ -206,19 +196,19 @@ export const ConsultationsSection = () => {
                   </div>
                   <div className="flex-grow">
                     <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
-                      {type.title}
+                      {t(type.titleKey)}
                     </h3>
                     <p className="text-muted-foreground text-sm mb-3">
-                      {type.description}
+                      {t(type.descKey)}
                     </p>
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1.5 text-muted-foreground">
                         <Clock className="w-4 h-4" />
-                        <span>{type.duration}</span>
+                        <span>{type.minutes} {t('cons.minutes')}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Shield className="w-4 h-4 text-primary" />
-                        <span className="text-primary font-bold">{type.price}</span>
+                        <span className="text-primary font-bold">{type.price} {t('cons.currency')}</span>
                       </div>
                     </div>
                   </div>
@@ -227,9 +217,9 @@ export const ConsultationsSection = () => {
                     size="sm" 
                     className="self-center" 
                     onClick={handleBookingClick}
-                    aria-label={`احجز ${type.title} الآن - ${type.price}`}
+                    aria-label={`${t('cons.bookNow')} - ${t(type.titleKey)} - ${type.price} ${t('cons.currency')}`}
                   >
-                    {user ? 'احجز الآن' : 'سجّل للحجز'}
+                    {user ? t('cons.bookNow') : t('cons.signupToBook')}
                   </Button>
                 </div>
               </motion.div>
