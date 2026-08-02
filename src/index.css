@@ -133,8 +133,15 @@
   }
 
   html {
-    direction: rtl;
     scroll-behavior: smooth;
+  }
+
+  html[dir='rtl'] {
+    direction: rtl;
+  }
+
+  html[dir='ltr'] {
+    direction: ltr;
   }
 
   body {

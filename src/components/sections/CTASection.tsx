@@ -2,9 +2,11 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const CTASection = () => {
   const navigate = useNavigate();
+  const { t, isRTL } = useLanguage();
 
   return (
     <section className="py-24 relative overflow-hidden">
@@ -34,21 +36,20 @@ export const CTASection = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/20 mb-8">
             <Sparkles className="w-4 h-4 text-primary-foreground" />
-            <span className="text-sm font-medium text-primary-foreground">ابدأ رحلتك اليوم</span>
+            <span className="text-sm font-medium text-primary-foreground">{t('cta.badge')}</span>
           </div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
-            جاهز لتبدأ رحلتك نحو حياة أفضل؟
+            {t('cta.title')}
           </h2>
           <p className="text-primary-foreground/80 text-lg mb-10">
-            انضم لآلاف المتدربين الذين غيّروا حياتهم من خلال منصتنا.
-            أول خطوة نحو التغيير تبدأ الآن.
+            {t('cta.subtitle')}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button variant="hero-outline" size="xl" className="group" onClick={() => navigate('/auth')}>
-              <span>سجّل مجاناً الآن</span>
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span>{t('cta.primary')}</span>
+              <ArrowLeft className={`w-5 h-5 transition-transform ${isRTL ? 'group-hover:-translate-x-1' : 'rotate-180 group-hover:translate-x-1'}`} />
             </Button>
             <Button
               variant="ghost"
@@ -58,7 +59,7 @@ export const CTASection = () => {
                 document.getElementById('consultations')?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
-              تواصل معنا
+              {t('cta.secondary')}
             </Button>
           </div>
         </motion.div>

@@ -1,34 +1,24 @@
 import { motion } from 'framer-motion';
 import { Star, Quote } from 'lucide-react';
 
-const testimonials = [
-  {
-    id: 1,
-    name: 'أحمد محمد',
-    role: 'موظف قطاع خاص',
-    content: 'كورس إدارة القلق غيّر حياتي بشكل كامل. تعلمت تقنيات عملية أستخدمها يومياً في التعامل مع ضغوط العمل.',
-    rating: 5,
-    avatar: 'أ',
-  },
-  {
-    id: 2,
-    name: 'نورة العلي',
-    role: 'طالبة جامعية',
-    content: 'الجلسات المباشرة مع الدكتورة سارة كانت مفيدة جداً. أشعر بتحسن كبير في ثقتي بنفسي وقدرتي على التعبير عن مشاعري.',
-    rating: 5,
-    avatar: 'ن',
-  },
-  {
-    id: 3,
-    name: 'خالد السالم',
-    role: 'رائد أعمال',
-    content: 'المنصة سهلة الاستخدام والمحتوى عالي الجودة. الاستشارات الفردية ساعدتني في تحقيق التوازن بين العمل والحياة.',
-    rating: 5,
-    avatar: 'خ',
-  },
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { TranslationKey } from '@/i18n/translations';
+
+const testimonials: {
+  id: number;
+  nameKey: TranslationKey;
+  roleKey: TranslationKey;
+  contentKey: TranslationKey;
+  rating: number;
+}[] = [
+  { id: 1, nameKey: 'test.1.name', roleKey: 'test.1.role', contentKey: 'test.1.content', rating: 5 },
+  { id: 2, nameKey: 'test.2.name', roleKey: 'test.2.role', contentKey: 'test.2.content', rating: 5 },
+  { id: 3, nameKey: 'test.3.name', roleKey: 'test.3.role', contentKey: 'test.3.content', rating: 5 },
 ];
 
 export const TestimonialsSection = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="py-24 bg-gradient-accent">
       <div className="container mx-auto px-4">
@@ -40,13 +30,13 @@ export const TestimonialsSection = () => {
           className="text-center mb-16"
         >
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            آراء المتدربين
+            {t('test.badge')}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            ماذا يقول عملاؤنا؟
+            {t('test.title')}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            نفتخر بثقة أكثر من 1000 متدرب اختاروا منصتنا لرحلتهم نحو الصحة النفسية
+            {t('test.subtitle')}
           </p>
         </motion.div>
 
@@ -73,17 +63,17 @@ export const TestimonialsSection = () => {
 
               {/* Content */}
               <p className="text-foreground leading-relaxed mb-6">
-                "{testimonial.content}"
+                "{t(testimonial.contentKey)}"
               </p>
 
               {/* Author */}
               <div className="flex items-center gap-3 pt-6 border-t border-border">
                 <div className="w-12 h-12 rounded-full bg-gradient-hero flex items-center justify-center text-primary-foreground font-bold">
-                  {testimonial.avatar}
+                  {t(testimonial.nameKey).charAt(0)}
                 </div>
                 <div>
-                  <div className="font-bold text-foreground">{testimonial.name}</div>
-                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                  <div className="font-bold text-foreground">{t(testimonial.nameKey)}</div>
+                  <div className="text-sm text-muted-foreground">{t(testimonial.roleKey)}</div>
                 </div>
               </div>
             </motion.div>

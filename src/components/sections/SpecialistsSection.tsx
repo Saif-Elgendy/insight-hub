@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SpecialistSkeletonGrid } from '@/components/ui/card-skeletons';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Specialist {
   id: string;
@@ -24,6 +25,7 @@ export const SpecialistsSection = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     fetchSpecialists();
@@ -79,15 +81,15 @@ export const SpecialistsSection = () => {
           className="text-center mb-16"
         >
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            فريق المختصين
+            {t('spec.badge')}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6">
-            تعرّف على
-            <span className="text-gradient"> مختصينا </span>
-            المعتمدين
+            {t('spec.title1')}
+            <span className="text-gradient">{t('spec.title2')}</span>
+            {t('spec.title3')}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            نخبة من الأطباء والمعالجين النفسيين المرخصين والمعتمدين، جاهزون لمساعدتك
+            {t('spec.subtitle')}
           </p>
         </motion.div>
 
@@ -145,10 +147,10 @@ export const SpecialistsSection = () => {
                     {specialist.years_experience && (
                       <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                         <Clock className="w-4 h-4" />
-                        <span>{specialist.years_experience} سنوات خبرة</span>
+                        <span>{specialist.years_experience} {t('spec.years')}</span>
                       </div>
                     )}
-                    <ArrowLeft className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ArrowLeft className={`w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity ${isRTL ? '' : 'rotate-180'}`} />
                   </div>
                 </div>
               </div>
@@ -170,8 +172,8 @@ export const SpecialistsSection = () => {
             onClick={() => navigate('/specialists')}
             className="gap-2"
           >
-            عرض جميع المختصين
-            <ArrowLeft className="w-5 h-5" />
+            {t('spec.viewAll')}
+            <ArrowLeft className={`w-5 h-5 ${isRTL ? '' : 'rotate-180'}`} />
           </Button>
         </motion.div>
       </div>

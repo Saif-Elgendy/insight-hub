@@ -3,9 +3,11 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import heroBg from '@/assets/hero-bg.jpg';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const HeroSection = () => {
   const navigate = useNavigate();
+  const { t, isRTL } = useLanguage();
 
   return (
     <section
@@ -46,7 +48,7 @@ export const HeroSection = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-wellness-teal-light border border-wellness-teal/20 mb-8"
           >
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">منصة متخصصة في الصحة النفسية</span>
+            <span className="text-sm font-medium text-primary">{t('hero.badge')}</span>
           </motion.div>
 
           {/* Main Heading */}
@@ -56,11 +58,11 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight mb-6"
           >
-            <span className="text-foreground">رحلتك نحو</span>
+            <span className="text-foreground">{t('hero.title1')}</span>
             <br />
-            <span className="text-gradient">الصحة النفسية</span>
+            <span className="text-gradient">{t('hero.title2')}</span>
             <br />
-            <span className="text-foreground">تبدأ من هنا</span>
+            <span className="text-foreground">{t('hero.title3')}</span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -70,8 +72,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
-            اكتشف كورسات متخصصة، جلسات مباشرة مع خبراء، واستشارات شخصية
-            لمساعدتك في تحقيق التوازن النفسي والرفاهية
+            {t('hero.subtitle')}
           </motion.p>
 
           {/* CTA Buttons */}
@@ -82,13 +83,13 @@ export const HeroSection = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Button variant="hero" size="xl" className="group" onClick={() => navigate('/courses')}>
-              <span>استكشف الكورسات</span>
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span>{t('hero.ctaCourses')}</span>
+              <ArrowLeft className={`w-5 h-5 transition-transform ${isRTL ? 'group-hover:-translate-x-1' : 'rotate-180 group-hover:translate-x-1'}`} />
             </Button>
             <Button variant="outline" size="xl" className="group" onClick={() => {
               document.getElementById('consultations')?.scrollIntoView({ behavior: 'smooth' });
             }}>
-              <span>احجز استشارتك</span>
+              <span>{t('hero.ctaBook')}</span>
             </Button>
           </motion.div>
 
@@ -100,10 +101,10 @@ export const HeroSection = () => {
             className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 pt-16 border-t border-border/50"
           >
             {[
-              { value: '+50', label: 'كورس متخصص' },
-              { value: '+1000', label: 'متدرب سعيد' },
-              { value: '+30', label: 'خبير معتمد' },
-              { value: '98%', label: 'رضا العملاء' },
+              { value: '+50', label: t('hero.stat1') },
+              { value: '+1000', label: t('hero.stat2') },
+              { value: '+30', label: t('hero.stat3') },
+              { value: '98%', label: t('hero.stat4') },
             ].map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold text-primary mb-2">
