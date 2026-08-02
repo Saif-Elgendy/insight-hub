@@ -5,6 +5,7 @@ import { Clock, Users, Star, Play, BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { CourseSkeletonGrid } from '@/components/ui/card-skeletons';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Course {
   id: string;
@@ -38,6 +39,7 @@ const itemVariants = {
 
 export const CoursesSection = () => {
   const navigate = useNavigate();
+  const { t, isRTL } = useLanguage();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,13 +73,13 @@ export const CoursesSection = () => {
           className="text-center mb-16"
         >
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            الكورسات المسجلة
+            {t('courses.badge')}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            تعلم في أي وقت ومن أي مكان
+            {t('courses.title')}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            محتوى تعليمي غني ومتنوع يغطي جميع جوانب الصحة النفسية
+            {t('courses.subtitle')}
           </p>
         </motion.div>
 
@@ -104,7 +106,7 @@ export const CoursesSection = () => {
                   <button
                     onClick={() => navigate(`/course/${course.id}`)}
                     className="absolute inset-0 flex items-center justify-center"
-                    aria-label={`مشاهدة ${course.title}`}
+                    aria-label={`${t('courses.watch')} ${course.title}`}
                   >
                     <motion.div
                       whileHover={{ scale: 1.1 }}
@@ -114,7 +116,7 @@ export const CoursesSection = () => {
                     </motion.div>
                   </button>
                   <span className="absolute top-4 right-4 px-3 py-1 rounded-full bg-background/90 text-xs font-medium text-foreground">
-                    {course.category || 'كورس'}
+                    {course.category || t('courses.defaultCategory')}
                   </span>
                 </div>
 
@@ -131,11 +133,11 @@ export const CoursesSection = () => {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4" aria-hidden="true" />
-                      <span>{course.duration || 'غير محدد'}</span>
+                      <span>{course.duration || t('courses.undefined')}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <BookOpen className="w-4 h-4" aria-hidden="true" />
-                      <span>{course.lessons_count || 0} درس</span>
+                      <span>{course.lessons_count || 0} {t('courses.lessons')}</span>
                     </div>
                   </div>
 
@@ -155,9 +157,9 @@ export const CoursesSection = () => {
                       variant="wellness" 
                       size="sm"
                       onClick={() => navigate(`/course/${course.id}`)}
-                      aria-label={`ابدأ تعلم ${course.title}`}
+                      aria-label={`${t('courses.start')} - ${course.title}`}
                     >
-                      ابدأ التعلم
+                      {t('courses.start')}
                     </Button>
                   </div>
                 </div>
@@ -178,10 +180,10 @@ export const CoursesSection = () => {
             size="lg"
             onClick={() => navigate('/courses')}
             className="gap-2"
-            aria-label="عرض جميع الكورسات المتاحة"
+            aria-label={t('courses.viewAll')}
           >
-            عرض جميع الكورسات
-            <ArrowLeft className="w-5 h-5" />
+            {t('courses.viewAll')}
+            <ArrowLeft className={`w-5 h-5 ${isRTL ? '' : 'rotate-180'}`} />
           </Button>
         </motion.div>
       </div>
