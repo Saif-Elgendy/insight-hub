@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.enforce_super_admin_grants_consultant() FROM PUBLIC, anon, authenticated;
