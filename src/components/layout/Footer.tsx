@@ -1,35 +1,40 @@
 import { Link } from 'react-router-dom';
 import { Brain, Mail, Phone, MapPin, Facebook, Github, Instagram, Linkedin } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { TranslationKey } from '@/i18n/translations';
 
-const footerLinks = {
-  platform: {
-    title: 'المنصة',
+const footerSections: {
+  titleKey: TranslationKey;
+  links: { labelKey: TranslationKey; href: string }[];
+}[] = [
+  {
+    titleKey: 'footer.platform',
     links: [
-      { label: 'الكورسات', href: '/courses' },
-      { label: 'المختصين', href: '/specialists' },
-      { label: 'المكتبة', href: '/resources' },
-      { label: 'الشهادات', href: '/#certificates' },
+      { labelKey: 'nav.courses', href: '/courses' },
+      { labelKey: 'nav.specialists', href: '/specialists' },
+      { labelKey: 'nav.library', href: '/resources' },
+      { labelKey: 'footer.certificates', href: '/#certificates' },
     ],
   },
-  support: {
-    title: 'الدعم',
+  {
+    titleKey: 'footer.support',
     links: [
-      { label: 'مركز المساعدة', href: '/#consultations' },
-      { label: 'الأسئلة الشائعة', href: '/#consultations' },
-      { label: 'تواصل معنا', href: '/#consultations' },
-      { label: 'سياسة الخصوصية', href: '/' },
+      { labelKey: 'footer.helpCenter', href: '/#consultations' },
+      { labelKey: 'footer.faq', href: '/#consultations' },
+      { labelKey: 'footer.contact', href: '/#consultations' },
+      { labelKey: 'footer.privacy', href: '/' },
     ],
   },
-  company: {
-    title: 'الشركة',
+  {
+    titleKey: 'footer.company',
     links: [
-      { label: 'من نحن', href: '/' },
-      { label: 'فريق العمل', href: '/specialists' },
-      { label: 'وظائف', href: '/' },
-      { label: 'الشراكات', href: '/' },
+      { labelKey: 'footer.about', href: '/' },
+      { labelKey: 'footer.team', href: '/specialists' },
+      { labelKey: 'footer.careers', href: '/' },
+      { labelKey: 'footer.partners', href: '/' },
     ],
   },
-};
+];
 
 const socialLinks = [
   { icon: Facebook, href: '#', label: 'Facebook' },
@@ -39,6 +44,8 @@ const socialLinks = [
 ];
 
 export const Footer = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-foreground text-background py-16">
       <div className="container mx-auto px-4">
@@ -49,12 +56,9 @@ export const Footer = () => {
               <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
                 <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">نفسي</span>
+              <span className="text-xl font-bold">{t('brand.name')}</span>
             </Link>
-            <p className="text-background/70 mb-6 max-w-sm">
-              منصة متخصصة في الصحة النفسية تقدم كورسات، جلسات مباشرة،
-              واستشارات فردية مع أفضل المختصين.
-            </p>
+            <p className="text-background/70 mb-6 max-w-sm">{t('footer.tagline')}</p>
             <div className="space-y-3 text-background/70">
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5" />
@@ -66,23 +70,23 @@ export const Footer = () => {
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-5 h-5" />
-                <span>مصر، طنطا</span>
+                <span>{t('footer.location')}</span>
               </div>
             </div>
           </div>
 
           {/* Links Columns */}
-          {Object.values(footerLinks).map((section) => (
-            <div key={section.title}>
-              <h4 className="font-bold text-lg mb-4">{section.title}</h4>
+          {footerSections.map((section) => (
+            <div key={section.titleKey}>
+              <h4 className="font-bold text-lg mb-4">{t(section.titleKey)}</h4>
               <ul className="space-y-3">
                 {section.links.map((link) => (
-                  <li key={link.label}>
+                  <li key={link.labelKey}>
                     <Link
                       to={link.href}
                       className="text-background/70 hover:text-background transition-colors"
                     >
-                      {link.label}
+                      {t(link.labelKey)}
                     </Link>
                   </li>
                 ))}
@@ -93,9 +97,7 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-background/20 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-background/70 text-sm">
-            © 2024 نفسي. جميع الحقوق محفوظة.
-          </p>
+          <p className="text-background/70 text-sm">{t('footer.rights')}</p>
           <div className="flex items-center gap-4">
             {socialLinks.map((social) => (
               <a
