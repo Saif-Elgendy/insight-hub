@@ -164,7 +164,7 @@ export const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                     className="block py-2 text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 ) : (
                   <a
@@ -173,7 +173,7 @@ export const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                     className="block py-2 text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </a>
                 )
               ))}
