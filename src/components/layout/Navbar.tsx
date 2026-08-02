@@ -9,19 +9,23 @@ import { NotificationsDropdown } from '@/components/notifications/NotificationsD
 import { MessagesBadge } from '@/components/layout/MessagesBadge';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { QuickLogoutButton } from '@/components/layout/QuickLogoutButton';
+import { LanguageToggle } from '@/components/layout/LanguageToggle';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { TranslationKey } from '@/i18n/translations';
 
-const navLinks = [
-  { label: 'الرئيسية', href: '/', isRoute: true },
-  { label: 'الكورسات', href: '/courses', isRoute: true },
-  { label: 'المختصين', href: '/specialists', isRoute: true },
-  { label: 'المكتبة', href: '/resources', isRoute: true },
-  { label: 'الاستشارات', href: '#consultations', isRoute: false },
+const navLinks: { key: TranslationKey; href: string; isRoute: boolean }[] = [
+  { key: 'nav.home', href: '/', isRoute: true },
+  { key: 'nav.courses', href: '/courses', isRoute: true },
+  { key: 'nav.specialists', href: '/specialists', isRoute: true },
+  { key: 'nav.library', href: '/resources', isRoute: true },
+  { key: 'nav.consultations', href: '#consultations', isRoute: false },
 ];
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
   const { isAdmin, canManageCourses, isConsultant } = useUserRole();
+  const { t } = useLanguage();
 
   const handleSignOut = async () => {
     await signOut();
@@ -41,7 +45,7 @@ export const Navbar = () => {
             <div className="w-12 h-12 rounded-xl bg-gradient-hero flex items-center justify-center">
               <Brain className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">نفسي</span>
+            <span className="text-xl font-bold text-foreground">{t('brand.name')}</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -53,7 +57,7 @@ export const Navbar = () => {
                   to={link.href}
                   className="text-muted-foreground hover:text-primary transition-colors duration-300 font-medium"
                 >
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               ) : (
                 <a
@@ -61,7 +65,7 @@ export const Navbar = () => {
                   href={link.href}
                   className="text-muted-foreground hover:text-primary transition-colors duration-300 font-medium"
                 >
-                  {link.label}
+                  {t(link.key)}
                 </a>
               )
             ))}
@@ -69,6 +73,7 @@ export const Navbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-4">
+            <LanguageToggle />
             <ThemeToggle />
             {loading ? (
               <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -80,7 +85,7 @@ export const Navbar = () => {
                   <Button variant="ghost" asChild>
                     <Link to="/admin" className="gap-2">
                       <Shield className="w-4 h-4" />
-                      إدارة النظام
+                      {t('nav.admin')}
                     </Link>
                   </Button>
                 )}
@@ -88,21 +93,21 @@ export const Navbar = () => {
                   <Button variant="ghost" asChild>
                     <Link to="/doctor-dashboard" className="gap-2">
                       <LayoutDashboard className="w-4 h-4" />
-                      لوحة التحكم
+                      {t('nav.dashboard')}
                     </Link>
                   </Button>
                 ) : isConsultant ? (
                   <Button variant="ghost" asChild>
                     <Link to="/consultant-dashboard" className="gap-2">
                       <Stethoscope className="w-4 h-4" />
-                      لوحة الاستشاري
+                      {t('nav.consultantDashboard')}
                     </Link>
                   </Button>
                 ) : (
                   <Button variant="ghost" asChild>
                     <Link to="/my-consultations" className="gap-2">
                       <Calendar className="w-4 h-4" />
-                      استشاراتي
+                      {t('nav.myConsultations')}
                     </Link>
                   </Button>
                 )}
@@ -117,10 +122,10 @@ export const Navbar = () => {
             ) : (
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/auth">تسجيل الدخول</Link>
+                  <Link to="/auth">{t('nav.login')}</Link>
                 </Button>
                 <Button variant="default" asChild>
-                  <Link to="/auth">ابدأ الآن</Link>
+                  <Link to="/auth">{t('nav.getStarted')}</Link>
                 </Button>
               </>
             )}
@@ -128,11 +133,12 @@ export const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 lg:hidden">
+            <LanguageToggle />
             <ThemeToggle />
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 text-foreground"
-              aria-label="القائمة"
+              aria-label={t('nav.menu')}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -178,7 +184,7 @@ export const Navbar = () => {
                       <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                         <Link to="/admin" className="gap-2">
                           <Shield className="w-4 h-4" />
-                          إدارة النظام
+                          {t('nav.admin')}
                         </Link>
                       </Button>
                     )}
@@ -186,21 +192,21 @@ export const Navbar = () => {
                       <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                         <Link to="/doctor-dashboard" className="gap-2">
                           <LayoutDashboard className="w-4 h-4" />
-                          لوحة التحكم
+                          {t('nav.dashboard')}
                         </Link>
                       </Button>
                     ) : isConsultant ? (
                       <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                         <Link to="/consultant-dashboard" className="gap-2">
                           <Stethoscope className="w-4 h-4" />
-                          لوحة الاستشاري
+                          {t('nav.consultantDashboard')}
                         </Link>
                       </Button>
                     ) : (
                       <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                         <Link to="/my-consultations" className="gap-2">
                           <Calendar className="w-4 h-4" />
-                          استشاراتي
+                          {t('nav.myConsultations')}
                         </Link>
                       </Button>
                     )}
@@ -215,10 +221,10 @@ export const Navbar = () => {
                 ) : (
                   <>
                     <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
-                      <Link to="/auth">تسجيل الدخول</Link>
+                      <Link to="/auth">{t('nav.login')}</Link>
                     </Button>
                     <Button variant="default" asChild className="w-full" onClick={() => setIsOpen(false)}>
-                      <Link to="/auth">ابدأ الآن</Link>
+                      <Link to="/auth">{t('nav.getStarted')}</Link>
                     </Button>
                   </>
                 )}
