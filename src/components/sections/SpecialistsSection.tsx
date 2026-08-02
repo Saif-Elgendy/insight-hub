@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SpecialistSkeletonGrid } from '@/components/ui/card-skeletons';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Specialist {
   id: string;
