@@ -374,15 +374,34 @@ const ProfilePage = () => {
         .maybeSingle();
 
       if (error) throw error;
-      
-      if (data) {
-        setProfile(data as Profile);
+
+      let row = data;
+
+      // Create the profile row if it doesn't exist yet
+      if (!row && user?.id) {
+        const { data: created } = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              user_id: user.id,
+              full_name: (user.user_metadata as any)?.full_name || null,
+            },
+            { onConflict: 'user_id' }
+          )
+          .select()
+          .maybeSingle();
+        row = created ?? null;
+      }
+
+      if (row) {
+        setProfile(row as Profile);
         setFormData({
-          full_name: data.full_name || '',
-          phone: data.phone || '',
-          bio: data.bio || '',
+          full_name: row.full_name || '',
+          phone: row.phone || '',
+          bio: row.bio || '',
         });
       }
+
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
