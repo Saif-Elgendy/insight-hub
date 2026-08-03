@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck, Trash2, FileSearch, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, Users, UserCog, Search, ChevronDown, AlertTriangle, Activity, UserCheck, Trash2, FileSearch, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,6 +91,10 @@ const AdminDashboard = () => {
   const [docsDialogUserId, setDocsDialogUserId] = useState<string | null>(null);
   const [docsDialogData, setDocsDialogData] = useState<any | null>(null);
   const [docsDialogLoading, setDocsDialogLoading] = useState(false);
+  const [decisionNote, setDecisionNote] = useState('');
+  const [decisionBusy, setDecisionBusy] = useState<null | 'approved' | 'rejected' | 'postponed'>(null);
+  const isSuperAdmin = user?.id === SUPER_ADMIN_ID;
+
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -146,7 +152,7 @@ const AdminDashboard = () => {
         const { data: cons } = await supabase
           .from('consultant_requests')
           .select('user_id, status')
-          .in('status', ['pending', 'admin_reviewed']);
+          .in('status', ['pending', 'admin_reviewed', 'postponed']);
         (cons || []).forEach((r: any) => { map[r.user_id] = 'consultant'; });
         setPendingRoleRequests(map);
       })();
@@ -225,8 +231,90 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleConsultantDecision = async (decision: 'approved' | 'rejected' | 'postponed') => {
+    const req = docsDialogData?.data;
+    if (!req || docsDialogData.kind !== 'consultant') return;
+    const note = decisionNote.trim();
+
+    if (decision !== 'approved' && !note) {
+      toast({ title: 'التعليق مطلوب', description: 'اكتب سبب الرفض أو ما هو الناقص قبل الحفظ', variant: 'destructive' });
+      return;
+    }
+
+    if (decision === 'approved') {
+      const missing: string[] = [];
+      if (!req.photo_url) missing.push('الصورة الشخصية');
+      if (!req.id_card_url) missing.push('بطاقة الهوية');
+      if (!req.license_url) missing.push('ترخيص مزاولة المهنة');
+      if (!req.certificates_urls?.length) missing.push('الشهادات العلمية');
+      if (missing.length) {
+        toast({ title: 'مستندات ناقصة', description: `لا يمكن القبول النهائي: ${missing.join('، ')}`, variant: 'destructive' });
+        return;
+      }
+    }
+
+    setDecisionBusy(decision);
+    try {
+      if (decision === 'approved') {
+        if (!req.admin_reviewed_at) {
+          const { error: e1 } = await supabase
+            .from('consultant_requests')
+            .update({ status: 'admin_reviewed', admin_review_notes: note || null })
+            .eq('id', req.id);
+          if (e1) throw e1;
+        }
+        const { error: e2 } = await supabase
+          .from('consultant_requests')
+          .update({ status: 'approved', admin_review_notes: note || null, rejection_reason: null })
+          .eq('id', req.id);
+        if (e2) throw e2;
+
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: 'consultant' as AppRole })
+          .eq('user_id', req.user_id);
+        if (roleError) {
+          toast({ title: 'تم القبول', description: `تم قبول الطلب لكن تعذر تحديث الصلاحية: ${roleError.message}`, variant: 'destructive' });
+        } else {
+          setUsers((prev) => prev.map((u) => (u.user_id === req.user_id ? { ...u, role: 'consultant' as AppRole } : u)));
+          toast({ title: 'تم القبول', description: 'تم اعتماد الاستشاري وتحديث صلاحيته' });
+        }
+      } else if (decision === 'rejected') {
+        const { error } = await supabase
+          .from('consultant_requests')
+          .update({ status: 'rejected', rejection_reason: note, admin_review_notes: note })
+          .eq('id', req.id);
+        if (error) throw error;
+        toast({ title: 'تم الرفض', description: 'تم إرسال سبب الرفض للاستشاري' });
+      } else {
+        const { error } = await supabase
+          .from('consultant_requests')
+          .update({ status: 'postponed', admin_review_notes: note })
+          .eq('id', req.id);
+        if (error) throw error;
+        toast({ title: 'تم التأجيل', description: 'تم إرسال التعليق للاستشاري لاستكمال الناقص' });
+      }
+
+      setPendingRoleRequests((prev) => {
+        if (decision === 'postponed') return prev;
+        const next = { ...prev };
+        delete next[req.user_id];
+        return next;
+      });
+      setDecisionNote('');
+      setDocsDialogUserId(null);
+      setDocsDialogData(null);
+    } catch (e: any) {
+      toast({ title: 'خطأ', description: e?.message || 'تعذر تنفيذ القرار', variant: 'destructive' });
+    } finally {
+      setDecisionBusy(null);
+    }
+  };
+
   const openDocsDialog = async (userId: string, kind: 'instructor' | 'consultant') => {
+    setDecisionNote('');
     setDocsDialogUserId(userId);
+
     setDocsDialogData(null);
     setDocsDialogLoading(true);
     try {
@@ -689,9 +777,61 @@ const AdminDashboard = () => {
                     )}
                   </div>
 
-                  <div className="text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
-                    بعد التحقق من المستندات، استخدم قائمة "تغيير الصلاحية" لاعتماد الاستشاري. الاعتماد النهائي متاح للمسؤول الأعلى فقط ويشترط اكتمال المستندات.
-                  </div>
+                  {docsDialogData.data.admin_review_notes && (
+                    <div className="text-sm bg-muted/50 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground mb-1">آخر تعليق للإدارة</p>
+                      <p>{docsDialogData.data.admin_review_notes}</p>
+                    </div>
+                  )}
+
+                  {isSuperAdmin ? (
+                    <div className="space-y-3 border-t border-border pt-4">
+                      <p className="text-sm font-semibold">قرار المسؤول الأعلى</p>
+                      <Textarea
+                        value={decisionNote}
+                        onChange={(e) => setDecisionNote(e.target.value)}
+                        placeholder="اكتب تعليقاً للاستشاري (ما هو الناقص أو سبب الرفض). التعليق يظهر له في صفحة حالة الطلب."
+                        rows={3}
+                        dir="rtl"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          onClick={() => handleConsultantDecision('approved')}
+                          disabled={!!decisionBusy}
+                          className="gap-1"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          {decisionBusy === 'approved' ? 'جارٍ القبول...' : 'قبول نهائي'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleConsultantDecision('postponed')}
+                          disabled={!!decisionBusy}
+                          className="gap-1"
+                        >
+                          <Clock className="w-4 h-4" />
+                          {decisionBusy === 'postponed' ? 'جارٍ التأجيل...' : 'تأجيل الطلب'}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => handleConsultantDecision('rejected')}
+                          disabled={!!decisionBusy}
+                          className="gap-1"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          {decisionBusy === 'rejected' ? 'جارٍ الرفض...' : 'رفض الطلب'}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        التعليق إجباري للرفض والتأجيل. القبول النهائي يشترط اكتمال المستندات ويحدّث صلاحية المستخدم إلى استشاري تلقائياً.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
+                      بعد التحقق من المستندات، الاعتماد النهائي (قبول / رفض / تأجيل) متاح للمسؤول الأعلى فقط.
+                    </div>
+                  )}
+
                 </>
               )}
             </div>

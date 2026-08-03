@@ -82,6 +82,13 @@ const ConsultantRequestStatus = () => {
             مقبول
           </Badge>
         );
+      case "postponed":
+        return (
+          <Badge variant="outline" className="bg-orange-500/10 text-orange-700 border-orange-500/20 text-base px-4 py-2">
+            <Clock3 className="w-4 h-4 ml-2" />
+            مؤجل - بانتظار استكمال المطلوب
+          </Badge>
+        );
       case "rejected":
         return (
           <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-base px-4 py-2">
@@ -93,6 +100,7 @@ const ConsultantRequestStatus = () => {
         return <Badge variant="outline">{request.status}</Badge>;
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -153,12 +161,23 @@ const ConsultantRequestStatus = () => {
                   </Alert>
                 )}
 
-                {isAdmin && request.admin_review_notes && (
+                {request.status === "postponed" && (
+                  <Alert className="border-orange-500/30 bg-orange-500/10">
+                    <Clock3 className="w-4 h-4" />
+                    <AlertTitle>تم تأجيل الطلب</AlertTitle>
+                    <AlertDescription>
+                      {request.admin_review_notes || "بانتظار استكمال المستندات أو البيانات المطلوبة"}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {request.admin_review_notes && request.status !== "postponed" && (
                   <Alert>
-                    <AlertTitle>ملاحظات الإدارة</AlertTitle>
+                    <AlertTitle>تعليق الإدارة</AlertTitle>
                     <AlertDescription>{request.admin_review_notes}</AlertDescription>
                   </Alert>
                 )}
+
 
                 {isAdmin && request.last_save_error && (
                   <Alert variant="destructive">
