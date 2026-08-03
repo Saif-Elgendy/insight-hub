@@ -775,9 +775,61 @@ const AdminDashboard = () => {
                     )}
                   </div>
 
-                  <div className="text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
-                    بعد التحقق من المستندات، استخدم قائمة "تغيير الصلاحية" لاعتماد الاستشاري. الاعتماد النهائي متاح للمسؤول الأعلى فقط ويشترط اكتمال المستندات.
-                  </div>
+                  {docsDialogData.data.admin_review_notes && (
+                    <div className="text-sm bg-muted/50 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground mb-1">آخر تعليق للإدارة</p>
+                      <p>{docsDialogData.data.admin_review_notes}</p>
+                    </div>
+                  )}
+
+                  {isSuperAdmin ? (
+                    <div className="space-y-3 border-t border-border pt-4">
+                      <p className="text-sm font-semibold">قرار المسؤول الأعلى</p>
+                      <Textarea
+                        value={decisionNote}
+                        onChange={(e) => setDecisionNote(e.target.value)}
+                        placeholder="اكتب تعليقاً للاستشاري (ما هو الناقص أو سبب الرفض). التعليق يظهر له في صفحة حالة الطلب."
+                        rows={3}
+                        dir="rtl"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          onClick={() => handleConsultantDecision('approved')}
+                          disabled={!!decisionBusy}
+                          className="gap-1"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          {decisionBusy === 'approved' ? 'جارٍ القبول...' : 'قبول نهائي'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleConsultantDecision('postponed')}
+                          disabled={!!decisionBusy}
+                          className="gap-1"
+                        >
+                          <Clock className="w-4 h-4" />
+                          {decisionBusy === 'postponed' ? 'جارٍ التأجيل...' : 'تأجيل الطلب'}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => handleConsultantDecision('rejected')}
+                          disabled={!!decisionBusy}
+                          className="gap-1"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          {decisionBusy === 'rejected' ? 'جارٍ الرفض...' : 'رفض الطلب'}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        التعليق إجباري للرفض والتأجيل. القبول النهائي يشترط اكتمال المستندات ويحدّث صلاحية المستخدم إلى استشاري تلقائياً.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
+                      بعد التحقق من المستندات، الاعتماد النهائي (قبول / رفض / تأجيل) متاح للمسؤول الأعلى فقط.
+                    </div>
+                  )}
+
                 </>
               )}
             </div>
