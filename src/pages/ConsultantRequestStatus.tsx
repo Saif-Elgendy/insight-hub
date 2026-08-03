@@ -161,12 +161,23 @@ const ConsultantRequestStatus = () => {
                   </Alert>
                 )}
 
-                {isAdmin && request.admin_review_notes && (
+                {request.status === "postponed" && (
+                  <Alert className="border-orange-500/30 bg-orange-500/10">
+                    <Clock3 className="w-4 h-4" />
+                    <AlertTitle>تم تأجيل الطلب</AlertTitle>
+                    <AlertDescription>
+                      {request.admin_review_notes || "بانتظار استكمال المستندات أو البيانات المطلوبة"}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {request.admin_review_notes && request.status !== "postponed" && (
                   <Alert>
-                    <AlertTitle>ملاحظات الإدارة</AlertTitle>
+                    <AlertTitle>تعليق الإدارة</AlertTitle>
                     <AlertDescription>{request.admin_review_notes}</AlertDescription>
                   </Alert>
                 )}
+
 
                 {isAdmin && request.last_save_error && (
                   <Alert variant="destructive">
