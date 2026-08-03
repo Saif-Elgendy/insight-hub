@@ -374,15 +374,34 @@ const ProfilePage = () => {
         .maybeSingle();
 
       if (error) throw error;
-      
-      if (data) {
-        setProfile(data as Profile);
+
+      let row = data;
+
+      // Create the profile row if it doesn't exist yet
+      if (!row && user?.id) {
+        const { data: created } = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              user_id: user.id,
+              full_name: (user.user_metadata as any)?.full_name || null,
+            },
+            { onConflict: 'user_id' }
+          )
+          .select()
+          .maybeSingle();
+        row = created ?? null;
+      }
+
+      if (row) {
+        setProfile(row as Profile);
         setFormData({
-          full_name: data.full_name || '',
-          phone: data.phone || '',
-          bio: data.bio || '',
+          full_name: row.full_name || '',
+          phone: row.phone || '',
+          bio: row.bio || '',
         });
       }
+
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -412,28 +431,67 @@ const ProfilePage = () => {
   };
 
   const handleSave = async () => {
+    if (!user) return;
+    const fullName = formData.full_name.trim();
+    const phone = formData.phone.trim();
+    const bio = formData.bio.trim();
+
+    if (!fullName) {
+      toast.error('يرجى إدخال الاسم الكامل');
+      return;
+    }
+    if (fullName.length > 100) {
+      toast.error('الاسم يجب أن يكون أقل من 100 حرف');
+      return;
+    }
+    if (phone && !/^[0-9+\-\s()]{7,20}$/.test(phone)) {
+      toast.error('رقم الهاتف غير صالح');
+      return;
+    }
+    if (bio.length > 1000) {
+      toast.error('النبذة يجب أن تكون أقل من 1000 حرف');
+      return;
+    }
+
     setSaving(true);
     try {
-      const { error } = await supabase
+      // Upsert so the row is created if it doesn't exist yet
+      const { data, error } = await supabase
         .from('profiles')
-        .update({
-          full_name: formData.full_name,
-          phone: formData.phone,
-          bio: formData.bio,
-        })
-        .eq('user_id', user?.id);
+        .upsert(
+          {
+            user_id: user.id,
+            full_name: fullName,
+            phone: phone || null,
+            bio: bio || null,
+          },
+          { onConflict: 'user_id' }
+        )
+        .select()
+        .maybeSingle();
 
       if (error) throw error;
 
-      setProfile({ ...profile!, ...formData });
+      if (data) {
+        setProfile(data as Profile);
+        setFormData({
+          full_name: data.full_name || '',
+          phone: data.phone || '',
+          bio: data.bio || '',
+        });
+      } else {
+        setProfile((prev) => (prev ? { ...prev, full_name: fullName, phone, bio } : prev));
+      }
       setIsEditing(false);
       toast.success('تم حفظ التغييرات بنجاح');
-    } catch (error) {
-      toast.error('حدث خطأ أثناء حفظ التغييرات');
+    } catch (error: any) {
+      console.error('Error saving profile:', error);
+      toast.error(error?.message ? `تعذر الحفظ: ${error.message}` : 'حدث خطأ أثناء حفظ التغييرات');
     } finally {
       setSaving(false);
     }
   };
+
 
   const handleLogout = async () => {
     await signOut();
@@ -489,21 +547,23 @@ const ProfilePage = () => {
 
     setUploadingAvatar(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const extFromType: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+      };
+      const fileExt = extFromType[file.type] || 'jpg';
+      // Unique name per upload so the browser never serves a stale cached image
+      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+      const oldPath = profile?.avatar_url
+        ? profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
+        : null;
 
-      // Delete old avatar if exists
-      if (profile?.avatar_url) {
-        const oldPath = profile.avatar_url.split('/avatars/')[1];
-        if (oldPath) {
-          await supabase.storage.from('avatars').remove([oldPath]);
-        }
-      }
-
-      // Upload new avatar
+      // Upload new avatar first
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
 
       if (uploadError) throw uploadError;
 
@@ -512,19 +572,27 @@ const ProfilePage = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Update profile with new avatar URL
+      // Save on the profile (upsert so a missing row is created)
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('user_id', user.id);
+        .upsert(
+          { user_id: user.id, avatar_url: publicUrl, full_name: formData.full_name.trim() || null },
+          { onConflict: 'user_id' }
+        );
 
       if (updateError) throw updateError;
 
-      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+      // Clean up the previous file (non-blocking)
+      if (oldPath && oldPath !== fileName) {
+        await supabase.storage.from('avatars').remove([oldPath]).catch(() => {});
+      }
+
+      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : ({ avatar_url: publicUrl } as any));
       toast.success('تم تحديث الصورة الشخصية بنجاح');
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
-      toast.error('حدث خطأ أثناء رفع الصورة');
+      toast.error(error?.message ? `تعذر رفع الصورة: ${error.message}` : 'حدث خطأ أثناء رفع الصورة');
+
     } finally {
       setUploadingAvatar(false);
       // Reset file input
@@ -540,13 +608,9 @@ const ProfilePage = () => {
     setUploadingAvatar(true);
     try {
       // Extract file path from URL
-      const avatarPath = profile.avatar_url.split('/avatars/')[1];
+      const avatarPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0];
       if (avatarPath) {
-        const { error: deleteError } = await supabase.storage
-          .from('avatars')
-          .remove([avatarPath]);
-
-        if (deleteError) throw deleteError;
+        await supabase.storage.from('avatars').remove([avatarPath]);
       }
 
       // Update profile to remove avatar URL
@@ -561,7 +625,8 @@ const ProfilePage = () => {
       toast.success('تم حذف الصورة الشخصية بنجاح');
     } catch (error: any) {
       console.error('Error deleting avatar:', error);
-      toast.error('حدث خطأ أثناء حذف الصورة');
+      toast.error(error?.message ? `تعذر حذف الصورة: ${error.message}` : 'حدث خطأ أثناء حذف الصورة');
+
     } finally {
       setUploadingAvatar(false);
     }
@@ -702,16 +767,34 @@ const ProfilePage = () => {
                     <Edit2 className="w-5 h-5" />
                   </Button>
                 ) : (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={saving}
-                  >
-                    <Save className="w-4 h-4 ml-2" />
-                    حفظ
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({
+                          full_name: profile?.full_name || '',
+                          phone: profile?.phone || '',
+                          bio: profile?.bio || '',
+                        });
+                        setIsEditing(false);
+                      }}
+                      disabled={saving}
+                    >
+                      إلغاء
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      <Save className="w-4 h-4 ml-2" />
+                      {saving ? 'جاري الحفظ...' : 'حفظ'}
+                    </Button>
+                  </div>
                 )}
+
               </div>
 
               <div className="space-y-4">
