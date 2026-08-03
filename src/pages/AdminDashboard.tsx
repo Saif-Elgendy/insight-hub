@@ -229,8 +229,90 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleConsultantDecision = async (decision: 'approved' | 'rejected' | 'postponed') => {
+    const req = docsDialogData?.data;
+    if (!req || docsDialogData.kind !== 'consultant') return;
+    const note = decisionNote.trim();
+
+    if (decision !== 'approved' && !note) {
+      toast({ title: 'التعليق مطلوب', description: 'اكتب سبب الرفض أو ما هو الناقص قبل الحفظ', variant: 'destructive' });
+      return;
+    }
+
+    if (decision === 'approved') {
+      const missing: string[] = [];
+      if (!req.photo_url) missing.push('الصورة الشخصية');
+      if (!req.id_card_url) missing.push('بطاقة الهوية');
+      if (!req.license_url) missing.push('ترخيص مزاولة المهنة');
+      if (!req.certificates_urls?.length) missing.push('الشهادات العلمية');
+      if (missing.length) {
+        toast({ title: 'مستندات ناقصة', description: `لا يمكن القبول النهائي: ${missing.join('، ')}`, variant: 'destructive' });
+        return;
+      }
+    }
+
+    setDecisionBusy(decision);
+    try {
+      if (decision === 'approved') {
+        if (!req.admin_reviewed_at) {
+          const { error: e1 } = await supabase
+            .from('consultant_requests')
+            .update({ status: 'admin_reviewed', admin_review_notes: note || null })
+            .eq('id', req.id);
+          if (e1) throw e1;
+        }
+        const { error: e2 } = await supabase
+          .from('consultant_requests')
+          .update({ status: 'approved', admin_review_notes: note || null, rejection_reason: null })
+          .eq('id', req.id);
+        if (e2) throw e2;
+
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: 'consultant' as AppRole })
+          .eq('user_id', req.user_id);
+        if (roleError) {
+          toast({ title: 'تم القبول', description: `تم قبول الطلب لكن تعذر تحديث الصلاحية: ${roleError.message}`, variant: 'destructive' });
+        } else {
+          setUsers((prev) => prev.map((u) => (u.user_id === req.user_id ? { ...u, role: 'consultant' as AppRole } : u)));
+          toast({ title: 'تم القبول', description: 'تم اعتماد الاستشاري وتحديث صلاحيته' });
+        }
+      } else if (decision === 'rejected') {
+        const { error } = await supabase
+          .from('consultant_requests')
+          .update({ status: 'rejected', rejection_reason: note, admin_review_notes: note })
+          .eq('id', req.id);
+        if (error) throw error;
+        toast({ title: 'تم الرفض', description: 'تم إرسال سبب الرفض للاستشاري' });
+      } else {
+        const { error } = await supabase
+          .from('consultant_requests')
+          .update({ status: 'postponed', admin_review_notes: note })
+          .eq('id', req.id);
+        if (error) throw error;
+        toast({ title: 'تم التأجيل', description: 'تم إرسال التعليق للاستشاري لاستكمال الناقص' });
+      }
+
+      setPendingRoleRequests((prev) => {
+        if (decision === 'postponed') return prev;
+        const next = { ...prev };
+        delete next[req.user_id];
+        return next;
+      });
+      setDecisionNote('');
+      setDocsDialogUserId(null);
+      setDocsDialogData(null);
+    } catch (e: any) {
+      toast({ title: 'خطأ', description: e?.message || 'تعذر تنفيذ القرار', variant: 'destructive' });
+    } finally {
+      setDecisionBusy(null);
+    }
+  };
+
   const openDocsDialog = async (userId: string, kind: 'instructor' | 'consultant') => {
+    setDecisionNote('');
     setDocsDialogUserId(userId);
+
     setDocsDialogData(null);
     setDocsDialogLoading(true);
     try {
