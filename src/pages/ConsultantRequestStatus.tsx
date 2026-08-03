@@ -82,6 +82,13 @@ const ConsultantRequestStatus = () => {
             مقبول
           </Badge>
         );
+      case "postponed":
+        return (
+          <Badge variant="outline" className="bg-orange-500/10 text-orange-700 border-orange-500/20 text-base px-4 py-2">
+            <Clock3 className="w-4 h-4 ml-2" />
+            مؤجل - بانتظار استكمال المطلوب
+          </Badge>
+        );
       case "rejected":
         return (
           <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-base px-4 py-2">
@@ -93,6 +100,7 @@ const ConsultantRequestStatus = () => {
         return <Badge variant="outline">{request.status}</Badge>;
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
