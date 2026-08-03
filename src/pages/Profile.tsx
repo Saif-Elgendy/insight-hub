@@ -767,16 +767,34 @@ const ProfilePage = () => {
                     <Edit2 className="w-5 h-5" />
                   </Button>
                 ) : (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={saving}
-                  >
-                    <Save className="w-4 h-4 ml-2" />
-                    حفظ
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({
+                          full_name: profile?.full_name || '',
+                          phone: profile?.phone || '',
+                          bio: profile?.bio || '',
+                        });
+                        setIsEditing(false);
+                      }}
+                      disabled={saving}
+                    >
+                      إلغاء
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      <Save className="w-4 h-4 ml-2" />
+                      {saving ? 'جاري الحفظ...' : 'حفظ'}
+                    </Button>
+                  </div>
                 )}
+
               </div>
 
               <div className="space-y-4">
