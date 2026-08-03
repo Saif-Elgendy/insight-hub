@@ -89,6 +89,10 @@ const AdminDashboard = () => {
   const [docsDialogUserId, setDocsDialogUserId] = useState<string | null>(null);
   const [docsDialogData, setDocsDialogData] = useState<any | null>(null);
   const [docsDialogLoading, setDocsDialogLoading] = useState(false);
+  const [decisionNote, setDecisionNote] = useState('');
+  const [decisionBusy, setDecisionBusy] = useState<null | 'approved' | 'rejected' | 'postponed'>(null);
+  const isSuperAdmin = user?.id === SUPER_ADMIN_ID;
+
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
