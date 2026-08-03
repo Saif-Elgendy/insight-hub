@@ -589,13 +589,9 @@ const ProfilePage = () => {
     setUploadingAvatar(true);
     try {
       // Extract file path from URL
-      const avatarPath = profile.avatar_url.split('/avatars/')[1];
+      const avatarPath = profile.avatar_url.split('/avatars/')[1]?.split('?')[0];
       if (avatarPath) {
-        const { error: deleteError } = await supabase.storage
-          .from('avatars')
-          .remove([avatarPath]);
-
-        if (deleteError) throw deleteError;
+        await supabase.storage.from('avatars').remove([avatarPath]);
       }
 
       // Update profile to remove avatar URL
@@ -610,7 +606,8 @@ const ProfilePage = () => {
       toast.success('تم حذف الصورة الشخصية بنجاح');
     } catch (error: any) {
       console.error('Error deleting avatar:', error);
-      toast.error('حدث خطأ أثناء حذف الصورة');
+      toast.error(error?.message ? `تعذر حذف الصورة: ${error.message}` : 'حدث خطأ أثناء حذف الصورة');
+
     } finally {
       setUploadingAvatar(false);
     }
