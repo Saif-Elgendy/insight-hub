@@ -152,7 +152,7 @@ const AdminDashboard = () => {
         const { data: cons } = await supabase
           .from('consultant_requests')
           .select('user_id, status')
-          .in('status', ['pending', 'admin_reviewed']);
+          .in('status', ['pending', 'admin_reviewed', 'postponed']);
         (cons || []).forEach((r: any) => { map[r.user_id] = 'consultant'; });
         setPendingRoleRequests(map);
       })();
