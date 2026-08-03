@@ -1069,17 +1069,29 @@ const ProfilePage = () => {
                           تمت الموافقة
                         </Badge>
                       )}
+                      {consultantRequest.status === 'postponed' && (
+                        <div className="space-y-2">
+                          <Badge variant="outline" className="bg-orange-500/10 text-orange-700 border-orange-500/20">
+                            <Clock3 className="w-3 h-3 ml-1" />
+                            مؤجل - بانتظار استكمال المطلوب
+                          </Badge>
+                          {consultantRequest.admin_review_notes && (
+                            <p className="text-sm text-orange-700">{consultantRequest.admin_review_notes}</p>
+                          )}
+                        </div>
+                      )}
                       {consultantRequest.status === 'rejected' && (
                         <div className="space-y-2">
                           <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
                             <XCircle className="w-3 h-3 ml-1" />
                             مرفوض
                           </Badge>
-                          {consultantRequest.rejection_reason && (
-                            <p className="text-sm text-destructive">{consultantRequest.rejection_reason}</p>
+                          {(consultantRequest.rejection_reason || consultantRequest.admin_review_notes) && (
+                            <p className="text-sm text-destructive">{consultantRequest.rejection_reason || consultantRequest.admin_review_notes}</p>
                           )}
                         </div>
                       )}
+
                       <div className="mt-3">
                         <Button
                           type="button"
