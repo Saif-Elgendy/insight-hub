@@ -412,28 +412,67 @@ const ProfilePage = () => {
   };
 
   const handleSave = async () => {
+    if (!user) return;
+    const fullName = formData.full_name.trim();
+    const phone = formData.phone.trim();
+    const bio = formData.bio.trim();
+
+    if (!fullName) {
+      toast.error('يرجى إدخال الاسم الكامل');
+      return;
+    }
+    if (fullName.length > 100) {
+      toast.error('الاسم يجب أن يكون أقل من 100 حرف');
+      return;
+    }
+    if (phone && !/^[0-9+\-\s()]{7,20}$/.test(phone)) {
+      toast.error('رقم الهاتف غير صالح');
+      return;
+    }
+    if (bio.length > 1000) {
+      toast.error('النبذة يجب أن تكون أقل من 1000 حرف');
+      return;
+    }
+
     setSaving(true);
     try {
-      const { error } = await supabase
+      // Upsert so the row is created if it doesn't exist yet
+      const { data, error } = await supabase
         .from('profiles')
-        .update({
-          full_name: formData.full_name,
-          phone: formData.phone,
-          bio: formData.bio,
-        })
-        .eq('user_id', user?.id);
+        .upsert(
+          {
+            user_id: user.id,
+            full_name: fullName,
+            phone: phone || null,
+            bio: bio || null,
+          },
+          { onConflict: 'user_id' }
+        )
+        .select()
+        .maybeSingle();
 
       if (error) throw error;
 
-      setProfile({ ...profile!, ...formData });
+      if (data) {
+        setProfile(data as Profile);
+        setFormData({
+          full_name: data.full_name || '',
+          phone: data.phone || '',
+          bio: data.bio || '',
+        });
+      } else {
+        setProfile((prev) => (prev ? { ...prev, full_name: fullName, phone, bio } : prev));
+      }
       setIsEditing(false);
       toast.success('تم حفظ التغييرات بنجاح');
-    } catch (error) {
-      toast.error('حدث خطأ أثناء حفظ التغييرات');
+    } catch (error: any) {
+      console.error('Error saving profile:', error);
+      toast.error(error?.message ? `تعذر الحفظ: ${error.message}` : 'حدث خطأ أثناء حفظ التغييرات');
     } finally {
       setSaving(false);
     }
   };
+
 
   const handleLogout = async () => {
     await signOut();
