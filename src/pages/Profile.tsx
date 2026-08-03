@@ -528,21 +528,23 @@ const ProfilePage = () => {
 
     setUploadingAvatar(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const extFromType: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+      };
+      const fileExt = extFromType[file.type] || 'jpg';
+      // Unique name per upload so the browser never serves a stale cached image
+      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+      const oldPath = profile?.avatar_url
+        ? profile.avatar_url.split('/avatars/')[1]?.split('?')[0]
+        : null;
 
-      // Delete old avatar if exists
-      if (profile?.avatar_url) {
-        const oldPath = profile.avatar_url.split('/avatars/')[1];
-        if (oldPath) {
-          await supabase.storage.from('avatars').remove([oldPath]);
-        }
-      }
-
-      // Upload new avatar
+      // Upload new avatar first
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
 
       if (uploadError) throw uploadError;
 
@@ -551,19 +553,27 @@ const ProfilePage = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Update profile with new avatar URL
+      // Save on the profile (upsert so a missing row is created)
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('user_id', user.id);
+        .upsert(
+          { user_id: user.id, avatar_url: publicUrl, full_name: formData.full_name.trim() || null },
+          { onConflict: 'user_id' }
+        );
 
       if (updateError) throw updateError;
 
-      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+      // Clean up the previous file (non-blocking)
+      if (oldPath && oldPath !== fileName) {
+        await supabase.storage.from('avatars').remove([oldPath]).catch(() => {});
+      }
+
+      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : ({ avatar_url: publicUrl } as any));
       toast.success('تم تحديث الصورة الشخصية بنجاح');
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
-      toast.error('حدث خطأ أثناء رفع الصورة');
+      toast.error(error?.message ? `تعذر رفع الصورة: ${error.message}` : 'حدث خطأ أثناء رفع الصورة');
+
     } finally {
       setUploadingAvatar(false);
       // Reset file input
