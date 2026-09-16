@@ -114,7 +114,7 @@ export const Navbar = () => {
                 <Button variant="ghost" asChild>
                   <Link to="/profile" className="gap-2">
                     <User className="w-4 h-4" />
-                    حسابي
+                    {t('nav.account')}
                   </Link>
                 </Button>
                 <QuickLogoutButton variant="icon" />
@@ -213,7 +213,7 @@ export const Navbar = () => {
                     <Button variant="ghost" asChild className="w-full" onClick={() => setIsOpen(false)}>
                       <Link to="/profile" className="gap-2">
                         <User className="w-4 h-4" />
-                        حسابي
+                        {t('nav.account')}
                       </Link>
                     </Button>
                     <QuickLogoutButton variant="full" className="w-full" />
