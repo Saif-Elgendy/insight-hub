@@ -88,7 +88,8 @@ const restoreArabic = () => {
       const original = originalText.get(text);
       if (original !== undefined) text.nodeValue = original;
     } else if (current instanceof Element) {
-      originalAttributes.get(current)?.forEach((value, attribute) => current.setAttribute(attribute, value));
+      const element = current;
+      originalAttributes.get(element)?.forEach((value, attribute) => element.setAttribute(attribute, value));
     }
     current = walker.nextNode();
   }
