@@ -24,6 +24,7 @@ import ConsultantRequestStatus from "./pages/ConsultantRequestStatus";
 import NotFound from "./pages/NotFound";
 import { SiteAssistant } from "./components/assistant/SiteAssistant";
 import { DiagnosticsActorBinder } from "./components/diagnostics/DiagnosticsActorBinder";
+import { LegacyTranslationBridge } from "./components/i18n/LegacyTranslationBridge";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
+        <LegacyTranslationBridge />
         <Toaster />
         <Sonner />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
