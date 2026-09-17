@@ -642,11 +642,19 @@ const ProfilePage = () => {
       }
 
       setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : ({ avatar_url: publicUrl } as any));
-      toast.success('تم تحديث الصورة الشخصية بنجاح');
+      toast.success('تم تحديث الصورة الشخصية بنجاح', {
+        description: `${dims.width}×${dims.height} بكسل • ${(file.size / (1024 * 1024)).toFixed(2)} ميجابايت`,
+      });
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
-      toast.error(error?.message ? `تعذر رفع الصورة: ${error.message}` : 'حدث خطأ أثناء رفع الصورة');
-
+      const raw = String(error?.message || '');
+      let reason = raw || 'خطأ غير متوقع';
+      if (/mime|content type/i.test(raw)) reason = 'صيغة الصورة مرفوضة من الخادم. استخدم JPG أو PNG أو WebP أو GIF.';
+      else if (/exceeded|too large|size/i.test(raw)) reason = 'حجم الصورة أكبر من الحد المسموح (5 ميجابايت).';
+      else if (/row-level security|policy|denied|unauthorized|403/i.test(raw)) reason = 'لا تملك صلاحية الرفع. سجّل الدخول من جديد ثم أعد المحاولة.';
+      else if (/jwt|token|expired|401/i.test(raw)) reason = 'انتهت صلاحية الجلسة. سجّل الدخول من جديد.';
+      else if (/network|fetch|failed to fetch/i.test(raw)) reason = 'انقطع الاتصال بالإنترنت أثناء الرفع. حاول مرة أخرى.';
+      toast.error('تعذر رفع الصورة', { description: reason });
     } finally {
       setUploadingAvatar(false);
       // Reset file input
