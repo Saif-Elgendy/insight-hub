@@ -530,22 +530,74 @@ const ProfilePage = () => {
     }
   };
 
+  const readImageSize = (file: File) =>
+    new Promise<{ width: number; height: number } | null>((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        URL.revokeObjectURL(url);
+      };
+      img.onerror = () => {
+        resolve(null);
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
+    const resetInput = () => { if (fileInputRef.current) fileInputRef.current.value = ''; };
 
-    // Validate file type
+    // 1) Format
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('يرجى اختيار صورة بصيغة JPEG أو PNG أو WebP أو GIF');
+      const ext = file.name.split('.').pop()?.toUpperCase() || 'غير معروف';
+      toast.error(`صيغة الملف غير مدعومة (${ext})`, {
+        description: 'الصيغ المقبولة: JPG أو PNG أو WebP أو GIF فقط.',
+      });
+      resetInput();
       return;
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+    // 2) Size
+    const MAX = 5 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error(`حجم الصورة كبير جداً (${(file.size / (1024 * 1024)).toFixed(2)} ميجابايت)`, {
+        description: 'الحد الأقصى المسموح 5 ميجابايت. جرّب صورة أصغر أو اضغطها.',
+      });
+      resetInput();
       return;
     }
+    if (file.size < 1024) {
+      toast.error('الملف تالف أو فارغ', { description: 'اختر صورة صحيحة بحجم أكبر من 1 كيلوبايت.' });
+      resetInput();
+      return;
+    }
+
+    // 3) Dimensions
+    const dims = await readImageSize(file);
+    if (!dims) {
+      toast.error('تعذر قراءة الصورة', { description: 'الملف قد يكون تالفاً أو ليس صورة حقيقية.' });
+      resetInput();
+      return;
+    }
+    if (dims.width < 100 || dims.height < 100) {
+      toast.error(`أبعاد الصورة صغيرة جداً (${dims.width}×${dims.height} بكسل)`, {
+        description: 'الحد الأدنى 100×100 بكسل. الأفضل صورة مربعة 400×400 أو أكبر.',
+      });
+      resetInput();
+      return;
+    }
+    if (dims.width > 5000 || dims.height > 5000) {
+      toast.error(`أبعاد الصورة كبيرة جداً (${dims.width}×${dims.height} بكسل)`, {
+        description: 'الحد الأقصى 5000×5000 بكسل. صغّر الصورة ثم أعد الرفع.',
+      });
+      resetInput();
+      return;
+    }
+
 
     setUploadingAvatar(true);
     try {
@@ -590,11 +642,19 @@ const ProfilePage = () => {
       }
 
       setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : ({ avatar_url: publicUrl } as any));
-      toast.success('تم تحديث الصورة الشخصية بنجاح');
+      toast.success('تم تحديث الصورة الشخصية بنجاح', {
+        description: `${dims.width}×${dims.height} بكسل • ${(file.size / (1024 * 1024)).toFixed(2)} ميجابايت`,
+      });
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
-      toast.error(error?.message ? `تعذر رفع الصورة: ${error.message}` : 'حدث خطأ أثناء رفع الصورة');
-
+      const raw = String(error?.message || '');
+      let reason = raw || 'خطأ غير متوقع';
+      if (/mime|content type/i.test(raw)) reason = 'صيغة الصورة مرفوضة من الخادم. استخدم JPG أو PNG أو WebP أو GIF.';
+      else if (/exceeded|too large|size/i.test(raw)) reason = 'حجم الصورة أكبر من الحد المسموح (5 ميجابايت).';
+      else if (/row-level security|policy|denied|unauthorized|403/i.test(raw)) reason = 'لا تملك صلاحية الرفع. سجّل الدخول من جديد ثم أعد المحاولة.';
+      else if (/jwt|token|expired|401/i.test(raw)) reason = 'انتهت صلاحية الجلسة. سجّل الدخول من جديد.';
+      else if (/network|fetch|failed to fetch/i.test(raw)) reason = 'انقطع الاتصال بالإنترنت أثناء الرفع. حاول مرة أخرى.';
+      toast.error('تعذر رفع الصورة', { description: reason });
     } finally {
       setUploadingAvatar(false);
       // Reset file input
@@ -683,31 +743,26 @@ const ProfilePage = () => {
                 )}
               </div>
               
-              {/* Upload overlay */}
-              <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                {uploadingAvatar ? (
-                  <Loader2 className="w-6 h-6 text-white animate-spin" />
-                ) : (
-                  <>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                      title="تغيير الصورة"
-                    >
-                      <Camera className="w-5 h-5 text-white" />
-                    </button>
-                    {profile?.avatar_url && (
-                      <button
-                        onClick={handleAvatarDelete}
-                        className="p-2 rounded-full bg-red-500/70 hover:bg-red-500 transition-colors"
-                        title="حذف الصورة"
-                      >
-                        <Trash2 className="w-5 h-5 text-white" />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
+              {/* Uploading state */}
+              {uploadingAvatar && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-primary-foreground animate-spin" />
+                </div>
+              )}
+
+              {/* Always visible camera button (works on touch devices too) */}
+              {!uploadingAvatar && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="تغيير الصورة الشخصية"
+                  title="تغيير الصورة الشخصية"
+                  className="absolute -bottom-1 -end-1 p-2 rounded-full bg-primary text-primary-foreground border-2 border-background shadow-lg hover:opacity-90 transition"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              )}
+              
               
               {/* Hidden file input */}
               <input
@@ -719,11 +774,39 @@ const ProfilePage = () => {
               />
             </div>
             
-            <div className="text-center md:text-right">
+            <div className="text-center md:text-start">
               <h1 className="text-2xl md:text-3xl font-bold mb-2">
                 {formData.full_name || 'مستخدم جديد'}
               </h1>
               <p className="text-primary-foreground/80">{user?.email}</p>
+
+              <div className="mt-3 flex flex-wrap items-center justify-center md:justify-start gap-2">
+                <Button
+                  variant="hero-outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={uploadingAvatar}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="w-4 h-4" />
+                  {profile?.avatar_url ? 'تغيير الصورة' : 'رفع صورة شخصية'}
+                </Button>
+                {profile?.avatar_url && (
+                  <Button
+                    variant="hero-outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={uploadingAvatar}
+                    onClick={handleAvatarDelete}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    حذف الصورة
+                  </Button>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-primary-foreground/80 leading-relaxed">
+                مواصفات الصورة: JPG أو PNG أو WebP أو GIF • الحجم حتى 5 ميجابايت • الأبعاد من 100×100 إلى 5000×5000 بكسل • يُفضّل صورة مربعة 400×400 وواضحة للوجه
+              </p>
             </div>
           </div>
 
