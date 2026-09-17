@@ -743,31 +743,26 @@ const ProfilePage = () => {
                 )}
               </div>
               
-              {/* Upload overlay */}
-              <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                {uploadingAvatar ? (
-                  <Loader2 className="w-6 h-6 text-white animate-spin" />
-                ) : (
-                  <>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                      title="تغيير الصورة"
-                    >
-                      <Camera className="w-5 h-5 text-white" />
-                    </button>
-                    {profile?.avatar_url && (
-                      <button
-                        onClick={handleAvatarDelete}
-                        className="p-2 rounded-full bg-red-500/70 hover:bg-red-500 transition-colors"
-                        title="حذف الصورة"
-                      >
-                        <Trash2 className="w-5 h-5 text-white" />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
+              {/* Uploading state */}
+              {uploadingAvatar && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-primary-foreground animate-spin" />
+                </div>
+              )}
+
+              {/* Always visible camera button (works on touch devices too) */}
+              {!uploadingAvatar && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="تغيير الصورة الشخصية"
+                  title="تغيير الصورة الشخصية"
+                  className="absolute -bottom-1 -end-1 p-2 rounded-full bg-primary text-primary-foreground border-2 border-background shadow-lg hover:opacity-90 transition"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              )}
+              
               
               {/* Hidden file input */}
               <input
