@@ -530,22 +530,74 @@ const ProfilePage = () => {
     }
   };
 
+  const readImageSize = (file: File) =>
+    new Promise<{ width: number; height: number } | null>((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        URL.revokeObjectURL(url);
+      };
+      img.onerror = () => {
+        resolve(null);
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
+    const resetInput = () => { if (fileInputRef.current) fileInputRef.current.value = ''; };
 
-    // Validate file type
+    // 1) Format
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('يرجى اختيار صورة بصيغة JPEG أو PNG أو WebP أو GIF');
+      const ext = file.name.split('.').pop()?.toUpperCase() || 'غير معروف';
+      toast.error(`صيغة الملف غير مدعومة (${ext})`, {
+        description: 'الصيغ المقبولة: JPG أو PNG أو WebP أو GIF فقط.',
+      });
+      resetInput();
       return;
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+    // 2) Size
+    const MAX = 5 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error(`حجم الصورة كبير جداً (${(file.size / (1024 * 1024)).toFixed(2)} ميجابايت)`, {
+        description: 'الحد الأقصى المسموح 5 ميجابايت. جرّب صورة أصغر أو اضغطها.',
+      });
+      resetInput();
       return;
     }
+    if (file.size < 1024) {
+      toast.error('الملف تالف أو فارغ', { description: 'اختر صورة صحيحة بحجم أكبر من 1 كيلوبايت.' });
+      resetInput();
+      return;
+    }
+
+    // 3) Dimensions
+    const dims = await readImageSize(file);
+    if (!dims) {
+      toast.error('تعذر قراءة الصورة', { description: 'الملف قد يكون تالفاً أو ليس صورة حقيقية.' });
+      resetInput();
+      return;
+    }
+    if (dims.width < 100 || dims.height < 100) {
+      toast.error(`أبعاد الصورة صغيرة جداً (${dims.width}×${dims.height} بكسل)`, {
+        description: 'الحد الأدنى 100×100 بكسل. الأفضل صورة مربعة 400×400 أو أكبر.',
+      });
+      resetInput();
+      return;
+    }
+    if (dims.width > 5000 || dims.height > 5000) {
+      toast.error(`أبعاد الصورة كبيرة جداً (${dims.width}×${dims.height} بكسل)`, {
+        description: 'الحد الأقصى 5000×5000 بكسل. صغّر الصورة ثم أعد الرفع.',
+      });
+      resetInput();
+      return;
+    }
+
 
     setUploadingAvatar(true);
     try {
