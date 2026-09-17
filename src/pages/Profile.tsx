@@ -774,11 +774,39 @@ const ProfilePage = () => {
               />
             </div>
             
-            <div className="text-center md:text-right">
+            <div className="text-center md:text-start">
               <h1 className="text-2xl md:text-3xl font-bold mb-2">
                 {formData.full_name || 'مستخدم جديد'}
               </h1>
               <p className="text-primary-foreground/80">{user?.email}</p>
+
+              <div className="mt-3 flex flex-wrap items-center justify-center md:justify-start gap-2">
+                <Button
+                  variant="hero-outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={uploadingAvatar}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="w-4 h-4" />
+                  {profile?.avatar_url ? 'تغيير الصورة' : 'رفع صورة شخصية'}
+                </Button>
+                {profile?.avatar_url && (
+                  <Button
+                    variant="hero-outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={uploadingAvatar}
+                    onClick={handleAvatarDelete}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    حذف الصورة
+                  </Button>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-primary-foreground/80 leading-relaxed">
+                مواصفات الصورة: JPG أو PNG أو WebP أو GIF • الحجم حتى 5 ميجابايت • الأبعاد من 100×100 إلى 5000×5000 بكسل • يُفضّل صورة مربعة 400×400 وواضحة للوجه
+              </p>
             </div>
           </div>
 
