@@ -46,7 +46,7 @@ async function openMaterial(url: string) {
     window.open(url, '_blank', 'noopener,noreferrer');
     return;
   }
-  const signed = await getSignedUrl('course-materials', url);
+  const signed = await getSignedUrl('course-materials', url, 60);
   if (signed) window.open(signed, '_blank', 'noopener,noreferrer');
   else toast.error('تعذر فتح الملف. تأكد من تسجيلك في الكورس.');
 }

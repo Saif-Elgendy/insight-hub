@@ -15,6 +15,13 @@
       "when": 1792426513260,
       "tag": "0001_avatars_owner_only_listing",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792427144732,
+      "tag": "0002_harden_completed_count",
+      "breakpoints": true
     }
   ]
 }
